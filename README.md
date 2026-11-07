@@ -53,20 +53,23 @@ QuestClusters.setDefaultExpanded(clusterId, false)
 QuestClusters.dissolve(clusterId)
 ```
 
-已知限制：任务集本身的增删改不进 FTB Quests 的撤销历史；不装 Quest Enhance 时 FTB Quests 只能复制单个对象，所以不会带上任务集。
+**撤销/重做**：创建、编辑、移动、解散、粘贴任务集都进 FTB Quests 自己的撤销历史（编辑模式的撤销/重做按钮），并显示在它的变更日志里。
+拖动整个任务集是一步撤销。「删除任务集和成员」后撤销，任务和任务集都会恢复（被删除的成员 ID 恢复时会自动回到原任务集）。
+
+已知限制：不装 Quest Enhance 时 FTB Quests 只能复制单个对象，所以不会带上任务集；KubeJS/API 的修改不进撤销历史。
 
 ### 兼容设计
 - 收起的成员不从面板删除，只让 `shouldDraw/isEnabled` 返回 false：画布布局不跳动，FTB Quests 和 CQA 的连线渲染会自动跳过它们。
 - 不注入 `QuestButton.draw`、`renderConnection`、`drawOffsetBackground`（CQA 和 Quest Enhance 会改写这些）。
-- 汇总依赖线由我们自己的控件绘制，目前是直线，没有 FTB Quests 的动画纹理和贝塞尔曲线。
+- 汇总依赖线由我们自己的控件绘制：使用章节主题的连线纹理、粗细、流动速度和悬停高亮颜色，外观和原生连线一致（直线，不支持贝塞尔控制点）。
 
 ### 已实测的兼容
 | 组合 | 版本 | 自检 |
 |---|---|---|
-| 不装联动附属 | — | 37 项通过 |
+| 不装联动附属 | — | 43 项通过 |
 | Certain Questing Additions | 1.2.0.5+mc1.21.1（Modrinth） | 28 项通过（玩法检查加入前） |
 | Quest Enhance | 3.12（从作者 GitHub 源码 `codex/1.21.1-neoforge` 编译） | 31 项通过（玩法检查加入前） |
-| 两者同时安装 | 同上 | 40 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
+| 两者同时安装 | 同上 | 46 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：
 - **Quest Enhance 单条前置线隐藏**：汇总线背后的真实连线全部被隐藏时，汇总线对玩家隐藏（设置了悬停显示则悬停时显示）；编辑模式下用 Quest Enhance 的隐藏线颜色画出。
@@ -104,6 +107,15 @@ QuestClusters.dissolve(clusterId)
 ./gradlew runClient  # 开发客户端
 ./gradlew runClientDevtest  # 脚本化界面自检：进入 run/saves/devtest，截图到 run/screenshots/qc_*.png，自动退出
 ```
+
+## 构建与发布
+
+- 每次推送到 `main` 或提交 PR，GitHub Actions 会编译并运行单元测试，jar 作为构建产物上传（`.github/workflows/build.yml`）。
+- 推送形如 `v0.2.0` 的标签会用这个版本号构建，并自动创建 GitHub Release 附上 jar（`.github/workflows/release.yml`）：
+  ```
+  git tag v0.2.0 && git push origin v0.2.0
+  ```
+- 界面自检 `runClientDevtest` 需要图形环境，不在 CI 里跑，发布前在本机跑一次。
 
 ## 许可证
 

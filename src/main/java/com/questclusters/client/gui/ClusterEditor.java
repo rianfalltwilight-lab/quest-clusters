@@ -184,18 +184,9 @@ public final class ClusterEditor {
 
     /** Moves the box and every member by (dx, dy) canvas units. Member moves go through FTB Quests (undoable). */
     static void moveBy(QuestScreen screen, QuestCluster c, double dx, double dy) {
-        ClientQuestFile file = ClientQuestFile.INSTANCE;
-        Chapter chapter = file.getChapter(c.chapterId());
-        if (chapter == null || (dx == 0 && dy == 0)) {
-            return;
+        if (dx != 0 || dy != 0) {
+            PacketDistributor.sendToServer(new ClusterPayloads.Move(c.id(), dx, dy));
         }
-        for (long id : c.members()) {
-            if (file.getBase(id) instanceof Movable m && !m.isPositionLocked()) {
-                m.requestMove(chapter, m.getX() + dx, m.getY() + dy);
-            }
-        }
-        update(new QuestCluster(c.id(), c.chapterId(), c.title(), c.subtitle(), c.color(), c.defaultExpanded(),
-                c.x() + dx, c.y() + dy, c.width(), c.height(), c.members()));
     }
 
     static void selectMembers(QuestScreen screen, QuestCluster c) {

@@ -103,4 +103,19 @@ public final class ClusterPayloads {
             return TYPE;
         }
     }
+
+    /** Move a cluster and all its members by (dx, dy) canvas units, as one undo step. */
+    public record Move(long clusterId, double dx, double dy) implements CustomPacketPayload {
+        public static final Type<Move> TYPE = newType("move");
+        public static final StreamCodec<ByteBuf, Move> CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_LONG, Move::clusterId,
+                ByteBufCodecs.DOUBLE, Move::dx,
+                ByteBufCodecs.DOUBLE, Move::dy,
+                Move::new);
+
+        @Override
+        public Type<Move> type() {
+            return TYPE;
+        }
+    }
 }

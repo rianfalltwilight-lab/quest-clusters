@@ -54,5 +54,10 @@
   "quest_clusters.task.required.tooltip": "The quest holding this task never counts towards itself",
   "quest_clusters.menu.prereq_add": "Make selected quests (%s) prerequisites of every member",
   "quest_clusters.menu.prereq_remove": "Remove selected quests (%s) as prerequisites of every member",
-  "quest_clusters.menu.prereq_hint": "Select quests first to add them as prerequisites of the whole cluster"
+  "quest_clusters.menu.prereq_hint": "Select quests first to add them as prerequisites of the whole cluster",
+  "quest_clusters.event.create": "Create quest cluster '%s'",
+  "quest_clusters.event.edit": "Edit quest cluster '%s'",
+  "quest_clusters.event.move": "Move quest cluster '%s'",
+  "quest_clusters.event.members": "Change members of quest cluster '%s'",
+  "quest_clusters.event.dissolve": "Dissolve quest cluster '%s'"
 }

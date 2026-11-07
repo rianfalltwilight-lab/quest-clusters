@@ -54,5 +54,10 @@
   "quest_clusters.task.required.tooltip": "带有这个任务的任务本身不计入",
   "quest_clusters.menu.prereq_add": "把选中的任务（%s 个）设为所有成员的前置",
   "quest_clusters.menu.prereq_remove": "从所有成员的前置中移除选中的任务（%s 个）",
-  "quest_clusters.menu.prereq_hint": "先选中任务，才能把它们设为整个任务集的前置"
+  "quest_clusters.menu.prereq_hint": "先选中任务，才能把它们设为整个任务集的前置",
+  "quest_clusters.event.create": "创建任务集「%s」",
+  "quest_clusters.event.edit": "编辑任务集「%s」",
+  "quest_clusters.event.move": "移动任务集「%s」",
+  "quest_clusters.event.members": "修改任务集「%s」的成员",
+  "quest_clusters.event.dissolve": "解散任务集「%s」"
 }

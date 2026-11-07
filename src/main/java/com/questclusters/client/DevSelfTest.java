@@ -163,6 +163,18 @@ public final class DevSelfTest {
                     "drag moves the box by (2,1): now " + c.x() + "," + c.y());
             double qx = ClientQuestFile.INSTANCE.getQuest(D1).getX();
             check(Math.abs(qx - (before[2] + 2)) < 1e-6, "drag moves member quests too: D1.x " + before[2] + " -> " + qx);
+            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(Math.abs(cluster().x() - before[0]) < 1e-6 && Math.abs(ClientQuestFile.INSTANCE.getQuest(D1).getX() - before[2]) < 1e-6,
+                    "one undo puts box and members back (box " + cluster().x() + ", D1 " + ClientQuestFile.INSTANCE.getQuest(D1).getX() + ")");
+            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.redo());
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(Math.abs(cluster().x() - (before[0] + 2)) < 1e-6 && Math.abs(ClientQuestFile.INSTANCE.getQuest(D1).getX() - (before[2] + 2)) < 1e-6,
+                    "redo moves them again");
             int[] p = centre(box());
             click(p[0], p[1], 1); // right click: cluster menu
             return 15;
@@ -325,6 +337,42 @@ public final class DevSelfTest {
             check(td.isCompleted(ClientQuestFile.INSTANCE.getQuest(D1)) && td.isCompleted(ClientQuestFile.INSTANCE.getQuest(0xD2L)), "members completed");
             check(milestone != null && td.isCompleted(milestone), "milestone completes when the whole cluster is done");
             check(milestone != null && td.hasUnclaimedRewards(Minecraft.getInstance().player.getUUID(), milestone), "milestone reward is claimable");
+            return 5;
+        });
+        // ---------------------------------------------------------------- undo of "delete cluster and members"
+        STEPS.add(() -> {
+            PacketDistributor.sendToServer(new ClusterPayloads.Create(chapterId(), "Temp", List.of(D3)));
+            return 20;
+        });
+        STEPS.add(() -> {
+            QuestCluster temp = ClientClusters.store().clusterOfMember(D3).orElse(null);
+            check(temp != null, "temp cluster created");
+            if (temp != null) {
+                ClusterEditor.clusterMenu(screen, temp); // builds fine
+                dev.architectury.networking.NetworkManager.sendToServer(new dev.ftb.mods.ftbquests.net.DeleteObjectMessage(List.copyOf(temp.members())));
+            }
+            return 30;
+        });
+        STEPS.add(() -> {
+            check(ClientQuestFile.INSTANCE.getQuest(D3) == null && ClientClusters.store().clusterOfMember(D3).isEmpty(),
+                    "delete with members removes quest and cluster");
+            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
+            return 30;
+        });
+        STEPS.add(() -> {
+            QuestCluster back = ClientClusters.store().clusterOfMember(D3).orElse(null);
+            check(ClientQuestFile.INSTANCE.getQuest(D3) != null, "undo restores the deleted quest");
+            check(back != null && back.title().equals("Temp"), "undo also restores its cluster (" + back + ")");
+            return 0;
+        });
+        STEPS.add(() -> {
+            screen.questPanel.scrollTo(cluster().x(), cluster().y());
+            ClusterViewState.setExpanded(cluster(), false);
+            return 20;
+        });
+        STEPS.add(() -> {
+            shot("qc_8_lines");
+            ClusterViewState.setExpanded(cluster(), true);
             return 5;
         });
         STEPS.add(() -> {

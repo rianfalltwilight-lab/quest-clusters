@@ -116,4 +116,69 @@ class ClusterLogicTest {
     private static String key(QuestCluster c, ClusterStore s, MemberLookup l) {
         return ClusterValidator.validate(c, s, l).map(ValidationError::key).orElse(null);
     }
+
+    @Test
+    void revivalRestoresClusterAfterUndoDelete() {
+        ClusterStore store = new ClusterStore();
+        store.put(cluster(5, CH1, 1L, 2L));
+        store.put(cluster(6, CH1, 3L));
+        FakeLookup l = lookup();
+        ClusterRevival rev = new ClusterRevival();
+
+        // "delete cluster and members": both quests go, cluster 5 is pruned away; quest 3 moves to another chapter
+        l.movables.remove(1L);
+        l.movables.remove(2L);
+        l.movables.put(3L, CH2);
+        rev.remember(ClusterPruner.prune(store, l), 0);
+        assertTrue(store.get(5).isEmpty());
+        assertTrue(store.get(6).isEmpty());
+        assertTrue(rev.revive(store, l, 10).isEmpty(), "nothing back yet");
+
+        // undo: FTB Quests restores the quests with the same ids
+        l.movable(1, CH1).movable(2, CH1);
+        rev.revive(store, l, 20);
+        assertEquals(List.of(1L, 2L), store.get(5).orElseThrow().members());
+
+        // undoing the move brings 3 back into cluster 6
+        l.movable(3, CH1);
+        rev.revive(store, l, 30);
+        assertEquals(List.of(3L), store.get(6).orElseThrow().members());
+        assertEquals(0, rev.size());
+    }
+
+    @Test
+    void revivalRestoresSingleMemberInOrderAndRespectsNewOwner() {
+        ClusterStore store = new ClusterStore();
+        store.put(cluster(5, CH1, 1L, 2L, 3L));
+        FakeLookup l = lookup();
+        ClusterRevival rev = new ClusterRevival();
+        l.movables.remove(2L);
+        rev.remember(ClusterPruner.prune(store, l), 0);
+        assertEquals(List.of(1L, 3L), store.get(5).orElseThrow().members());
+        l.movable(2, CH1);
+        rev.revive(store, l, 1);
+        assertEquals(List.of(1L, 2L, 3L), store.get(5).orElseThrow().members(), "original order kept");
+
+        // if the object was put in another cluster meanwhile, do not steal it back
+        l.movables.remove(2L);
+        rev.remember(ClusterPruner.prune(store, l), 2);
+        l.movable(2, CH1);
+        store.put(cluster(7, CH1, 2L));
+        rev.revive(store, l, 3);
+        assertEquals(7L, store.clusterOfMember(2L).orElseThrow().id());
+    }
+
+    @Test
+    void revivalEntriesExpire() {
+        ClusterStore store = new ClusterStore();
+        store.put(cluster(5, CH1, 1L));
+        FakeLookup l = lookup();
+        ClusterRevival rev = new ClusterRevival();
+        l.movables.remove(1L);
+        rev.remember(ClusterPruner.prune(store, l), 0);
+        l.movable(1, CH1);
+        rev.revive(store, l, ClusterRevival.MAX_AGE_MS + 1);
+        assertTrue(store.get(5).isEmpty());
+        assertEquals(0, rev.size());
+    }
 }

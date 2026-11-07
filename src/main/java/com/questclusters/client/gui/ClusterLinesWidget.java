@@ -139,6 +139,10 @@ public final class ClusterLinesWidget extends Widget {
         float half = (float) (ClusterWidgets.zoom(questPanel) * ThemeProperties.DEPENDENCY_LINE_THICKNESS.get(chapter) / 4D * 3D);
 
         int drawn = 0, drawnHidden = 0;
+        var texture = ThemeProperties.DEPENDENCY_LINE_TEXTURE.get(chapter);
+        double t = -(System.currentTimeMillis() * 0.001D);
+        float scrollNormal = (float) ((t * ThemeProperties.DEPENDENCY_LINE_UNSELECTED_SPEED.get(chapter)) % 1D);
+        float scrollSelected = (float) ((t * ThemeProperties.DEPENDENCY_LINE_SELECTED_SPEED.get(chapter)) % 1D);
         for (Map.Entry<ClusterEdges.Edge, List<ClusterEdges.Pair>> entry : list.entrySet()) {
             ClusterEdges.Edge e = entry.getKey();
             Widget from = widget(e.dependent());
@@ -147,21 +151,32 @@ public final class ClusterLinesWidget extends Widget {
                 continue;
             }
             int color = lineColor(e.dependent(), from, chapter, td);
+            float scroll = scrollNormal;
 
             LineRule.Visibility vis = visibility(file, chapter, entry.getValue());
+            boolean hidden = false;
             if (vis != LineRule.Visibility.SHOW) {
                 if (edit) {
                     color = QuestEnhanceCompat.HIDDEN_LINE_EDIT_COLOR;
+                    hidden = true;
                 } else if (vis == LineRule.Visibility.HIDDEN || !(from.isMouseOver() || to.isMouseOver())) {
                     continue;
                 }
             }
-            ClusterRender.line(g,
+            // hover highlight, like FTB Quests: what the hovered end requires / is required for
+            if (!hidden && from.isMouseOver()) {
+                color = ThemeProperties.DEPENDENCY_LINE_REQUIRES_COLOR.get(chapter).rgba();
+                scroll = scrollSelected;
+            } else if (!hidden && to.isMouseOver()) {
+                color = ThemeProperties.DEPENDENCY_LINE_REQUIRED_FOR_COLOR.get(chapter).rgba();
+                scroll = scrollSelected;
+            }
+            ClusterRender.texturedLine(g,
                     from.getX() + from.width / 2D, from.getY() + from.height / 2D,
                     to.getX() + to.width / 2D, to.getY() + to.height / 2D,
-                    half, color);
+                    half, ClusterRender.darker(color), color, scroll, texture);
             drawn++;
-            if (color == QuestEnhanceCompat.HIDDEN_LINE_EDIT_COLOR) drawnHidden++;
+            if (hidden) drawnHidden++;
         }
         lastDrawn = drawn;
         lastDrawnHidden = drawnHidden;

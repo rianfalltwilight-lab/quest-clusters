@@ -30,6 +30,7 @@ public final class ServerClusters {
     private static final ClusterStore STORE = new ClusterStore();
     private static boolean dirty;
     private static boolean pruneRequested;
+    private static final com.questclusters.data.ClusterRevival REVIVAL = new com.questclusters.data.ClusterRevival();
 
     private ServerClusters() {
     }
@@ -76,6 +77,7 @@ public final class ServerClusters {
 
     public static void onUnload() {
         STORE.clear();
+        REVIVAL.clear();
         dirty = false;
         pruneRequested = false;
     }
@@ -89,10 +91,23 @@ public final class ServerClusters {
 
     private static void runPrune(ServerQuestFile file) {
         pruneRequested = false;
-        ClusterPruner.Result r = ClusterPruner.prune(STORE, new FtbqMemberLookup(file));
-        if (r.changed()) {
+        FtbqMemberLookup lookup = new FtbqMemberLookup(file);
+        long now = System.currentTimeMillis();
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+
+        // objects that came back (FTB Quests undo of a delete or move) rejoin their old cluster
+        List<QuestCluster> revived = REVIVAL.revive(STORE, lookup, now);
+        if (!revived.isEmpty()) {
             dirty = true;
-            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                revived.forEach(c -> ClusterNetwork.sendUpsertToAll(server, c));
+            }
+        }
+
+        ClusterPruner.Result r = ClusterPruner.prune(STORE, lookup);
+        if (r.changed()) {
+            REVIVAL.remember(r, now);
+            dirty = true;
             if (server != null) {
                 r.updated().forEach(c -> ClusterNetwork.sendUpsertToAll(server, c));
                 r.removed().forEach(id -> ClusterNetwork.sendRemoveToAll(server, id));
@@ -100,12 +115,27 @@ public final class ServerClusters {
         }
     }
 
+    /** Sets a cluster to the given state (null = removed) without validation; used by undo/redo. */
+    static void setRaw(ServerQuestFile file, long id, QuestCluster state) {
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (state == null) {
+            if (STORE.remove(id).isPresent() && server != null) {
+                ClusterNetwork.sendRemoveToAll(server, id);
+            }
+        } else {
+            STORE.put(state);
+            if (server != null) {
+                ClusterNetwork.sendUpsertToAll(server, state);
+            }
+        }
+        dirty = true;
+        file.markDirty(); // also schedules a prune, which drops members that no longer exist
+    }
+
     // ---------------------------------------------------------------- edits requested by clients
 
     public static void handleCreate(ServerPlayer player, long chapterId, String title, List<Long> members) {
-        withEditableFile(player, file -> {
-            apply(player, file, draft(file, chapterId, title, members));
-        });
+        withEditableFile(player, file -> applyWithHistory(player, file, draft(file, chapterId, title, members)));
     }
 
     public static void handleUpdate(ServerPlayer player, QuestCluster cluster) {
@@ -114,17 +144,59 @@ public final class ServerClusters {
                 reject(player, new ValidationError("no_cluster"));
                 return;
             }
-            apply(player, file, cluster);
+            applyWithHistory(player, file, cluster);
         });
     }
 
-    /** Removes the cluster only; member quests are kept where they are. */
+    /** Removes the cluster only; member quests are kept where they are. Undoable. */
     public static void handleDissolve(ServerPlayer player, long clusterId) {
         withEditableFile(player, file -> {
-            if (!dissolve(clusterId)) {
+            Optional<QuestCluster> current = STORE.get(clusterId);
+            if (current.isEmpty()) {
                 reject(player, new ValidationError("no_cluster"));
+                return;
             }
+            file.getHistoryStack().addAndApply(file, new ClusterChangeEvent(current.get(), null));
         });
+    }
+
+    /** Moves box and members by (dx, dy) as one undo step. */
+    public static void handleMove(ServerPlayer player, long clusterId, double dx, double dy) {
+        withEditableFile(player, file -> {
+            Optional<QuestCluster> current = STORE.get(clusterId);
+            if (current.isEmpty() || !Double.isFinite(dx) || !Double.isFinite(dy) || Math.abs(dx) > 10_000 || Math.abs(dy) > 10_000) {
+                reject(player, new ValidationError(current.isEmpty() ? "no_cluster" : "bad_position"));
+                return;
+            }
+            QuestCluster c = current.get();
+            dev.ftb.mods.ftbquests.quest.Chapter chapter = file.getChapter(c.chapterId());
+            QuestCluster moved = new QuestCluster(c.id(), c.chapterId(), c.title(), c.subtitle(), c.color(), c.defaultExpanded(),
+                    c.x() + dx, c.y() + dy, c.width(), c.height(), c.members());
+            Optional<ValidationError> err = ClusterValidator.validate(moved, STORE, new FtbqMemberLookup(file));
+            if (err.isPresent() || chapter == null) {
+                reject(player, err.orElse(new ValidationError("no_chapter", QuestCluster.idToString(c.chapterId()))));
+                return;
+            }
+            List<dev.ftb.mods.ftbquests.quest.history.QuestBookEditEvent> events = new ArrayList<>();
+            for (long id : c.members()) {
+                if (file.getBase(id) instanceof Movable m && !m.isPositionLocked()) {
+                    dev.ftb.mods.ftbquests.quest.history.events.MoveMovableObject
+                            .create(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
+                }
+            }
+            events.add(new ClusterChangeEvent(c, moved));
+            file.getHistoryStack().addAndApply(file, new dev.ftb.mods.ftbquests.quest.history.events.CompositeEditEvent(events));
+        });
+    }
+
+    /** Validates, then records the change in FTB Quests' history (which applies it). */
+    private static void applyWithHistory(ServerPlayer player, ServerQuestFile file, QuestCluster cluster) {
+        Optional<ValidationError> err = ClusterValidator.validate(cluster, STORE, new FtbqMemberLookup(file));
+        if (err.isPresent()) {
+            reject(player, err.get());
+            return;
+        }
+        file.getHistoryStack().addAndApply(file, new ClusterChangeEvent(STORE.get(cluster.id()).orElse(null), cluster));
     }
 
     /**
@@ -146,7 +218,8 @@ public final class ServerClusters {
                     QuestClusters.LOGGER.debug("Paste: no copies found for cluster {}", t.title());
                     continue;
                 }
-                apply(player, file, new QuestCluster(newId(), chapterId, t.title(), t.subtitle(), t.color(),
+                // separate step after Quest Enhance's paste steps; undo it first, then the pasted quests
+                applyWithHistory(player, file, new QuestCluster(newId(), chapterId, t.title(), t.subtitle(), t.color(),
                         t.defaultExpanded(), t.x(), t.y(), t.width(), t.height(), members));
             }
         });
@@ -172,10 +245,6 @@ public final class ServerClusters {
             }
         }
         return Optional.ofNullable(best).map(Movable::getMovableID);
-    }
-
-    private static void apply(ServerPlayer player, ServerQuestFile file, QuestCluster cluster) {
-        applyChecked(file, cluster).ifPresent(err -> reject(player, err));
     }
 
     /** Validates, stores, saves and broadcasts. Returns the reason if rejected. */
