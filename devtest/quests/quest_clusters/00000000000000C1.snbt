@@ -1,0 +1,16 @@
+{
+	version: 1
+	chapter: "00000000000000C1"
+	clusters: [{
+		id: "00000000000000F1"
+		title: "矿石处理"
+		subtitle: "Ore processing"
+		color: "#FF2E5A88"
+		default_expanded: true
+		x: 1.0d
+		y: 0.5d
+		width: 3.0d
+		height: 1.5d
+		members: ["00000000000000D1", "00000000000000D2"]
+	}]
+}

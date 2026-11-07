@@ -1,0 +1,51 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "cluster_test"
+	group: ""
+	id: "00000000000000C1"
+	images: [ ]
+	order_index: 0
+	quest_links: [ ]
+	quests: [
+		{ id: "00000000000000D9", x: 1.0d, y: 4.0d, title: "Milestone", tasks: [{ id: "00000000000000E9", type: "quest_clusters:cluster", cluster: "00000000000000F1" }], rewards: [{ id: "00000000000000B9", type: "xp", xp: 10 }] }
+		{
+			id: "00000000000000D0"
+			tasks: [{
+				id: "00000000000000E0"
+				type: "checkmark"
+			}]
+			x: -3.0d
+			y: 0.0d
+		}
+		{
+			dependencies: ["00000000000000D0"]
+			id: "00000000000000D1"
+			tasks: [{
+				id: "00000000000000E1"
+				type: "checkmark"
+			}]
+			x: 0.0d
+			y: 0.0d
+		}
+		{
+			id: "00000000000000D2"
+			tasks: [{
+				id: "00000000000000E2"
+				type: "checkmark"
+			}]
+			x: 1.5d
+			y: 1.0d
+		}
+		{
+			dependencies: ["00000000000000D2"]
+			id: "00000000000000D3"
+			tasks: [{
+				id: "00000000000000E3"
+				type: "checkmark"
+			}]
+			x: 5.0d
+			y: 1.0d
+		}
+	]
+}

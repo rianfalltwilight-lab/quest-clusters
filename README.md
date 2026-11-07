@@ -1,0 +1,106 @@
+# Quest Clusters（任务集）
+
+FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组成「任务集」，收起时显示为一个长方形文字框。
+
+- Minecraft 1.21.1 / NeoForge 21.1.x
+- FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
+- 客户端和服务端都需要安装
+
+## 当前进度：阶段 0–2、4 + 任务集玩法
+
+| 部分 | 位置 |
+|---|---|
+| 数据模型、校验、清理（纯 Java，可单测） | `data/` |
+| 独立存档、服务端状态、权限检查 | `server/` |
+| 网络包（全量同步 / 增量 / 编辑请求） | `net/` |
+| 客户端副本 | `client/ClientClusters` |
+| FTB Quests 生命周期挂钩（仅 HEAD/TAIL） | `mixin/ServerQuestFileMixin` |
+| 收起的文字框、展开的区域框、汇总依赖线 | `client/gui/` |
+| 玩家展开状态（按服务器/存档记忆） | `client/ClusterViewState`，存于 `<游戏目录>/quest_clusters/view_state.json` |
+
+**玩家**：点击文字框展开，点击区域框标题栏收起；跳转到组内任务时自动展开。
+
+**编辑模式**（`client/gui/ClusterEditor`）：
+- 右键任务、任务链接或章节图片：创建任务集 / 加入任务集 / 移出任务集
+- 多选后右键：用选中对象创建任务集 / 加入任务集 / 移出所属任务集
+- 右键文字框或区域框标题栏：编辑属性（标题、副标题、颜色、默认展开、文字框尺寸）、展开/收起、选中全部成员、
+  文字框居中到成员、解散（保留任务）、删除任务集和全部成员（二次确认）
+- 拖动文字框或区域框标题栏：整组移动，按 1/8 格吸附，按住 Shift 不吸附。成员移动走 FTB Quests 自己的移动（可撤销）
+- 框选不会选中被收起的成员
+
+**任务集玩法**（全部基于 FTB Quests 原生的任务、前置和奖励，不改它的进度判定）：
+- **「完成任务集」任务类型**：在画布空白处右键 → 选「完成任务集」，就会在那里新建一个带这个任务的「里程碑任务」。
+  在任务设置里选任务集和需要完成的数量（0 = 全部）。组内任务完成到要求时它自动完成（每秒检查一次，登录时也检查）。
+  只计任务（不计任务链接和图片），里程碑任务本身不计入。
+  - **整组奖励**：给里程碑任务加奖励。
+  - **整组作为前置**：让其他任务依赖里程碑任务。
+- **整组解锁**：先选中要作为前置的任务，再右键任务集 →「把选中的任务设为所有成员的前置」（也可以批量移除）。
+  和 FTB Quests 自己的「添加前置」一样，会产生循环的成员会被跳过并提示。
+
+**标题翻译**：标题或副标题写成 `{some.lang.key}` 时按 lang 文件翻译（和 FTB Quests 的写法一致）。
+
+**动画**：文字框悬停时放大并发光，收起/展开时淡入。装了 CQA 时跟随它的「quest_hover」「quest_hover_glow_alpha」「smooth_animations」设置。
+
+**KubeJS**（装了 KubeJS 时自动注册，全局名 `QuestClusters`；不装也能用 Java 调 `com.questclusters.api.QuestClustersAPI`）：
+```js
+// server_scripts：修改只能在服务端；跳过编辑模式权限检查，但校验和同步与编辑器相同
+QuestClusters.create('0123456789ABCDEF', '{mypack.cluster.ores}', ['...', '...'])
+QuestClusters.ofMember(questId)          // 所属任务集或 null
+QuestClusters.inChapter(chapterId)       // 列表
+QuestClusters.setMembers(clusterId, [...])
+QuestClusters.setTitle(clusterId, '标题', '副标题')
+QuestClusters.setDefaultExpanded(clusterId, false)
+QuestClusters.dissolve(clusterId)
+```
+
+已知限制：任务集本身的增删改不进 FTB Quests 的撤销历史；不装 Quest Enhance 时 FTB Quests 只能复制单个对象，所以不会带上任务集。
+
+### 兼容设计
+- 收起的成员不从面板删除，只让 `shouldDraw/isEnabled` 返回 false：画布布局不跳动，FTB Quests 和 CQA 的连线渲染会自动跳过它们。
+- 不注入 `QuestButton.draw`、`renderConnection`、`drawOffsetBackground`（CQA 和 Quest Enhance 会改写这些）。
+- 汇总依赖线由我们自己的控件绘制，目前是直线，没有 FTB Quests 的动画纹理和贝塞尔曲线。
+
+### 已实测的兼容
+| 组合 | 版本 | 自检 |
+|---|---|---|
+| 不装联动附属 | — | 37 项通过 |
+| Certain Questing Additions | 1.2.0.5+mc1.21.1（Modrinth） | 28 项通过（玩法检查加入前） |
+| Quest Enhance | 3.12（从作者 GitHub 源码 `codex/1.21.1-neoforge` 编译） | 31 项通过（玩法检查加入前） |
+| 两者同时安装 | 同上 | 40 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
+
+联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：
+- **Quest Enhance 单条前置线隐藏**：汇总线背后的真实连线全部被隐藏时，汇总线对玩家隐藏（设置了悬停显示则悬停时显示）；编辑模式下用 Quest Enhance 的隐藏线颜色画出。
+- **Quest Enhance 多选复制粘贴**：选区完整包含一个任务集时，粘贴后会在新副本上重建这个任务集（位置按相同偏移）。
+- **CQA 动画设置**：见上方「动画」。
+
+## 存档格式
+
+`config/ftbquests/quests/quest_clusters/<章节ID>.snbt`，每个章节一个文件，和 FTB Quests 自己的章节文件分开：
+卸载本附属不会影响任务数据，FTB Quests 重新保存章节也不会丢掉任务集数据。
+
+```
+{
+	version: 1
+	chapter: "0123456789ABCDEF"
+	clusters: [{
+		id: "1A2B3C4D5E6F7081"
+		title: "矿石处理"
+		subtitle: "可选"
+		color: "#FF3B4252"
+		default_expanded: true
+		x: 4.0d, y: 2.0d, width: 3.0d, height: 1.0d
+		members: ["...", "..."]
+	}]
+}
+```
+
+规则：一个对象最多属于一个任务集；成员必须和任务集在同一章节。成员被删除、移到其他章节（包括撤销/重做）后，
+会在下一个服务端 tick 自动移除；任务集没有成员或章节被删除时整体移除。
+
+## 构建
+
+```
+./gradlew build      # 编译 + 单元测试
+./gradlew runClient  # 开发客户端
+./gradlew runClientDevtest  # 脚本化界面自检：进入 run/saves/devtest，截图到 run/screenshots/qc_*.png，自动退出
+```

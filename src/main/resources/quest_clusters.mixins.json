@@ -1,0 +1,22 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.questclusters.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ServerQuestFileMixin"
+  ],
+  "client": [
+    "client.QuestPanelAccessor",
+    "client.QuestScreenAccessor",
+    "client.QuestButtonAccessor",
+    "client.QuestPanelMixin",
+    "client.QuestButtonMixin",
+    "client.WidgetMixin",
+    "client.QuestScreenMixin",
+    "client.QuestScreenClipboardMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
