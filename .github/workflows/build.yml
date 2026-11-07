@@ -39,4 +39,5 @@ jobs:
           path: |
             core/build/libs/*.jar
             visuals/build/libs/*.jar
+            editor/build/libs/*.jar
             bundle/build/libs/*.jar

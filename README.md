@@ -6,7 +6,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 - FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
 - 客户端和服务端都需要安装
 
-## 当前进度：阶段 0–2、4、A、B、C、D
+## 当前进度：阶段 0–2、4、A、B、C、D、E1
 
 ## 模块（阶段 C 起为多模块仓库）
 
@@ -14,7 +14,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 |---|---|---|---|
 | `core/` | `quest_clusters` | 任务集、评分/结算页/排行榜、章节搜索、迁移框架（下文全部功能） | 已发布 |
 | `visuals/` | `quest_clusters_visuals` | 任务书视觉增强，替代 Certain Questing Additions（见下）；声明与之不兼容；纯客户端 | 已发布 |
-| `editor/` | `quest_clusters_editor` | 阶段 E：替代 Quest Enhance；声明与之不兼容 | 占位，未发布 |
+| `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（E1：显示与导入；编辑界面在 E2） |
 | `filters/` | `quest_clusters_filters` | 阶段 F：FTB Filter System 的额外筛选 | 占位，未发布 |
 | `xmod/` | `quest_clusters_xmod` | 阶段 G：FTB XMod Compat 的 FTB Quests 部分（接管，不声明不兼容） | 占位，未发布 |
 | `bundle/` | `quest_clusters_bundle` | 把所有已发布模块嵌套进一个 jar（jar-in-jar） | 已发布 |
@@ -32,6 +32,25 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
   着色器为 core 着色器，可用 uniform：`size`、`scrollOffset`、`scrollSize`（像素）、`time`（秒）、`zoom`。为 CQA 写的着色器（包括 `#moj_import <certain_questing_additions:background_compat.glsl>`）可直接使用。
 - **EMI**：从任务书打开的 EMI 配方界面关闭后回到任务书。
 - **设置**：`/qcvisuals` 打开设置界面；文件 `local/quest_clusters_visuals/client-config.snbt`，键名与 CQA 相同。首次启动时如果存在 CQA 的 `local/certain_questing_additions/client-config.snbt`，会自动导入（原文件保留）。
+
+### 编辑器模块（`editor/`，替代 Quest Enhance 3.13 的行为，未复用其代码和素材）
+E1（本版）：读取并显示 Quest Enhance 任务书里的全部数据，在游戏里看起来和以前一样。
+- **章节背景**（铺满任务界面，不随画布滚动）、**侧栏背景**（章节栏）、**任务框背景**（叠在任务形状上、轮廓和图标下面；任务链接不画）、**任务详情背景**。
+- **装饰线**：从每条线的第一个节点连向其他节点；节点可以是任务、任务链接或**辅助点**（由本模块自己绘制成灰色圆点，不需要 Quest Enhance 的贴图）。
+  玩家看不到的任务会让整条线对玩家隐藏；节点在收起的任务集里时线连到文字框。
+- **隐藏前置线**：编辑模式下画成紫色；玩家模式下不画，设置了“悬停显示”时鼠标移到任一端才画。打开任务详情时不画原生连线（避免透到详情面板上）。
+- **画布文字**（`text`/`text_v2`/`text_v3`：字体、缩放、旋转、颜色、透明度）；GIF 和视频元素在 E1 先显示为占位框（E2/E4 播放）。
+- **章节前置任务**：前置任务全部完成前，玩家看不到这个章节（服务端和客户端都生效，编辑模式不受影响）。
+- **禁用滚轮翻页**（按任务）、**框选时排除**（按章节图片）。
+
+**从 Quest Enhance 迁移**：删掉 Quest Enhance 的 jar，装上本模块（或 bundle），启动一次即可。
+服务器先把整个任务书备份到 `config/ftbquests/quest_clusters_backups/`，再把数据导入本模块自己的文件；原来的 `quest_enhance_*` 字段不动，FTB Quests 下次保存章节时会自己丢掉。
+1.20 时代任务书里存在旧 `click` 字段中的画布文字和辅助点（FTB Quests 2101 读不出来，会变成普通图片），导入时一并恢复。
+请在**同一次重启**里完成“删 Quest Enhance + 装本模块”：如果中间先不带本模块启动过、FTB Quests 又保存了章节，旧字段就没了，需要从 FTB Quests 的备份里恢复后再启动。
+用真实任务书（21 章、547 条装饰线、697 个任务框背景、93 个辅助点）测试过，导入和显示与 Quest Enhance 一致。
+
+数据位置：`config/ftbquests/quests/quest_clusters/editor/`，`book.snbt`（侧栏背景）加每章一个 `<章节ID>.snbt`
+（章节背景、前置任务、装饰线、隐藏线，以及当前在该章节里的任务和图片的设置）。画布文字和辅助点仍存在章节图片的 `click_action` 里（与 Quest Enhance 相同的格式），卸载本模块后它们只是普通图片。
 
 ### 迁移框架（`core/.../migration`）
 - 模块用 `MigrationRegistry.register(...)` 注册一次性迁移；服务器读完任务书后、本附属加载自己的数据前执行。
@@ -117,6 +136,8 @@ QuestClusters.dissolve(clusterId)
 | visuals + Quest Enhance | 同上 | 105 项通过 |
 | 只装 visuals | — | 96 项通过 |
 | 两者同时安装（不含 visuals） | 同上 | 93 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
+| visuals + editor（默认全部已发布模块） | — | 116 项通过 |
+| visuals + Quest Enhance（不带 editor，`-PskipModules=editor`） | 3.12 | 105 项通过 |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：
 - **Quest Enhance 单条前置线隐藏**：汇总线背后的真实连线全部被隐藏时，汇总线对玩家隐藏（设置了悬停显示则悬停时显示）；编辑模式下用 Quest Enhance 的隐藏线颜色画出。
@@ -155,7 +176,10 @@ QuestClusters.dissolve(clusterId)
 ./gradlew build                     # 编译全部模块 + 单元测试
 ./gradlew :core:runClient           # 开发客户端（core + 已发布模块）
 ./gradlew :core:runClientDevtest    # 脚本化界面自检：进入 core/run/saves/devtest，截图到 core/run/screenshots/qc_*.png，自动退出
-./gradlew :core:runClient -PdevModules=visuals,editor   # 额外加载未发布模块（例如检查不兼容声明）
+./gradlew :core:runClient -PdevModules=filters,xmod   # 额外加载未发布模块（例如检查不兼容声明）
+./gradlew :core:runClientDevtest -PskipModules=editor   # 不加载某个已发布模块（例如和 Quest Enhance 一起测）
+./gradlew :editor:test -PlegacyBook=<任务书目录>         # 额外用一本本地任务书测试 Quest Enhance 导入
+./gradlew :core:runClientTour -PtourBook=<任务书目录>    # 载入这本任务书，逐章截图到 core/run/screenshots/tour_*.png（下次 devtest 会恢复测试任务书）
 ```
 
 ## 构建与发布

@@ -67,6 +67,7 @@ public final class ServerClusters {
         QuestClusters.LOGGER.info("Loaded {} quest cluster(s)", STORE.size());
 
         ServerScoring.load(file);
+        com.questclusters.api.QuestBookHooks.fireLoaded(file);
 
         // /ftbquests reload: players are already online and need the fresh data
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
@@ -84,6 +85,7 @@ public final class ServerClusters {
             dirty = false;
         }
         ServerScoring.save(file);
+        com.questclusters.api.QuestBookHooks.fireSaving(file);
     }
 
     public static void onQuestFileDirty() {
@@ -92,6 +94,7 @@ public final class ServerClusters {
 
     public static void onUnload() {
         ServerScoring.unload();
+        com.questclusters.api.QuestBookHooks.fireUnloaded();
         STORE.clear();
         REVIVAL.clear();
         LAST_BOUNDS.clear();
@@ -107,6 +110,7 @@ public final class ServerClusters {
         MinecraftServer srv = ServerLifecycleHooks.getCurrentServer();
         if (srv != null) {
             ServerScoring.tick(srv);
+            ServerQuestFile.getInstance().filter(f -> !f.isLoading()).ifPresent(com.questclusters.api.QuestBookHooks::fireTick);
         }
         if (++tickCounter % 20 == 0) {
             pruneRequested = true;

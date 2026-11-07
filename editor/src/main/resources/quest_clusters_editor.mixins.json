@@ -3,8 +3,19 @@
   "minVersion": "0.8",
   "package": "com.questclusters.editor.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
-  "client": [],
+  "mixins": [
+    "ChapterImageAccessor",
+    "ChapterVisibilityMixin"
+  ],
+  "client": [
+    "client.ChapterImageButtonEditorMixin",
+    "client.ChapterPanelEditorMixin",
+    "client.QuestButtonEditorMixin",
+    "client.QuestPanelEditorMixin",
+    "client.QuestScreenEditorAccessor",
+    "client.QuestScreenEditorMixin",
+    "client.ViewQuestPanelEditorMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

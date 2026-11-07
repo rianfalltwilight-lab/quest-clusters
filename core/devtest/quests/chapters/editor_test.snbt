@@ -1,0 +1,21 @@
+{
+	default_hide_dependency_lines: false
+	default_quest_shape: ""
+	filename: "editor_test"
+	group: ""
+	id: "00000000000000C2"
+	images: [
+		{ id: "00000000000000A5", x: 0.0d, y: -1.5d, width: 0.4d, height: 0.4d, image: "", click_action: "none:quest_enhance:decorative_anchor:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", quest_enhance_exclude_from_box_selection: 0b }
+		{ id: "00000000000000A6", x: 0.0d, y: 2.0d, width: 5.0d, height: 0.5d, image: "", color: 5636095, rotation: -10.0d, click_action: "none:quest_enhance:text_v3:1.0:17:minecraft:default画布文字 Canvas text", quest_enhance_exclude_from_box_selection: 1b }
+		{ id: "00000000000000A7", x: 0.0d, y: 3.0d, width: 3.0d, height: 0.5d, image: "", click: "quest_enhance:text:Legacy click text" }
+	]
+	order_index: 1
+	quest_enhance_chapter_background: "minecraft:textures/block/deepslate_tiles.png"
+	quest_enhance_decorative_lines: [{ nodes: ["q:d5", "a:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "q:d6"] }]
+	quest_enhance_hidden_dependency_lines: [{ source: "q:d6", dependency: "q:d5", reveal_on_hover: 1b }]
+	quest_links: [ ]
+	quests: [
+		{ id: "00000000000000D5", x: -2.0d, y: 0.0d, title: "Editor A", quest_enhance_quest_background: "minecraft:textures/block/gold_block.png", quest_enhance_quest_view_background: "minecraft:textures/block/sculk.png", quest_enhance_disable_scroll_paging: true, tasks: [{ id: "00000000000000E5", type: "checkmark" }] }
+		{ id: "00000000000000D6", x: 2.0d, y: 0.0d, title: "Editor B", dependencies: ["00000000000000D5"], quest_enhance_disable_scroll_paging: false, tasks: [{ id: "00000000000000E6", type: "checkmark" }] }
+	]
+}

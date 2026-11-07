@@ -73,4 +73,10 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named('test') {
     useJUnitPlatform()
+    testLogging { showStandardStreams = true }
+    // optional local-only fixture (a private quest book): -PlegacyBook=/path/to/config/ftbquests/quests
+    if (project.hasProperty('legacyBook')) {
+        systemProperty 'quest_clusters.legacyBook', project.property('legacyBook')
+        outputs.upToDateWhen { false }
+    }
 }

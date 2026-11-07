@@ -1,11 +1,13 @@
 apply from: rootProject.file('gradle/module.gradle')
 
-// Dev runs load core plus every module marked publish=true. Add others with -PdevModules=visuals,editor
+// Dev runs load core plus every module marked publish=true. Add others with -PdevModules=filters,xmod
 // (e.g. to see their incompatibility rules refuse to start next to Certain Questing Additions / Quest Enhance).
 def extraModules = ['visuals', 'editor', 'filters', 'xmod']
 extraModules.each { evaluationDependsOn(":$it") }
 def requested = (findProperty('devModules') ?: '').toString().split(',').collect { it.trim() }.findAll { it }
-def devModules = extraModules.findAll { project(":$it").findProperty('publish') == 'true' || requested.contains(it) }
+// -PskipModules=editor leaves a published module out (e.g. to test next to Quest Enhance, which it replaces)
+def skipped = (findProperty('skipModules') ?: '').toString().split(',').collect { it.trim() }.findAll { it }
+def devModules = extraModules.findAll { (project(":$it").findProperty('publish') == 'true' || requested.contains(it)) && !skipped.contains(it) }
 
 neoForge {
     runs {
@@ -20,6 +22,12 @@ neoForge {
         clientDevtest {
             client()
             systemProperty 'quest_clusters.devtest', '00000000000000C1'
+            programArguments.addAll('--quickPlaySingleplayer', 'devtest')
+        }
+        // screenshots every chapter of the loaded quest book (editor module); see prepareTour
+        clientTour {
+            client()
+            systemProperty 'quest_clusters_editor.tour', 'true'
             programArguments.addAll('--quickPlaySingleplayer', 'devtest')
         }
         configureEach {
@@ -65,4 +73,13 @@ def prepareVisualsDevtest = tasks.register('prepareVisualsDevtest') {
         file('run/local/certain_questing_additions/client-config.snbt').text = '{\n\tanimations: { quest_hover: true }\n\tappearance: { quest_hover_glow_alpha: 77 }\n}\n'
     }
 }
+// -PtourBook=/path/to/config/ftbquests/quests: load that quest book for runClientTour (a local copy; the next
+// runClientDevtest restores the fixture)
+def prepareTour = tasks.register('prepareTour', Sync) {
+    onlyIf { project.hasProperty('tourBook') }
+    from { project.findProperty('tourBook') ?: 'devtest/quests' }
+    into 'run/config/ftbquests/quests'
+    outputs.upToDateWhen { false }
+}
+tasks.matching { it.name == 'runClientTour' }.configureEach { dependsOn prepareTour }
 tasks.matching { it.name == 'runClientDevtest' }.configureEach { dependsOn prepareDevtest, prepareVisualsDevtest }

@@ -7,7 +7,12 @@ import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.QuestLink;
 import net.neoforged.fml.ModList;
 
+import com.questclusters.api.LineData;
+import dev.ftb.mods.ftbquests.quest.ChapterImage;
+
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,8 +38,8 @@ public final class QuestEnhanceCompat {
     }
 
     public static boolean decorativeLinesActive() {
-        init();
-        return decoGet != null;
+        var p = provider();
+        return p != null && (p != REFLECT || decoGet != null);
     }
 
     /**
@@ -43,81 +48,108 @@ public final class QuestEnhanceCompat {
      */
     public static java.util.Set<Long> anchorsInside(Chapter chapter, java.util.Collection<Long> memberIds) {
         java.util.Set<Long> result = new java.util.HashSet<>();
-        if (!decorativeLinesActive() || chapter == null) {
+        var p = provider();
+        if (p == null || chapter == null || !decorativeLinesActive()) {
             return result;
         }
-        try {
-            java.util.Set<String> memberKeys = new java.util.HashSet<>();
-            for (long id : memberIds) {
-                memberKeys.add((String) decoQuestNode.invoke(null, id));
-                memberKeys.add((String) decoLinkNode.invoke(null, id));
-            }
-            java.util.Map<String, Long> anchorIds = new java.util.HashMap<>();
-            for (dev.ftb.mods.ftbquests.quest.ChapterImage img : chapter.getImages()) {
-                ((Optional<?>) anchorNodeKey.invoke(null, img)).ifPresent(k -> anchorIds.put((String) k, img.id));
-            }
-            if (anchorIds.isEmpty()) {
-                return result;
-            }
-            java.util.Set<String> insideAnchors = new java.util.HashSet<>();
-            java.util.Set<String> outsideAnchors = new java.util.HashSet<>();
-            for (Object line : (java.util.List<?>) decoGet.invoke(null, chapter)) {
-                @SuppressWarnings("unchecked")
-                java.util.List<String> nodes = (java.util.List<String>) decoNodes.invoke(line);
-                boolean hasMember = false, allInside = true;
-                for (String n : nodes) {
-                    if (anchorIds.containsKey(n)) {
-                        continue;
-                    }
-                    if (memberKeys.contains(n)) {
-                        hasMember = true;
-                    } else {
-                        allInside = false;
-                    }
-                }
-                for (String n : nodes) {
-                    if (anchorIds.containsKey(n)) {
-                        (hasMember && allInside ? insideAnchors : outsideAnchors).add(n);
-                    }
-                }
-            }
-            insideAnchors.removeAll(outsideAnchors); // an anchor shared with an outside line stays put
-            insideAnchors.forEach(k -> result.add(anchorIds.get(k)));
-        } catch (Throwable t) {
-            QuestClusters.LOGGER.warn("Quest Enhance decorative-line lookup failed, disabling that part", t);
-            decoGet = null;
+        java.util.Set<String> memberKeys = new java.util.HashSet<>();
+        for (long id : memberIds) {
+            memberKeys.add(com.questclusters.api.LineData.questNode(id));
+            memberKeys.add(com.questclusters.api.LineData.linkNode(id));
         }
+        java.util.Map<String, Long> anchorIds = new java.util.HashMap<>();
+        for (dev.ftb.mods.ftbquests.quest.ChapterImage img : chapter.getImages()) {
+            p.anchorKey(img).ifPresent(k -> anchorIds.put(k, img.id));
+        }
+        if (anchorIds.isEmpty()) {
+            return result;
+        }
+        java.util.Set<String> insideAnchors = new java.util.HashSet<>(), outsideAnchors = new java.util.HashSet<>();
+        for (java.util.List<String> nodes : p.decorativeLines(chapter)) {
+            boolean hasMember = false, allInside = true;
+            for (String n : nodes) {
+                if (anchorIds.containsKey(n)) continue;
+                if (memberKeys.contains(n)) hasMember = true;
+                else allInside = false;
+            }
+            for (String n : nodes) {
+                if (anchorIds.containsKey(n)) (hasMember && allInside ? insideAnchors : outsideAnchors).add(n);
+            }
+        }
+        insideAnchors.removeAll(outsideAnchors); // an anchor shared with an outside line stays put
+        insideAnchors.forEach(k -> result.add(anchorIds.get(k)));
         return result;
     }
 
-    /** Hidden-line setting for one real line, if Quest Enhance has one. */
+    /** Hidden-line setting for one real line. */
     public record LineSetting(boolean revealOnHover) {
     }
 
-    public static boolean active() {
+    /** Editor module's data if registered, else Quest Enhance (reflection) if installed, else null. */
+    public static LineData provider() {
+        LineData p = LineData.Holder.get();
+        if (p != null) return p;
         init();
-        return find != null;
+        return find != null ? REFLECT : null;
+    }
+
+    public static boolean active() {
+        return provider() != null;
     }
 
     public static Optional<LineSetting> hiddenLine(Chapter chapter, Movable dependent, Movable dependency) {
-        if (!active() || !(dependent instanceof Quest || dependent instanceof QuestLink)
+        LineData p = provider();
+        if (p == null || !(dependent instanceof Quest || dependent instanceof QuestLink)
                 || !(dependency instanceof Quest || dependency instanceof QuestLink)) {
             return Optional.empty();
         }
-        try {
-            Object a = nodeKey.invoke(null, dependent);
-            Object b = nodeKey.invoke(null, dependency);
-            Optional<?> line = (Optional<?>) find.invoke(null, chapter, a, b);
-            if (line.isEmpty()) {
+        return p.hiddenLine(chapter, dependent, dependency).map(LineSetting::new);
+    }
+
+    private static final LineData REFLECT = new LineData() {
+        @Override
+        public List<List<String>> decorativeLines(Chapter chapter) {
+            List<List<String>> out = new ArrayList<>();
+            if (decoGet == null || chapter == null) return out;
+            try {
+                for (Object line : (List<?>) decoGet.invoke(null, chapter)) {
+                    @SuppressWarnings("unchecked")
+                    List<String> nodes = (List<String>) decoNodes.invoke(line);
+                    out.add(nodes);
+                }
+            } catch (Throwable t) {
+                QuestClusters.LOGGER.warn("Quest Enhance decorative-line lookup failed, disabling that part", t);
+                decoGet = null;
+            }
+            return out;
+        }
+
+        @Override
+        public Optional<String> anchorKey(ChapterImage image) {
+            if (anchorNodeKey == null || decoGet == null) return Optional.empty();
+            try {
+                return ((Optional<?>) anchorNodeKey.invoke(null, image)).map(Object::toString);
+            } catch (Throwable t) {
                 return Optional.empty();
             }
-            return Optional.of(new LineSetting((Boolean) revealOnHover.invoke(line.get())));
-        } catch (Throwable t) {
-            QuestClusters.LOGGER.warn("Quest Enhance hidden-line lookup failed, disabling the integration", t);
-            find = null;
-            return Optional.empty();
         }
-    }
+
+        @Override
+        public Optional<Boolean> hiddenLine(Chapter chapter, Movable dependent, Movable dependency) {
+            if (find == null) return Optional.empty();
+            try {
+                Object a = nodeKey.invoke(null, dependent);
+                Object b = nodeKey.invoke(null, dependency);
+                Optional<?> line = (Optional<?>) find.invoke(null, chapter, a, b);
+                if (line.isEmpty()) return Optional.empty();
+                return Optional.of((Boolean) revealOnHover.invoke(line.get()));
+            } catch (Throwable t) {
+                QuestClusters.LOGGER.warn("Quest Enhance hidden-line lookup failed, disabling the integration", t);
+                find = null;
+                return Optional.empty();
+            }
+        }
+    };
 
     private static synchronized void init() {
         if (initialised) {

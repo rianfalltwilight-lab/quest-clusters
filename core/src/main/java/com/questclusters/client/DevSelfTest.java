@@ -100,7 +100,7 @@ public final class DevSelfTest {
             var mig = com.questclusters.server.ServerClusters.lastMigration;
             check(mig != null && mig.applied().contains(com.questclusters.migration.DevProbeMigration.ID),
                     "migration ran on first load: " + (mig == null ? null : mig.applied()));
-            check(com.questclusters.migration.DevProbeMigration.linesSeen == 2, "migration read the raw chapter keys ("
+            check(com.questclusters.migration.DevProbeMigration.linesSeen == 3, "migration read the raw chapter keys ("
                     + com.questclusters.migration.DevProbeMigration.linesSeen + " lines)");
             check(mig != null && mig.backup() != null && java.nio.file.Files.exists(mig.backup()), "backup zip made before migrating: "
                     + (mig == null ? null : mig.backup()));

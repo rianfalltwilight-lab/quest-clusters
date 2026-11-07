@@ -61,6 +61,11 @@ public final class ClusterViewState {
         return owner != null && ClientClusters.store().get(owner).map(c -> !STATE.isExpanded(c)).orElse(false);
     }
 
+    /** Cluster an anchor image moves and hides with, if any. */
+    public static java.util.Optional<Long> anchorOwner(long imageId) {
+        return java.util.Optional.ofNullable(anchorOwners().get(imageId));
+    }
+
     private static java.util.Map<Long, Long> anchorOwners() {
         long now = System.currentTimeMillis();
         if (anchorRevision != ClientClusters.revision() || now - anchorTime > 1000L) {

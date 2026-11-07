@@ -35,6 +35,7 @@ public abstract class ServerQuestFileMixin {
     private void quest_clusters$onLogin(PlayerLoggedInAfterTeamEvent event, CallbackInfo ci) {
         ClusterNetwork.sendFullSync(event.getPlayer());
         com.questclusters.server.ServerScoring.sendTo(event.getPlayer());
+        com.questclusters.api.QuestBookHooks.fireLogin(event.getPlayer());
     }
 
     @Inject(method = "unload", at = @At("TAIL"))
