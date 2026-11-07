@@ -104,3 +104,7 @@ QuestClusters.dissolve(clusterId)
 ./gradlew runClient  # 开发客户端
 ./gradlew runClientDevtest  # 脚本化界面自检：进入 run/saves/devtest，截图到 run/screenshots/qc_*.png，自动退出
 ```
+
+## 许可证
+
+MIT，见 [LICENSE](LICENSE)。
