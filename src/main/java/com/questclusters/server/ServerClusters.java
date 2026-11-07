@@ -240,6 +240,13 @@ public final class ServerClusters {
                             .create(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
                 }
             }
+            // Quest Enhance anchor points that only serve lines inside the cluster move with it
+            for (long imageId : com.questclusters.compat.QuestEnhanceCompat.anchorsInside(chapter, c.members())) {
+                if (!c.members().contains(imageId) && file.getBase(imageId) instanceof Movable m && !m.isPositionLocked()) {
+                    dev.ftb.mods.ftbquests.quest.history.events.MoveMovableObject
+                            .create(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
+                }
+            }
             events.add(new ClusterChangeEvent(c, moved));
             file.getHistoryStack().addAndApply(file, new dev.ftb.mods.ftbquests.quest.history.events.CompositeEditEvent(events));
         });

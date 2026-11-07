@@ -52,6 +52,12 @@ public final class ClusterNbt {
             if (st.subtitleColor() != 0) style.putString("subtitle_color", String.format("#%08X", st.subtitleColor()));
             if (st.borderColor() != 0) style.putString("border_color", String.format("#%08X", st.borderColor()));
             if (st.frameColor() != 0) style.putString("frame_color", String.format("#%08X", st.frameColor()));
+            if (st.hasBackground()) {
+                style.putString("background", st.background());
+                style.putString("background_mode", new String[]{"stretch", "tile", "nine_slice"}[st.backgroundMode()]);
+                if (st.backgroundMode() == ClusterStyle.MODE_NINE_SLICE) style.putInt("slice_border", st.sliceBorder());
+                if (st.backgroundOnFrame()) style.putBoolean("background_on_frame", true);
+            }
             tag.put("style", style);
         }
         return tag;
@@ -121,8 +127,15 @@ public final class ClusterNbt {
         if (t.isEmpty()) {
             return ClusterStyle.DEFAULT;
         }
+        int mode = switch (t.getString("background_mode")) {
+            case "tile" -> ClusterStyle.MODE_TILE;
+            case "nine_slice" -> ClusterStyle.MODE_NINE_SLICE;
+            default -> ClusterStyle.MODE_STRETCH;
+        };
         return new ClusterStyle(optColor(t, "title_color"), optColor(t, "subtitle_color"),
-                optColor(t, "border_color"), optColor(t, "frame_color"));
+                optColor(t, "border_color"), optColor(t, "frame_color"),
+                t.getString("background"), mode, t.contains("slice_border") ? t.getInt("slice_border") : 4,
+                t.getBoolean("background_on_frame"));
     }
 
     private static int optColor(CompoundTag t, String key) {

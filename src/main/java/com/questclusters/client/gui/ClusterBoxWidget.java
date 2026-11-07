@@ -123,7 +123,12 @@ public final class ClusterBoxWidget extends ClusterWidgetBase {
         int border = borderColor(s);
         int t = Math.max(1, (int) Math.round(ClusterWidgets.zoom(questPanel) / 10D));
 
-        g.fill(x, y, x + w, y + h, ClusterRender.withAlpha(base, (int) (Math.max(200, base >>> 24) * alpha)));
+        if (cluster.style().hasBackground()) {
+            ClusterRender.textureFill(g, cluster.style().background(), cluster.style().backgroundMode(), cluster.style().sliceBorder(),
+                    x, y, w, h, (float) (ClusterWidgets.zoom(questPanel) / 16D), alpha);
+        } else {
+            g.fill(x, y, x + w, y + h, ClusterRender.withAlpha(base, (int) (Math.max(200, base >>> 24) * alpha)));
+        }
         ClusterRender.outline(g, x, y, w, h, ClusterRender.withAlpha(border, (int) (255 * alpha)), t);
         if (hv > 0.01F) {
             g.fill(x, y, x + w, y + h, ClusterRender.withAlpha(0xFFFFFF, (int) (CqaCompat.hoverGlowAlpha() * 0.5F * hv)));

@@ -113,7 +113,12 @@ public final class ClusterFrameWidget extends ClusterWidgetBase {
         float a = appear(); // fade in after expanding
         int base = cluster.style().frameColor() != 0 ? cluster.style().frameColor() : cluster.color();
         int edge = ClusterRender.lighten(ClusterRender.withAlpha(base, (int) (200 * a)), 0.35F);
-        g.fill(x, y + headerH, x + w, y + h, ClusterRender.withAlpha(base, (int) (70 * a)));
+        if (cluster.style().hasBackground() && cluster.style().backgroundOnFrame()) {
+            ClusterRender.textureFill(g, cluster.style().background(), cluster.style().backgroundMode(), cluster.style().sliceBorder(),
+                    x, y + headerH, w, h - headerH, (float) (ClusterWidgets.zoom(questPanel) / 16D), 0.6F * a);
+        } else {
+            g.fill(x, y + headerH, x + w, y + h, ClusterRender.withAlpha(base, (int) (70 * a)));
+        }
         ClusterRender.outline(g, x, y, w, h, edge, ClusterWidgets.canEdit() && isMouseOver() ? 2 : 1);
         g.fill(x, y, x + w, y + headerH, ClusterRender.withAlpha(base, (int) ((isMouseOver() ? 255 : 220) * a)));
 

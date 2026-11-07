@@ -34,6 +34,10 @@ public final class ClusterValidator {
         if (!isBoxSize(c.width()) || !isBoxSize(c.height())) {
             return error("bad_size", QuestCluster.MIN_BOX_SIZE, QuestCluster.MAX_BOX_SIZE);
         }
+        String bg = c.style().background();
+        if (bg.length() > ClusterStyle.MAX_BACKGROUND_LENGTH || !bg.matches("([a-z0-9_.-]+:)?[a-z0-9_./-]*")) {
+            return error("bad_background");
+        }
         if (c.members().isEmpty()) {
             return error("no_members");
         }

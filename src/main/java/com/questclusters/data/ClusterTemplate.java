@@ -34,7 +34,7 @@ public record ClusterTemplate(String title, String subtitle, int color, boolean 
             for (int i = 0; i < n; i++) {
                 members.add(new MemberSpec(buf.readLong(), buf.readDouble(), buf.readDouble()));
             }
-            ClusterStyle style = new ClusterStyle(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt());
+            ClusterStyle style = ClusterCodecs.STYLE.decode(buf);
             return new ClusterTemplate(title, subtitle, color, exp, x, y, w, h, members, style);
         }
 
@@ -54,10 +54,7 @@ public record ClusterTemplate(String title, String subtitle, int color, boolean 
                 buf.writeDouble(m.x());
                 buf.writeDouble(m.y());
             }
-            buf.writeInt(t.style().titleColor());
-            buf.writeInt(t.style().subtitleColor());
-            buf.writeInt(t.style().borderColor());
-            buf.writeInt(t.style().frameColor());
+            ClusterCodecs.STYLE.encode(buf, t.style());
         }
     };
 }

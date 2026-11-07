@@ -13,7 +13,7 @@ public abstract class WidgetMixin {
     @ModifyReturnValue(method = "shouldDraw", at = @At("RETURN"))
     private boolean quest_clusters$hideCollapsedImage(boolean original) {
         if (original && (Object) this instanceof ChapterImageButton img) {
-            return !ClusterViewState.isHidden(img.moveAndDeleteFocus().getMovableID());
+            return !ClusterViewState.isHiddenImage(img.moveAndDeleteFocus().getMovableID());
         }
         return original;
     }
@@ -21,7 +21,7 @@ public abstract class WidgetMixin {
     @ModifyReturnValue(method = "isEnabled", at = @At("RETURN"))
     private boolean quest_clusters$disableCollapsedImage(boolean original) {
         if (original && (Object) this instanceof ChapterImageButton img) {
-            return !ClusterViewState.isHidden(img.moveAndDeleteFocus().getMovableID());
+            return !ClusterViewState.isHiddenImage(img.moveAndDeleteFocus().getMovableID());
         }
         return original;
     }

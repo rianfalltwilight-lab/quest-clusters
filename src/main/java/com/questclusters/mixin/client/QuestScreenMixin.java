@@ -3,6 +3,7 @@ package com.questclusters.mixin.client;
 import com.questclusters.client.ClusterViewState;
 import com.questclusters.client.gui.ClusterEditor;
 import com.questclusters.client.gui.ClusterWidgets;
+import com.questclusters.client.gui.ChapterSearchWidgets;
 import dev.ftb.mods.ftblibrary.ui.Button;
 import dev.ftb.mods.ftblibrary.ui.ContextMenuItem;
 import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
@@ -22,6 +23,16 @@ public abstract class QuestScreenMixin {
     @Inject(method = "open", at = @At("HEAD"))
     private void quest_clusters$revealTarget(QuestObject object, boolean focus, CallbackInfo ci) {
         ClusterWidgets.reveal(object);
+    }
+
+    /** Ctrl+F: focus the chapter search box. */
+    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
+    private void quest_clusters$searchShortcut(dev.ftb.mods.ftblibrary.ui.input.Key key,
+                                               org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+        if (key.is(org.lwjgl.glfw.GLFW.GLFW_KEY_F) && net.minecraft.client.gui.screens.Screen.hasControlDown()
+                && ChapterSearchWidgets.focus(((QuestScreenAccessor) this).quest_clusters$getChapterPanel())) {
+            cir.setReturnValue(true);
+        }
     }
 
     /** Context menu of a single object: used by quests, quest links and chapter images alike. */

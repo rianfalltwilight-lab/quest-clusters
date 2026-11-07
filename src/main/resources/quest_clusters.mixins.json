@@ -14,7 +14,12 @@
     "client.QuestButtonMixin",
     "client.WidgetMixin",
     "client.QuestScreenMixin",
-    "client.QuestScreenClipboardMixin"
+    "client.QuestScreenClipboardMixin",
+    "client.DecorativeWindowOpenMixin",
+    "client.DecorativeWindowCloseMixin",
+    "client.PanelMixin",
+    "client.ChapterPanelMixin",
+    "client.ChapterPanelAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

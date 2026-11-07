@@ -110,6 +110,7 @@ public final class ClusterEditor {
         menu.add(new ContextMenuItem(Component.literal("\"").append(ClusterText.title(c)).append("\""), Color4I.empty(), null).setCloseMenu(false));
         menu.add(ContextMenuItem.SEPARATOR);
         menu.add(new ContextMenuItem(tr("edit"), ThemeProperties.EDIT_ICON.get(), b -> openEditor(screen, c)));
+        menu.add(new ContextMenuItem(tr("background"), Icons.ART, b -> openBackgroundEditor(screen, c)));
         menu.add(new ContextMenuItem(ClusterViewState.isExpanded(c) ? tr("collapse") : tr("expand"), Icons.INFO,
                 b -> ClusterViewState.toggle(c)));
         menu.add(new ContextMenuItem(tr("select_members"), Icons.ADD, b -> selectMembers(screen, c)));
@@ -182,11 +183,56 @@ public final class ClusterEditor {
         group.addBool("frame_from_box", boxFrame[0], v -> boxFrame[0] = v, true).setOrder(o++);
         group.addColor("frame_color", Color4I.rgba(frame[0]), v -> frame[0] = v.rgba() | 0xFF000000,
                 Color4I.rgba(QuestCluster.DEFAULT_COLOR)).setOrder(o++);
+        o = addBackgroundFields(group, e, o);
         group.addBool("default_expanded", c.defaultExpanded(), v -> e[0] = e[0].withDefaultExpanded(v), true).setOrder(o++);
         group.addDouble("width", c.width(), v -> e[0] = e[0].withBoxSize(v, e[0].height()), 3D,
                 QuestCluster.MIN_BOX_SIZE, QuestCluster.MAX_BOX_SIZE).setOrder(o++);
         group.addDouble("height", c.height(), v -> e[0] = e[0].withBoxSize(e[0].width(), v), 1D,
                 QuestCluster.MIN_BOX_SIZE, QuestCluster.MAX_BOX_SIZE).setOrder(o++);
+        new EditConfigScreen(group).openGui();
+    }
+
+    /** Image picker (FTB Quests' own, as for chapter images), fill mode, nine-slice border, frame toggle. */
+    private static int addBackgroundFields(ConfigGroup group, QuestCluster[] e, int o) {
+        var st = e[0].style();
+        net.minecraft.resources.ResourceLocation current = st.hasBackground()
+                ? net.minecraft.resources.ResourceLocation.tryParse(st.background()) : null;
+        group.add("background", new dev.ftb.mods.ftblibrary.config.ImageResourceConfig(),
+                current == null ? dev.ftb.mods.ftblibrary.config.ImageResourceConfig.NONE : current,
+                v -> e[0] = e[0].withStyle(e[0].style().withBackground(
+                        v == null || v.equals(dev.ftb.mods.ftblibrary.config.ImageResourceConfig.NONE) ? "" : v.toString(),
+                        e[0].style().backgroundMode(), e[0].style().sliceBorder(), e[0].style().backgroundOnFrame())),
+                dev.ftb.mods.ftblibrary.config.ImageResourceConfig.NONE).setOrder(o++);
+        group.addEnum("background_mode", BackgroundMode.values()[st.backgroundMode()],
+                v -> e[0] = e[0].withStyle(e[0].style().withBackground(e[0].style().background(), v.ordinal(),
+                        e[0].style().sliceBorder(), e[0].style().backgroundOnFrame())),
+                BackgroundMode.NAME_MAP).setOrder(o++);
+        group.addInt("slice_border", st.sliceBorder(),
+                v -> e[0] = e[0].withStyle(e[0].style().withBackground(e[0].style().background(), e[0].style().backgroundMode(),
+                        v, e[0].style().backgroundOnFrame())), 4, 0, 64).setOrder(o++);
+        group.addBool("background_on_frame", st.backgroundOnFrame(),
+                v -> e[0] = e[0].withStyle(e[0].style().withBackground(e[0].style().background(), e[0].style().backgroundMode(),
+                        e[0].style().sliceBorder(), v)), false).setOrder(o++);
+        return o;
+    }
+
+    enum BackgroundMode {
+        STRETCH, TILE, NINE_SLICE;
+        static final dev.ftb.mods.ftblibrary.config.NameMap<BackgroundMode> NAME_MAP = dev.ftb.mods.ftblibrary.config.NameMap
+                .of(STRETCH, values()).id(m -> m.name().toLowerCase(java.util.Locale.ROOT))
+                .name(m -> Component.translatable("quest_clusters.background_mode." + m.name().toLowerCase(java.util.Locale.ROOT))).create();
+    }
+
+    /** Right click → "Set background image…": only the background fields. */
+    public static void openBackgroundEditor(QuestScreen screen, QuestCluster c) {
+        QuestCluster[] e = {c};
+        ConfigGroup group = new ConfigGroup("quest_clusters", accepted -> {
+            reopen(screen);
+            if (accepted && !e[0].equals(c)) {
+                update(e[0]);
+            }
+        });
+        addBackgroundFields(group, e, 0);
         new EditConfigScreen(group).openGui();
     }
 

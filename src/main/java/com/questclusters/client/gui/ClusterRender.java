@@ -129,4 +129,71 @@ final class ClusterRender {
         return FastColor.ARGB32.color(FastColor.ARGB32.alpha(argb), FastColor.ARGB32.red(argb) * 3 / 4,
                 FastColor.ARGB32.green(argb) * 3 / 4, FastColor.ARGB32.blue(argb) * 3 / 4);
     }
+
+    private static final java.util.Map<net.minecraft.resources.ResourceLocation, int[]> TEXTURE_SIZES = new java.util.HashMap<>();
+
+    /** Pixel size of a texture, read once from the resource manager; null if it can't be read. */
+    static int[] textureSize(net.minecraft.resources.ResourceLocation rl) {
+        return TEXTURE_SIZES.computeIfAbsent(rl, k -> {
+            try (var in = Minecraft.getInstance().getResourceManager().open(k);
+                 var img = com.mojang.blaze3d.platform.NativeImage.read(in)) {
+                return new int[]{img.getWidth(), img.getHeight()};
+            } catch (Exception e) {
+                return null;
+            }
+        });
+    }
+
+    static void clearTextureSizes() {
+        TEXTURE_SIZES.clear();
+    }
+
+    /**
+     * Fills (x, y, w, h) with a texture: stretched, tiled, or nine-sliced with a border of {@code border} texture px.
+     * Texture pixels map to screen pixels at {@code scale} (tile size and nine-slice borders follow the quest zoom).
+     */
+    static void textureFill(GuiGraphics g, String texture, int mode, int border, int x, int y, int w, int h,
+                            float scale, float alpha) {
+        net.minecraft.resources.ResourceLocation rl = net.minecraft.resources.ResourceLocation.tryParse(texture);
+        if (rl == null || w <= 0 || h <= 0) {
+            return;
+        }
+        int[] size = textureSize(rl);
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 1F, 1F, alpha);
+        try {
+            if (size == null || mode == com.questclusters.data.ClusterStyle.MODE_STRETCH) {
+                int tw = size == null ? 16 : size[0], th = size == null ? 16 : size[1];
+                g.blit(rl, x, y, w, h, 0, 0, tw, th, tw, th);
+                return;
+            }
+            int tw = size[0], th = size[1];
+            if (mode == com.questclusters.data.ClusterStyle.MODE_TILE) {
+                int sw = Math.max(1, Math.round(tw * scale)), sh = Math.max(1, Math.round(th * scale));
+                for (int ty = 0; ty < h; ty += sh) {
+                    for (int tx = 0; tx < w; tx += sw) {
+                        int dw = Math.min(sw, w - tx), dh = Math.min(sh, h - ty);
+                        g.blit(rl, x + tx, y + ty, dw, dh, 0, 0, Math.max(1, Math.round(dw / scale)), Math.max(1, Math.round(dh / scale)), tw, th);
+                    }
+                }
+                return;
+            }
+            // nine-slice
+            int b = Math.min(border, Math.min(tw, th) / 2);
+            int sb = Math.min(Math.round(b * scale), Math.min(w, h) / 2);
+            int[] dx = {x, x + sb, x + w - sb}, dw = {sb, w - 2 * sb, sb};
+            int[] dy = {y, y + sb, y + h - sb}, dh = {sb, h - 2 * sb, sb};
+            int[] u = {0, b, tw - b}, uw = {b, tw - 2 * b, b};
+            int[] v = {0, b, th - b}, vh = {b, th - 2 * b, b};
+            for (int r = 0; r < 3; r++) {
+                for (int c = 0; c < 3; c++) {
+                    if (dw[c] > 0 && dh[r] > 0 && uw[c] > 0 && vh[r] > 0) {
+                        g.blit(rl, dx[c], dy[r], dw[c], dh[r], u[c], v[r], uw[c], vh[r], tw, th);
+                    }
+                }
+            }
+        } finally {
+            com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        }
+    }
 }

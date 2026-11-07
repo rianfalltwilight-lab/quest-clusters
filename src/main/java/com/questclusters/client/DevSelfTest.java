@@ -54,6 +54,18 @@ public final class DevSelfTest {
         // ---------------------------------------------------------------- player view
         STEPS.add(() -> ready() ? 40 : -1);
         STEPS.add(() -> {
+            // long run: keep the test player safe from mobs and hunger
+            var srv = Minecraft.getInstance().getSingleplayerServer();
+            var me = Minecraft.getInstance().player.getUUID();
+            log("player health " + Minecraft.getInstance().player.getHealth() + " at " + Minecraft.getInstance().player.blockPosition());
+            srv.execute(() -> {
+                srv.setDifficulty(net.minecraft.world.Difficulty.PEACEFUL, true);
+                var sp = srv.getPlayerList().getPlayer(me);
+                if (sp != null) {
+                    sp.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
+                    sp.setHealth(sp.getMaxHealth());
+                }
+            });
             Chapter ch = ClientQuestFile.INSTANCE.getChapter(QuestCluster.idFromString(PROP));
             check(ch != null, "chapter exists on client");
             check(cluster() != null, "cluster synced to client on login");
@@ -408,6 +420,129 @@ public final class DevSelfTest {
             ClusterViewState.setExpanded(cluster(), true);
             return 5;
         });
+        // ---------------------------------------------------------------- phase A
+        // A1) Quest Enhance decorative lines: inside anchor moves and hides with the cluster, outside lines reroute
+        STEPS.add(() -> {
+            if (!net.neoforged.fml.ModList.get().isLoaded("quest_enhance")) {
+                log("skip decorative-line checks (needs Quest Enhance)");
+                return 0;
+            }
+            var ch = ClientQuestFile.INSTANCE.getChapter(chapterId());
+            var inside = com.questclusters.compat.QuestEnhanceCompat.anchorsInside(ch, cluster().members());
+            check(inside.contains(0xA1L), "anchor serving only cluster lines is detected: " + inside);
+            before = new double[]{((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(0xA1L)).getX()};
+            PacketDistributor.sendToServer(new ClusterPayloads.Move(CLUSTER, 1, 0));
+            return 25;
+        });
+        STEPS.add(() -> {
+            if (!net.neoforged.fml.ModList.get().isLoaded("quest_enhance")) return 0;
+            double ax = ((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(0xA1L)).getX();
+            check(Math.abs(ax - (before[0] + 1)) < 1e-6, "anchor moves with the cluster: " + before[0] + " -> " + ax);
+            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
+            return 25;
+        });
+        STEPS.add(() -> {
+            if (!net.neoforged.fml.ModList.get().isLoaded("quest_enhance")) return 0;
+            double ax = ((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(0xA1L)).getX();
+            check(Math.abs(ax - before[0]) < 1e-6, "one undo puts the anchor back too");
+            ClusterViewState.setExpanded(cluster(), false);
+            com.questclusters.client.gui.DecorativeLineWindow.swaps = 0;
+            screen.questPanel.scrollTo(cluster().x(), cluster().y());
+            return 15;
+        });
+        STEPS.add(() -> {
+            if (!net.neoforged.fml.ModList.get().isLoaded("quest_enhance")) return 0;
+            check(ClusterViewState.isHiddenImage(0xA1L), "inside anchor hidden while collapsed");
+            if (net.neoforged.fml.ModList.get().isLoaded("certain_questing_additions")) {
+                // CQA cancels the whole line pass, so Quest Enhance draws no decorative lines at all (upstream conflict)
+                log("CQA present: Quest Enhance decorative lines are not drawn by upstream; swaps=" + com.questclusters.client.gui.DecorativeLineWindow.swaps);
+            } else {
+                check(com.questclusters.client.gui.DecorativeLineWindow.swaps > 0,
+                        "Quest Enhance's decorative lines see the box instead of hidden quests (" + com.questclusters.client.gui.DecorativeLineWindow.swaps + " frames)");
+            }
+            check(screen.questPanel.getWidgets().stream().noneMatch(w -> w.getClass().getSimpleName().equals("Stand")),
+                    "stand-ins never leak outside the drawing window");
+            shot("qc_11_decorative_collapsed");
+            ClusterViewState.setExpanded(cluster(), true);
+            return 5;
+        });
+        // A2) background image
+        STEPS.add(() -> {
+            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style()
+                    .withBackground("minecraft:textures/block/oak_planks.png", com.questclusters.data.ClusterStyle.MODE_TILE, 4, true))));
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(cluster().style().background().equals("minecraft:textures/block/oak_planks.png")
+                    && cluster().style().backgroundMode() == com.questclusters.data.ClusterStyle.MODE_TILE, "background image saved and synced");
+            ClusterViewState.setExpanded(cluster(), false);
+            screen.questPanel.scrollTo(cluster().x(), cluster().y() + 1.5); // box above the edit-mode change log
+            return 15;
+        });
+        STEPS.add(() -> {
+            shot("qc_12_background_tile");
+            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style()
+                    .withBackground("minecraft:textures/gui/sprites/widget/button.png", com.questclusters.data.ClusterStyle.MODE_NINE_SLICE, 3, true))));
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(cluster().style().backgroundMode() == com.questclusters.data.ClusterStyle.MODE_NINE_SLICE, "nine-slice mode synced");
+            return 5;
+        });
+        STEPS.add(() -> {
+            shot("qc_13_background_nine_slice");
+            ClusterViewState.setExpanded(cluster(), true);
+            return 5;
+        });
+        // A3) chapter search
+        STEPS.add(() -> {
+            var results = com.questclusters.client.gui.QuestSearch.search("milest");
+            check(results.stream().anyMatch(r -> r.quest() != null && r.quest().id == 0xD9L), "search finds quest by title: " + results.size());
+            var clusterHits = com.questclusters.client.gui.QuestSearch.search("矿石");
+            check(clusterHits.stream().anyMatch(r -> r.cluster() != null && r.cluster().id() == CLUSTER), "search finds the cluster by title");
+            check(com.questclusters.client.gui.QuestSearch.search("zzzz-nothing").isEmpty(), "no false matches");
+            var panel = ((com.questclusters.mixin.client.QuestScreenAccessor) screen).quest_clusters$getChapterPanel();
+            check(com.questclusters.client.gui.ChapterSearchWidgets.focus(panel), "search box exists and can be focused (Ctrl+F)");
+            realMove(30, 60); // keep the chapter panel open under the cursor
+            panel.getWidgets().stream().filter(w -> w instanceof dev.ftb.mods.ftblibrary.ui.TextBox).findFirst()
+                    .ifPresent(w -> ((dev.ftb.mods.ftblibrary.ui.TextBox) w).setText("Milest")); // may refresh the panel
+            return 10;
+        });
+        STEPS.add(() -> {
+            var panel = ((com.questclusters.mixin.client.QuestScreenAccessor) screen).quest_clusters$getChapterPanel();
+            Widget hit = null;
+            int results = 0;
+            for (Widget w : panel.getWidgets()) {
+                if (w.getClass().getSimpleName().equals("ResultButton")) {
+                    results++;
+                    if (hit == null) hit = w;
+                }
+                check(!(w instanceof dev.ftb.mods.ftbquests.client.gui.quests.ChapterPanel.ChapterButton), "chapter list replaced by results");
+            }
+            check(results >= 1, "result buttons shown (" + results + ")");
+            check(com.questclusters.client.gui.ChapterSearchWidgets.isSearchFocused(panel), "search box keeps focus while typing");
+            check(((com.questclusters.mixin.client.ChapterPanelAccessor) panel).quest_clusters$isExpanded(), "chapter panel stays open while searching");
+            shot("qc_14_search");
+            if (hit instanceof dev.ftb.mods.ftblibrary.ui.Button b) {
+                b.onClicked(dev.ftb.mods.ftblibrary.ui.input.MouseButton.LEFT);
+            }
+            return 10;
+        });
+        STEPS.add(() -> {
+            check(screen.getViewedQuest() != null && screen.getViewedQuest().id == 0xD9L, "clicking a result opens the quest");
+            screen.closeQuest();
+            var panel = ((com.questclusters.mixin.client.QuestScreenAccessor) screen).quest_clusters$getChapterPanel();
+            panel.getWidgets().stream().filter(w -> w instanceof dev.ftb.mods.ftblibrary.ui.TextBox).findFirst()
+                    .ifPresent(w -> ((dev.ftb.mods.ftblibrary.ui.TextBox) w).setText("")); // may refresh the panel
+            return 5;
+        });
+        STEPS.add(() -> {
+            var panel = ((com.questclusters.mixin.client.QuestScreenAccessor) screen).quest_clusters$getChapterPanel();
+            check(panel.getWidgets().stream().anyMatch(w -> w instanceof dev.ftb.mods.ftbquests.client.gui.quests.ChapterPanel.ChapterButton),
+                    "clearing the search brings the chapter list back");
+            return 5;
+        });
+
         // ---------------------------------------------------------------- user reports (v0.1.0)
         // 1) Esc / E after the editor must go back to the quest screen, then out to the game
         for (int key : new int[]{256, 69}) { // GLFW_KEY_ESCAPE, GLFW_KEY_E

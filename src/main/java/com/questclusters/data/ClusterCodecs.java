@@ -34,6 +34,27 @@ public final class ClusterCodecs {
         }
     };
 
+    public static final StreamCodec<ByteBuf, ClusterStyle> STYLE = new StreamCodec<>() {
+        @Override
+        public ClusterStyle decode(ByteBuf buf) {
+            return new ClusterStyle(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(),
+                    ByteBufCodecs.stringUtf8(ClusterStyle.MAX_BACKGROUND_LENGTH).decode(buf),
+                    buf.readByte(), buf.readByte(), buf.readBoolean());
+        }
+
+        @Override
+        public void encode(ByteBuf buf, ClusterStyle s) {
+            buf.writeInt(s.titleColor());
+            buf.writeInt(s.subtitleColor());
+            buf.writeInt(s.borderColor());
+            buf.writeInt(s.frameColor());
+            ByteBufCodecs.stringUtf8(ClusterStyle.MAX_BACKGROUND_LENGTH).encode(buf, s.background());
+            buf.writeByte(s.backgroundMode());
+            buf.writeByte(s.sliceBorder());
+            buf.writeBoolean(s.backgroundOnFrame());
+        }
+    };
+
     public static final StreamCodec<ByteBuf, QuestCluster> CLUSTER = new StreamCodec<>() {
         @Override
         public QuestCluster decode(ByteBuf buf) {
@@ -49,7 +70,7 @@ public final class ClusterCodecs {
                     buf.readDouble(),
                     buf.readDouble(),
                     ID_LIST.decode(buf),
-                    new ClusterStyle(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt())
+                    STYLE.decode(buf)
             );
         }
 
@@ -66,10 +87,7 @@ public final class ClusterCodecs {
             buf.writeDouble(c.width());
             buf.writeDouble(c.height());
             ID_LIST.encode(buf, c.members());
-            buf.writeInt(c.style().titleColor());
-            buf.writeInt(c.style().subtitleColor());
-            buf.writeInt(c.style().borderColor());
-            buf.writeInt(c.style().frameColor());
+            STYLE.encode(buf, c.style());
         }
     };
 

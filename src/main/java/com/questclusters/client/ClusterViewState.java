@@ -45,6 +45,41 @@ public final class ClusterViewState {
         return STATE.isHidden(ClientClusters.store(), memberId);
     }
 
+    private static java.util.Map<Long, Long> anchorOwner = java.util.Map.of();
+    private static int anchorRevision = -1;
+    private static long anchorTime;
+
+    /**
+     * For chapter images: hidden if they are members of a collapsed cluster, or Quest Enhance anchor points that only
+     * serve decorative lines inside one.
+     */
+    public static boolean isHiddenImage(long imageId) {
+        if (isHidden(imageId)) {
+            return true;
+        }
+        Long owner = anchorOwners().get(imageId);
+        return owner != null && ClientClusters.store().get(owner).map(c -> !STATE.isExpanded(c)).orElse(false);
+    }
+
+    private static java.util.Map<Long, Long> anchorOwners() {
+        long now = System.currentTimeMillis();
+        if (anchorRevision != ClientClusters.revision() || now - anchorTime > 1000L) {
+            anchorRevision = ClientClusters.revision();
+            anchorTime = now;
+            java.util.Map<Long, Long> m = new java.util.HashMap<>();
+            var file = dev.ftb.mods.ftbquests.client.ClientQuestFile.INSTANCE;
+            if (file != null && com.questclusters.compat.QuestEnhanceCompat.decorativeLinesActive()) {
+                for (QuestCluster c : ClientClusters.store().all()) {
+                    for (long id : com.questclusters.compat.QuestEnhanceCompat.anchorsInside(file.getChapter(c.chapterId()), c.members())) {
+                        m.putIfAbsent(id, c.id());
+                    }
+                }
+            }
+            anchorOwner = m;
+        }
+        return anchorOwner;
+    }
+
     public static void setExpanded(QuestCluster c, boolean expanded) {
         if (STATE.setExpanded(c, expanded)) {
             LAST_CHANGE.put(c.id(), System.currentTimeMillis());

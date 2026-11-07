@@ -4,7 +4,8 @@
 	filename: "cluster_test"
 	group: ""
 	id: "00000000000000C1"
-	images: [ ]
+	images: [{ id: "00000000000000A1", x: 0.75d, y: 0.5d, width: 0.4d, height: 0.4d, image: "quest_enhance:textures/icons/decorative_anchor.png", click_action: "none:quest_enhance:decorative_anchor:11111111-2222-3333-4444-555555555555" }]
+	quest_enhance_decorative_lines: [{ nodes: ["q:d1", "a:11111111-2222-3333-4444-555555555555", "q:d2"] }, { nodes: ["q:d0", "q:d1"] }]
 	order_index: 0
 	quest_links: [ ]
 	quests: [
