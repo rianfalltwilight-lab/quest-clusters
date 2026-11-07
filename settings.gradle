@@ -6,3 +6,8 @@ pluginManagement {
 }
 
 rootProject.name = 'quest-clusters'
+
+// core: the quest_clusters mod (clusters, scoring, search, migration framework)
+// visuals / editor / filters / xmod: modules for phases D-G, published once they are implemented
+// bundle: one jar that nests every published module (jar-in-jar)
+include 'core', 'visuals', 'editor', 'filters', 'xmod', 'bundle'

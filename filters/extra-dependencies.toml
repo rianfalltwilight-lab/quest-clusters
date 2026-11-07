@@ -1,0 +1,14 @@
+
+[[dependencies.${module_id}]]
+modId = "quest_clusters"
+type = "required"
+versionRange = "[${mod_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${module_id}]]
+modId = "ftbfiltersystem"
+type = "required"
+versionRange = "[21.1.4,21.2)"
+ordering = "AFTER"
+side = "BOTH"

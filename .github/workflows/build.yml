@@ -30,10 +30,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: build/reports/tests/
+          path: '*/build/reports/tests/'
 
       - name: Upload jar
         uses: actions/upload-artifact@v4
         with:
           name: quest-clusters-${{ github.sha }}
-          path: build/libs/*.jar
+          path: |
+            core/build/libs/*.jar
+            bundle/build/libs/*.jar

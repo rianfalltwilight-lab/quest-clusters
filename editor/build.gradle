@@ -1,0 +1,6 @@
+apply from: rootProject.file('gradle/module.gradle')
+
+dependencies {
+    compileOnly project(':core')
+    testImplementation project(':core')
+}

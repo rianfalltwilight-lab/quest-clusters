@@ -1,0 +1,13 @@
+apply from: rootProject.file('gradle/module.gradle')
+
+// nest every module that is marked publish=true (except this one)
+def nested = rootProject.subprojects.findAll { it != project && it.findProperty('publish') == 'true' }
+nested.each { evaluationDependsOn(it.path) }
+
+dependencies {
+    nested.each { jarJar(project(it.path)) }
+}
+
+tasks.named('jar') {
+    archiveClassifier = ''
+}

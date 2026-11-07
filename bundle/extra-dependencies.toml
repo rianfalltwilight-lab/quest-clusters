@@ -1,0 +1,7 @@
+
+[[dependencies.${module_id}]]
+modId = "quest_clusters"
+type = "required"
+versionRange = "[${mod_version},)"
+ordering = "AFTER"
+side = "BOTH"

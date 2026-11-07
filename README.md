@@ -6,7 +6,28 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 - FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
 - 客户端和服务端都需要安装
 
-## 当前进度：阶段 0–2、4 + 任务集玩法
+## 当前进度：阶段 0–2、4、A、B、C
+
+## 模块（阶段 C 起为多模块仓库）
+
+| 目录 | 模组 ID | 内容 | 状态 |
+|---|---|---|---|
+| `core/` | `quest_clusters` | 任务集、评分/结算页/排行榜、章节搜索、迁移框架（下文全部功能） | 已发布 |
+| `visuals/` | `quest_clusters_visuals` | 阶段 D：替代 Certain Questing Additions；声明与之不兼容 | 占位，未发布 |
+| `editor/` | `quest_clusters_editor` | 阶段 E：替代 Quest Enhance；声明与之不兼容 | 占位，未发布 |
+| `filters/` | `quest_clusters_filters` | 阶段 F：FTB Filter System 的额外筛选 | 占位，未发布 |
+| `xmod/` | `quest_clusters_xmod` | 阶段 G：FTB XMod Compat 的 FTB Quests 部分（接管，不声明不兼容） | 占位，未发布 |
+| `bundle/` | `quest_clusters_bundle` | 把所有已发布模块嵌套进一个 jar（jar-in-jar） | 已发布 |
+
+发布页同时提供 `quest_clusters-*.jar`（只要核心）和 `quest_clusters_bundle-*.jar`（全部已发布模块），二选一安装。
+模块在各自阶段完成后把 `<模块>/gradle.properties` 里的 `publish` 改为 `true`，就会被 bundle 收录、进入发布页和开发运行。
+
+### 迁移框架（`core/.../migration`）
+- 模块用 `MigrationRegistry.register(...)` 注册一次性迁移；服务器读完任务书后、本附属加载自己的数据前执行。
+- 迁移直接读磁盘上的原始章节文件（`MigrationContext.rawChapters()`），所以已卸载附属留下的字段仍能读到——FTB Quests 下次保存章节时会丢掉这些字段。
+- 有待执行的迁移时，先把整个 `config/ftbquests/quests` 打包到 `config/ftbquests/quest_clusters_backups/`（保留最近 10 份），再执行。
+- 成功的记录在 `quests/quest_clusters/migrations.snbt`，不再重复；失败的不记录，下次启动重试。
+- `/questclusters migrate status` 查看，`/questclusters migrate backup` 手动备份（需要 OP）。
 
 | 部分 | 位置 |
 |---|---|
@@ -79,10 +100,10 @@ QuestClusters.dissolve(clusterId)
 ### 已实测的兼容
 | 组合 | 版本 | 自检 |
 |---|---|---|
-| 不装联动附属 | — | 80 项通过 |
+| 不装联动附属 | — | 85 项通过 |
 | Certain Questing Additions | 1.2.0.5+mc1.21.1（Modrinth） | 80 项通过 |
 | Quest Enhance | 3.12（从作者 GitHub 源码 `codex/1.21.1-neoforge` 编译） | 89 项通过 |
-| 两者同时安装 | 同上 | 88 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
+| 两者同时安装 | 同上 | 93 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：
 - **Quest Enhance 单条前置线隐藏**：汇总线背后的真实连线全部被隐藏时，汇总线对玩家隐藏（设置了悬停显示则悬停时显示）；编辑模式下用 Quest Enhance 的隐藏线颜色画出。
@@ -118,9 +139,10 @@ QuestClusters.dissolve(clusterId)
 ## 构建
 
 ```
-./gradlew build      # 编译 + 单元测试
-./gradlew runClient  # 开发客户端
-./gradlew runClientDevtest  # 脚本化界面自检：进入 run/saves/devtest，截图到 run/screenshots/qc_*.png，自动退出
+./gradlew build                     # 编译全部模块 + 单元测试
+./gradlew :core:runClient           # 开发客户端（core + 已发布模块）
+./gradlew :core:runClientDevtest    # 脚本化界面自检：进入 core/run/saves/devtest，截图到 core/run/screenshots/qc_*.png，自动退出
+./gradlew :core:runClient -PdevModules=visuals,editor   # 额外加载未发布模块（例如检查不兼容声明）
 ```
 
 ## 构建与发布

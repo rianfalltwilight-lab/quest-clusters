@@ -1,0 +1,58 @@
+apply from: rootProject.file('gradle/module.gradle')
+
+// Dev runs load core plus every module marked publish=true. Add others with -PdevModules=visuals,editor
+// (e.g. to see their incompatibility rules refuse to start next to Certain Questing Additions / Quest Enhance).
+def extraModules = ['visuals', 'editor', 'filters', 'xmod']
+extraModules.each { evaluationDependsOn(":$it") }
+def requested = (findProperty('devModules') ?: '').toString().split(',').collect { it.trim() }.findAll { it }
+def devModules = extraModules.findAll { project(":$it").findProperty('publish') == 'true' || requested.contains(it) }
+
+neoForge {
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+        // scripted UI check: boots into run/saves/devtest, runs client/DevSelfTest, quits
+        clientDevtest {
+            client()
+            systemProperty 'quest_clusters.devtest', '00000000000000C1'
+            programArguments.addAll('--quickPlaySingleplayer', 'devtest')
+        }
+        configureEach {
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+
+    mods {
+        "${project.module_id}" {
+            sourceSet sourceSets.main
+        }
+        devModules.each { m ->
+            def p = project(":$m")
+            "${p.module_id}" {
+                sourceSet p.sourceSets.main
+            }
+        }
+    }
+}
+
+dependencies {
+    compileOnly("dev.latvian.mods:kubejs-neoforge:${rootProject.kubejs_version}") { transitive = false }
+    compileOnly("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
+
+    localRuntime("dev.architectury:architectury-neoforge:${rootProject.architectury_version}") { transitive = false }
+    localRuntime("dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}") { transitive = false }
+    localRuntime("dev.ftb.mods:ftb-teams-neoforge:${rootProject.ftb_teams_version}") { transitive = false }
+    localRuntime("dev.ftb.mods:ftb-quests-neoforge:${rootProject.ftb_quests_version}") { transitive = false }
+}
+
+// resets the devtest quest book (and migration state) before every scripted UI run, so results are repeatable
+def prepareDevtest = tasks.register('prepareDevtest', Sync) {
+    from 'devtest/quests'
+    into 'run/config/ftbquests/quests'
+}
+tasks.matching { it.name == 'runClientDevtest' }.configureEach { dependsOn prepareDevtest }

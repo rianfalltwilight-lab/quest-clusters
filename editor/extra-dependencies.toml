@@ -1,0 +1,15 @@
+
+[[dependencies.${module_id}]]
+modId = "quest_clusters"
+type = "required"
+versionRange = "[${mod_version},)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Replaces Quest Enhance: both together would patch the same quest book code.
+[[dependencies.${module_id}]]
+modId = "quest_enhance"
+type = "incompatible"
+reason = "Quest Clusters Editor replaces Quest Enhance. Remove Quest Enhance (keep its config folder); its quest book data is imported automatically on the next start (a backup is made first)."
+versionRange = "*"
+side = "BOTH"

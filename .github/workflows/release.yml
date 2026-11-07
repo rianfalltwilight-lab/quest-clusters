@@ -28,6 +28,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" build/libs/*.jar \
+          # core = the quest_clusters mod; bundle = every released module in one jar (install one of the two)
+          gh release create "$GITHUB_REF_NAME" core/build/libs/*.jar bundle/build/libs/*.jar \
             --title "Quest Clusters $GITHUB_REF_NAME" \
             --generate-notes
