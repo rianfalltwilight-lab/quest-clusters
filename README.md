@@ -42,6 +42,14 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 **章节搜索**：章节栏顶部的搜索框（Ctrl+F）。按任务标题、副标题、任务目标、描述和任务集名搜索，点击结果直接跳转（收起的任务集会自动展开）。
 玩家看不到的任务和章节不会被搜到；「可开始前隐藏详情」的任务只按标题匹配。装了 Just Enough Characters 时支持拼音。
 
+**评分、结算页、排行榜**（按队伍统计，根据 FTB Quests 的完成记录实时计算，不另存进度：重置进度、改分值、删任务后结果自动正确，旧存档直接可用）：
+- 右键任务 →「评分与结算节点…」：分值（可为负）、结算节点文字（支持 FTB 文本格式）、「完成时打开结算页」。多选后可批量设分值。
+- 结算页：任务书右上角的「结算」按钮，或 `/questclusters settlement [玩家]`，或完成设了「完成时打开结算页」的任务时自动打开。
+  像片尾字幕一样滚动：标题、队伍名、开头文字、按完成顺序排列的节点、各章节得分、总分与百分比、评级、结尾文字。按住空格或鼠标加速，滚轮移动。
+- 编辑模式下右键「结算」按钮编辑结算页：标题、开头/结尾文字、评级（每行 `百分比=名称`，如 `90=&6S`）、是否显示满分、是否启用排行榜。
+- 排行榜：右上角按钮或 `/questclusters leaderboard`。按完成任务数、再按分数排序；玩家加入队伍后，其旧的个人队伍不重复计入。
+- 数据存于 `config/ftbquests/quests/quest_clusters/scoring.snbt`；修改都可撤销。API/KubeJS：`setScore`、`getScore`、`teamScore`、`openSettlement`。
+
 **标题格式**：标题和副标题与 FTB Quests 的任务标题用同一个解析器，支持 `&` 颜色/格式代码（如 `&6金色&l加粗`）、JSON 文本（如 `{"text":"矿石","color":"gold"}`）和 `{some.lang.key}` 翻译。
 
 **动画**：文字框悬停时放大并发光，收起/展开时淡入。装了 CQA 时跟随它的「quest_hover」「quest_hover_glow_alpha」「smooth_animations」设置。
@@ -71,10 +79,10 @@ QuestClusters.dissolve(clusterId)
 ### 已实测的兼容
 | 组合 | 版本 | 自检 |
 |---|---|---|
-| 不装联动附属 | — | 67 项通过 |
-| Certain Questing Additions | 1.2.0.5+mc1.21.1（Modrinth） | 67 项通过 |
-| Quest Enhance | 3.12（从作者 GitHub 源码 `codex/1.21.1-neoforge` 编译） | 76 项通过 |
-| 两者同时安装 | 同上 | 75 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
+| 不装联动附属 | — | 80 项通过 |
+| Certain Questing Additions | 1.2.0.5+mc1.21.1（Modrinth） | 80 项通过 |
+| Quest Enhance | 3.12（从作者 GitHub 源码 `codex/1.21.1-neoforge` 编译） | 89 项通过 |
+| 两者同时安装 | 同上 | 88 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：
 - **Quest Enhance 单条前置线隐藏**：汇总线背后的真实连线全部被隐藏时，汇总线对玩家隐藏（设置了悬停显示则悬停时显示）；编辑模式下用 Quest Enhance 的隐藏线颜色画出。

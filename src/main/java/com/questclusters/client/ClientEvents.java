@@ -25,6 +25,7 @@ public final class ClientEvents {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         ClusterViewState.onLogout();
         ClientClusters.clear();
+        ClientScoring.clear();
         com.questclusters.client.gui.ClusterText.clearCache();
     }
 
@@ -32,12 +33,13 @@ public final class ClientEvents {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         ClusterClipboard.tick();
-        int rev = ClientClusters.revision();
+        int rev = ClientClusters.revision() * 31 + ClientScoring.revision();
         if (rev != seenRevision) {
             seenRevision = rev;
             QuestScreen qs = ClientUtils.getCurrentGuiAs(QuestScreen.class);
             if (qs != null) {
                 qs.refreshQuestPanel();
+                qs.otherButtonsTopPanel.refreshWidgets(); // settlement / leaderboard buttons
             }
         }
     }

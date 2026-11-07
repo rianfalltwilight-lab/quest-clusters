@@ -46,6 +46,7 @@ public final class DevSelfTest {
     private static QuestScreen screen;
     private static double[] before;
     private static int[] dragFrom;
+    private static int waitedForSettlement;
 
     private DevSelfTest() {
     }
@@ -64,6 +65,9 @@ public final class DevSelfTest {
                 if (sp != null) {
                     sp.setGameMode(net.minecraft.world.level.GameType.CREATIVE);
                     sp.setHealth(sp.getMaxHealth());
+                    // progress lives in the world save and survives runs: start every run from a clean chapter
+                    srv.getCommands().performPrefixedCommand(srv.createCommandSourceStack().withSuppressedOutput(),
+                            "ftbquests change_progress " + sp.getGameProfile().getName() + " reset " + PROP);
                 }
             });
             Chapter ch = ClientQuestFile.INSTANCE.getChapter(QuestCluster.idFromString(PROP));
@@ -383,6 +387,59 @@ public final class DevSelfTest {
             check(milestone != null && td.isCompleted(milestone), "milestone completes when the whole cluster is done");
             check(milestone != null && td.hasUnclaimedRewards(Minecraft.getInstance().player.getUUID(), milestone), "milestone reward is claimable");
             return 5;
+        });
+        // ---------------------------------------------------------------- phase B: scoring, settlement page, leaderboard
+        STEPS.add(() -> {
+            check(com.questclusters.client.ClientScoring.entries().size() == 4, "scoring data synced (" + com.questclusters.client.ClientScoring.entries().size() + ")");
+            var r = com.questclusters.client.ClientScoring.myResult();
+            check(r.total() == 60 && r.max() == 60, "team score computed from completions: " + r.total() + "/" + r.max());
+            check(r.nodes().size() == 3, "completed nodes listed: " + r.nodes().stream().map(com.questclusters.data.ScoreCalc.Node::text).toList());
+            for (long q : new long[]{D0, D1, 0xD2L, 0xD9L}) {
+                log("completed time " + QuestCluster.idToString(q) + " client=" + ClientQuestFile.INSTANCE.selfTeamData.getCompletedTime(q));
+            }
+            check(com.questclusters.client.ClientScoring.settings().rankFor(r.percent()).equals("&6S"), "rank from percentage");
+            return 0;
+        });
+        STEPS.add(() -> {
+            // completing the milestone (opens_settlement) must have opened the settlement page by now, or within a few ticks
+            if (!(Minecraft.getInstance().screen instanceof com.questclusters.client.gui.SettlementScreen) && waitedForSettlement++ < 100) {
+                return -1;
+            }
+            check(Minecraft.getInstance().screen instanceof com.questclusters.client.gui.SettlementScreen,
+                    "settlement page opened by completing the milestone (after " + waitedForSettlement + " ticks)");
+            if (Minecraft.getInstance().screen instanceof com.questclusters.client.gui.SettlementScreen ss) {
+                var lines = ss.plainLines();
+                log("settlement lines: " + lines);
+                check(lines.contains("Test Journey") && lines.contains("第一步") && lines.contains("Second step") && lines.contains("Milestone reached"),
+                        "settlement page shows title and node texts in order");
+                check(lines.stream().anyMatch(l -> l.contains("60") && l.contains("100")), "settlement page shows total and percentage");
+                check(lines.contains("S") && lines.contains("The end"), "settlement page shows rank and closing line");
+            }
+            return 60; // let it scroll a little
+        });
+        STEPS.add(() -> {
+            shot("qc_15_settlement");
+            Minecraft.getInstance().screen.onClose();
+            PacketDistributor.sendToServer(new ClusterPayloads.RequestLeaderboard());
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(Minecraft.getInstance().screen instanceof com.questclusters.client.gui.LeaderboardScreen, "leaderboard screen opens");
+            if (Minecraft.getInstance().screen instanceof com.questclusters.client.gui.LeaderboardScreen ls) {
+                var own = ls.rows().stream().filter(com.questclusters.data.ScoreCalc.Row::own).findFirst().orElse(null);
+                log("leaderboard: " + ls.rows());
+                check(own != null && own.score() == 60 && own.quests() >= 3, "own team on the leaderboard with its score");
+            }
+            shot("qc_16_leaderboard");
+            return 5;
+        });
+        STEPS.add(() -> {
+            Minecraft.getInstance().screen.onClose();
+            screen = ClientQuestFile.openGui();
+            screen.open(ClientQuestFile.INSTANCE.getChapter(chapterId()), false);
+            check(screen.otherButtonsTopPanel.getWidgets().stream().anyMatch(w -> w.getClass().getSimpleName().equals("SettlementButton")),
+                    "settlement button in the quest book");
+            return 10;
         });
         // ---------------------------------------------------------------- undo of "delete cluster and members"
         STEPS.add(() -> {

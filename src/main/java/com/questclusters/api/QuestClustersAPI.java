@@ -84,6 +84,32 @@ public final class QuestClustersAPI {
         return serverFile("dissolve") != null && ServerClusters.dissolve(id(clusterId));
     }
 
+    // ------------------------------------------------------------------ scoring (server only)
+
+    /** Sets score, settlement node text and "opens settlement" for a quest. score 0 + empty node removes it. */
+    public static boolean setScore(Object questId, int score, String node, boolean opensSettlement) {
+        if (serverFile("setScore") == null) return false;
+        com.questclusters.server.ServerScoring.setEntry(id(questId), new com.questclusters.data.ScoreEntry(score, node, opensSettlement));
+        return true;
+    }
+
+    public static int getScore(Object questId) {
+        var e = com.questclusters.server.ServerScoring.entries().get(id(questId));
+        return e == null ? 0 : e.score();
+    }
+
+    /** Current total score of the player's team (computed from completions). */
+    public static int teamScore(net.minecraft.server.level.ServerPlayer player) {
+        ServerQuestFile file = serverFile("teamScore");
+        if (file == null) return 0;
+        return com.questclusters.data.ScoreCalc.compute(com.questclusters.server.ServerScoring.entries(),
+                com.questclusters.server.ServerScoring.progress(file, file.getOrCreateTeamData(player))).total();
+    }
+
+    public static void openSettlement(net.minecraft.server.level.ServerPlayer player) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.questclusters.net.ClusterPayloads.OpenSettlement());
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private static QuestCluster change(Object clusterId, java.util.function.UnaryOperator<QuestCluster> edit, String what) {

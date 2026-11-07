@@ -28,6 +28,18 @@ public final class ClusterNetwork {
         r.playToClient(ClusterPayloads.Remove.TYPE, ClusterPayloads.Remove.CODEC,
                 (p, ctx) -> ClientClusters.remove(p.clusterId()));
 
+        r.playToClient(ClusterPayloads.ScoringSync.TYPE, ClusterPayloads.ScoringSync.CODEC,
+                (p, ctx) -> com.questclusters.client.ClientScoring.set(p.entries(), p.settings()));
+        r.playToClient(ClusterPayloads.OpenSettlement.TYPE, ClusterPayloads.OpenSettlement.CODEC,
+                (p, ctx) -> com.questclusters.client.ClientScoring.openSettlement());
+        r.playToClient(ClusterPayloads.Leaderboard.TYPE, ClusterPayloads.Leaderboard.CODEC,
+                (p, ctx) -> com.questclusters.client.ClientScoring.showLeaderboard(p.rows()));
+        r.playToServer(ClusterPayloads.SetScore.TYPE, ClusterPayloads.SetScore.CODEC,
+                (p, ctx) -> com.questclusters.server.ServerScoring.handleSetEntry((ServerPlayer) ctx.player(), p.questId(), p.entry()));
+        r.playToServer(ClusterPayloads.SetSettlement.TYPE, ClusterPayloads.SetSettlement.CODEC,
+                (p, ctx) -> com.questclusters.server.ServerScoring.handleSetSettings((ServerPlayer) ctx.player(), p.settings()));
+        r.playToServer(ClusterPayloads.RequestLeaderboard.TYPE, ClusterPayloads.RequestLeaderboard.CODEC,
+                (p, ctx) -> com.questclusters.server.ServerScoring.handleLeaderboard((ServerPlayer) ctx.player()));
         r.playToServer(ClusterPayloads.Create.TYPE, ClusterPayloads.Create.CODEC,
                 (p, ctx) -> ServerClusters.handleCreate((ServerPlayer) ctx.player(), p.chapterId(), p.title(), p.members()));
         r.playToServer(ClusterPayloads.Update.TYPE, ClusterPayloads.Update.CODEC,

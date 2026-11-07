@@ -17,6 +17,8 @@ public final class QuestClusters {
     public QuestClusters(IEventBus modBus) {
         modBus.addListener(ClusterNetwork::register);
         com.questclusters.task.ClusterTask.init(); // register the "Complete quest cluster" task type early
+        com.questclusters.server.ServerScoring.init();
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.RegisterCommandsEvent e) -> com.questclusters.server.ClusterCommands.register(e.getDispatcher()));
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> ServerClusters.tick());
     }
 }

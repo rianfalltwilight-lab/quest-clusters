@@ -1,0 +1,17 @@
+{
+	version: 1
+	quests: [
+		{ quest: "00000000000000D0", score: 10, node: "&6第一步" }
+		{ quest: "00000000000000D1", score: 20, node: "Second step" }
+		{ quest: "00000000000000D2", score: 30 }
+		{ quest: "00000000000000D9", opens_settlement: true, node: "{\"text\":\"Milestone reached\",\"color\":\"aqua\"}" }
+	]
+	settlement: {
+		title: "&lTest Journey"
+		intro: ["Thanks for playing"]
+		outro: ["&7The end"]
+		ranks: ["100=&6S", "50=&aB", "0=&7C"]
+		show_max: true
+		leaderboard: true
+	}
+}

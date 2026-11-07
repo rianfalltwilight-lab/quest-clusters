@@ -51,6 +51,7 @@ public final class ClusterEditor {
         long id = movable.getMovableID();
         Chapter chapter = movable.getChapter();
         Optional<QuestCluster> owner = ClientClusters.store().clusterOfMember(id);
+        ScoringEditor.addQuestItems(menu, screen, movable);
 
         menu.add(ContextMenuItem.SEPARATOR);
         if (owner.isPresent()) {
@@ -81,6 +82,7 @@ public final class ClusterEditor {
             return;
         }
         menu.add(ContextMenuItem.SEPARATOR);
+        ScoringEditor.addSelectionItems(menu, screen, selected);
         menu.add(new ContextMenuItem(tr("create_from_selection", ids.size()), ThemeProperties.ADD_ICON.get(),
                 b -> promptCreate(screen, chapter, ids)));
         List<ContextMenuItem> targets = new ArrayList<>();

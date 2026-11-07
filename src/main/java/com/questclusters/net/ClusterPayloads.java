@@ -118,4 +118,73 @@ public final class ClusterPayloads {
             return TYPE;
         }
     }
+
+    // ------------------------------------------------------------------ scoring / settlement / leaderboard
+
+    public record ScoringSync(java.util.Map<Long, com.questclusters.data.ScoreEntry> entries,
+                              com.questclusters.data.SettlementSettings settings) implements CustomPacketPayload {
+        public static final Type<ScoringSync> TYPE = newType("scoring_sync");
+        public static final StreamCodec<ByteBuf, ScoringSync> CODEC = StreamCodec.composite(
+                com.questclusters.data.ScoringCodecs.ENTRIES, ScoringSync::entries,
+                com.questclusters.data.ScoringCodecs.SETTINGS, ScoringSync::settings,
+                ScoringSync::new);
+
+        @Override
+        public Type<ScoringSync> type() {
+            return TYPE;
+        }
+    }
+
+    public record OpenSettlement() implements CustomPacketPayload {
+        public static final Type<OpenSettlement> TYPE = newType("open_settlement");
+        public static final StreamCodec<ByteBuf, OpenSettlement> CODEC = StreamCodec.unit(new OpenSettlement());
+
+        @Override
+        public Type<OpenSettlement> type() {
+            return TYPE;
+        }
+    }
+
+    public record Leaderboard(List<com.questclusters.data.ScoreCalc.Row> rows) implements CustomPacketPayload {
+        public static final Type<Leaderboard> TYPE = newType("leaderboard");
+        public static final StreamCodec<ByteBuf, Leaderboard> CODEC = com.questclusters.data.ScoringCodecs.ROWS.map(Leaderboard::new, Leaderboard::rows);
+
+        @Override
+        public Type<Leaderboard> type() {
+            return TYPE;
+        }
+    }
+
+    public record SetScore(long questId, com.questclusters.data.ScoreEntry entry) implements CustomPacketPayload {
+        public static final Type<SetScore> TYPE = newType("set_score");
+        public static final StreamCodec<ByteBuf, SetScore> CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_LONG, SetScore::questId,
+                com.questclusters.data.ScoringCodecs.ENTRY, SetScore::entry,
+                SetScore::new);
+
+        @Override
+        public Type<SetScore> type() {
+            return TYPE;
+        }
+    }
+
+    public record SetSettlement(com.questclusters.data.SettlementSettings settings) implements CustomPacketPayload {
+        public static final Type<SetSettlement> TYPE = newType("set_settlement");
+        public static final StreamCodec<ByteBuf, SetSettlement> CODEC = com.questclusters.data.ScoringCodecs.SETTINGS.map(SetSettlement::new, SetSettlement::settings);
+
+        @Override
+        public Type<SetSettlement> type() {
+            return TYPE;
+        }
+    }
+
+    public record RequestLeaderboard() implements CustomPacketPayload {
+        public static final Type<RequestLeaderboard> TYPE = newType("request_leaderboard");
+        public static final StreamCodec<ByteBuf, RequestLeaderboard> CODEC = StreamCodec.unit(new RequestLeaderboard());
+
+        @Override
+        public Type<RequestLeaderboard> type() {
+            return TYPE;
+        }
+    }
 }

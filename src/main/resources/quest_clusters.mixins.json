@@ -19,7 +19,8 @@
     "client.DecorativeWindowCloseMixin",
     "client.PanelMixin",
     "client.ChapterPanelMixin",
-    "client.ChapterPanelAccessor"
+    "client.ChapterPanelAccessor",
+    "client.OtherButtonsPanelTopMixin"
   ],
   "injectors": {
     "defaultRequire": 1
