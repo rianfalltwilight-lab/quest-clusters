@@ -28,18 +28,24 @@ public final class CqaCompat {
 
     /** CQA's "quest_hover" switch; true without CQA. */
     public static boolean hoverAnimation() {
+        var v = com.questclusters.api.VisualSettings.Holder.get();
+        if (v != null) return v.questHover();
         refresh();
         return cachedHover;
     }
 
     /** CQA's "quest_hover_glow_alpha" (0-255); 60 without CQA. */
     public static int hoverGlowAlpha() {
+        var v = com.questclusters.api.VisualSettings.Holder.get();
+        if (v != null) return v.questHoverGlowAlpha();
         refresh();
         return cachedGlow;
     }
 
     /** CQA's "smooth_animations" (easing); true without CQA. */
     public static boolean smooth() {
+        var v = com.questclusters.api.VisualSettings.Holder.get();
+        if (v != null) return v.smoothAnimations();
         refresh();
         return cachedSmooth;
     }

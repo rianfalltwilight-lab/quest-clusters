@@ -40,6 +40,30 @@ public final class DevSelfTest {
     private static final long CLUSTER = 0xF1L, D0 = 0xD0L, D1 = 0xD1L, D3 = 0xD3L;
 
     private static final List<IntSupplier> STEPS = new ArrayList<>();
+    private static final List<IntSupplier> MODULE_STEPS = new ArrayList<>();
+    private static boolean moduleStepsAdded;
+
+    /**
+     * Other modules add their checks here during mod construction; they run after core's own steps.
+     * A step returns the ticks to wait before the next one, or -1 to be called again next tick.
+     */
+    public static void addModuleSteps(List<IntSupplier> steps) {
+        MODULE_STEPS.addAll(steps);
+    }
+
+    /** For module steps: record a check result in the same report. */
+    public static void moduleCheck(boolean ok, String what) {
+        check(ok, what);
+    }
+
+    /** For module steps: the quest screen the self-test is using. */
+    public static QuestScreen questScreen() {
+        return screen;
+    }
+
+    public static boolean active() {
+        return PROP != null;
+    }
     private static int step = -1;
     private static int wait = 0;
     private static int failures = 0;
@@ -750,6 +774,10 @@ public final class DevSelfTest {
         }
         Minecraft mc = Minecraft.getInstance();
         try {
+            if (!moduleStepsAdded) {
+                moduleStepsAdded = true;
+                STEPS.addAll(STEPS.size() - 2 >= 0 ? STEPS.size() : 0, MODULE_STEPS);
+            }
             int idx = step < 0 ? 0 : step;
             if (idx >= STEPS.size()) {
                 log(failures == 0 ? "ALL CHECKS PASSED" : failures + " CHECK(S) FAILED");
@@ -918,6 +946,10 @@ public final class DevSelfTest {
         log(label + ": quest buttons " + quests + " (hidden " + hidden + "), boxes shown " + boxesShown + ", frames shown " + framesShown);
         check(boxesShown == (collapsed ? 1 : 0) && framesShown == (collapsed ? 0 : 1), label + ": box/frame visibility");
         check(hidden == (collapsed ? cluster().members().size() : 0), label + ": hidden member count");
+    }
+
+    public static void moduleShot(String name) {
+        shot(name);
     }
 
     private static void shot(String name) {

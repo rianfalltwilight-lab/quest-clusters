@@ -51,6 +51,8 @@ def generateModMetadata = tasks.register('generateModMetadata', ProcessResources
             module_id               : project.module_id,
             module_name             : project.module_name,
             module_description      : project.module_description,
+            // client-only modules use IGNORE_ALL_VERSION so servers don't need them
+            display_test            : project.findProperty('display_test') ?: 'MATCH_VERSION',
             // placeholders inside the inserted text are not expanded by the template engine: resolve them here
             extra_dependencies      : depsFile.exists() ? depsFile.getText('UTF-8')
                     .replace('${module_id}', project.module_id).replace('${mod_version}', rootProject.mod_version) : ''

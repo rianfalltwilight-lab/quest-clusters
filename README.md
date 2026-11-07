@@ -6,21 +6,32 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 - FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
 - 客户端和服务端都需要安装
 
-## 当前进度：阶段 0–2、4、A、B、C
+## 当前进度：阶段 0–2、4、A、B、C、D
 
 ## 模块（阶段 C 起为多模块仓库）
 
 | 目录 | 模组 ID | 内容 | 状态 |
 |---|---|---|---|
 | `core/` | `quest_clusters` | 任务集、评分/结算页/排行榜、章节搜索、迁移框架（下文全部功能） | 已发布 |
-| `visuals/` | `quest_clusters_visuals` | 阶段 D：替代 Certain Questing Additions；声明与之不兼容 | 占位，未发布 |
+| `visuals/` | `quest_clusters_visuals` | 任务书视觉增强，替代 Certain Questing Additions（见下）；声明与之不兼容；纯客户端 | 已发布 |
 | `editor/` | `quest_clusters_editor` | 阶段 E：替代 Quest Enhance；声明与之不兼容 | 占位，未发布 |
 | `filters/` | `quest_clusters_filters` | 阶段 F：FTB Filter System 的额外筛选 | 占位，未发布 |
 | `xmod/` | `quest_clusters_xmod` | 阶段 G：FTB XMod Compat 的 FTB Quests 部分（接管，不声明不兼容） | 占位，未发布 |
 | `bundle/` | `quest_clusters_bundle` | 把所有已发布模块嵌套进一个 jar（jar-in-jar） | 已发布 |
 
-发布页同时提供 `quest_clusters-*.jar`（只要核心）和 `quest_clusters_bundle-*.jar`（全部已发布模块），二选一安装。
+发布页提供每个已发布模块的单独 jar，以及包含全部已发布模块的 `quest_clusters_bundle-*.jar`；装单独模块或 bundle 二选一。
 模块在各自阶段完成后把 `<模块>/gradle.properties` 里的 `publish` 改为 `true`，就会被 bundle 收录、进入发布页和开发运行。
+
+### 视觉模块（`visuals/`，替代 Certain Questing Additions 1.2.0.5 的行为，未复用其代码和素材）
+- **动画**：任务悬停放大到 110% 并发光（0.2 秒），章节栏按钮悬停发光（0.25 秒），任务详情从下方 20px 滑入（0.3 秒），滚轮缩放平滑过渡，可选缓动。
+  悬停动画包住原来的绘制而不是替换，其他附属在任务按钮上画的东西照常显示。
+- **实体图标**：`entity:<实体ID>[选项]{NBT}`，可用于任务/章节图标、描述图片、章节图片。选项与 CQA 相同：`rotate`、`look`（看向鼠标）；玩家另有 `skin`、`display_name`、`show_name`、`uuid`；其他 `键=值` 合并进 NBT。
+- **APNG**：文件名以 `.apng.png` 结尾的图片会播放动画（所有 FTB 图标处都有效）。示例：`quest_clusters_visuals:textures/gui/example.apng.png`。
+- **章节着色器背景**：设置里开启 `shader_background` 后生效。资源包中 `assets/quest_clusters_visuals/chapter_shaders.json` 或（为 CQA 写的旧包）`assets/certain_questing_additions/chapter_shaders.json`：
+  `{ "default": "命名空间:着色器", "chapters": { "<章节ID十六进制或文件名>": "命名空间:着色器" } }`；
+  着色器为 core 着色器，可用 uniform：`size`、`scrollOffset`、`scrollSize`（像素）、`time`（秒）、`zoom`。为 CQA 写的着色器（包括 `#moj_import <certain_questing_additions:background_compat.glsl>`）可直接使用。
+- **EMI**：从任务书打开的 EMI 配方界面关闭后回到任务书。
+- **设置**：`/qcvisuals` 打开设置界面；文件 `local/quest_clusters_visuals/client-config.snbt`，键名与 CQA 相同。首次启动时如果存在 CQA 的 `local/certain_questing_additions/client-config.snbt`，会自动导入（原文件保留）。
 
 ### 迁移框架（`core/.../migration`）
 - 模块用 `MigrationRegistry.register(...)` 注册一次性迁移；服务器读完任务书后、本附属加载自己的数据前执行。
@@ -100,10 +111,12 @@ QuestClusters.dissolve(clusterId)
 ### 已实测的兼容
 | 组合 | 版本 | 自检 |
 |---|---|---|
-| 不装联动附属 | — | 85 项通过 |
+| 不装联动附属 | — | 85 项通过（不含 visuals） |
 | Certain Questing Additions | 1.2.0.5+mc1.21.1（Modrinth） | 80 项通过 |
 | Quest Enhance | 3.12（从作者 GitHub 源码 `codex/1.21.1-neoforge` 编译） | 89 项通过 |
-| 两者同时安装 | 同上 | 93 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
+| visuals + Quest Enhance | 同上 | 105 项通过 |
+| 只装 visuals | — | 96 项通过 |
+| 两者同时安装（不含 visuals） | 同上 | 93 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：
 - **Quest Enhance 单条前置线隐藏**：汇总线背后的真实连线全部被隐藏时，汇总线对玩家隐藏（设置了悬停显示则悬停时显示）；编辑模式下用 Quest Enhance 的隐藏线颜色画出。

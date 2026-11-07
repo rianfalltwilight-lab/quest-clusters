@@ -2,5 +2,6 @@ apply from: rootProject.file('gradle/module.gradle')
 
 dependencies {
     compileOnly project(':core')
+    // ClientQuestFile etc. are FTB Quests classes already on the compile classpath via module.gradle
     testImplementation project(':core')
 }

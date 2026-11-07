@@ -4,7 +4,7 @@
 	filename: "cluster_test"
 	group: ""
 	id: "00000000000000C1"
-	images: [{ id: "00000000000000A1", x: 0.75d, y: 0.5d, width: 0.4d, height: 0.4d, image: "quest_enhance:textures/icons/decorative_anchor.png", click_action: "none:quest_enhance:decorative_anchor:11111111-2222-3333-4444-555555555555" }]
+	images: [{ id: "00000000000000A2", x: -1.5d, y: 3.0d, width: 1.0d, height: 1.5d, image: "entity:minecraft:creeper[rotate=true]" }, { id: "00000000000000A3", x: 0.5d, y: 3.0d, width: 1.0d, height: 1.0d, image: "quest_clusters_visuals:textures/gui/example.apng.png" }, { id: "00000000000000A1", x: 0.75d, y: 0.5d, width: 0.4d, height: 0.4d, image: "quest_enhance:textures/icons/decorative_anchor.png", click_action: "none:quest_enhance:decorative_anchor:11111111-2222-3333-4444-555555555555" }]
 	quest_enhance_decorative_lines: [{ nodes: ["q:d1", "a:11111111-2222-3333-4444-555555555555", "q:d2"] }, { nodes: ["q:d0", "q:d1"] }]
 	order_index: 0
 	quest_links: [ ]

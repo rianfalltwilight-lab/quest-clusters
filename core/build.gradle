@@ -54,5 +54,15 @@ dependencies {
 def prepareDevtest = tasks.register('prepareDevtest', Sync) {
     from 'devtest/quests'
     into 'run/config/ftbquests/quests'
+    // the game writes into this folder during the run; Gradle would otherwise think it is still up to date
+    outputs.upToDateWhen { false }
 }
-tasks.matching { it.name == 'runClientDevtest' }.configureEach { dependsOn prepareDevtest }
+// visuals: start without our settings and with Certain Questing Additions' settings, to exercise the import
+def prepareVisualsDevtest = tasks.register('prepareVisualsDevtest') {
+    doLast {
+        delete 'run/local/quest_clusters_visuals'
+        file('run/local/certain_questing_additions').mkdirs()
+        file('run/local/certain_questing_additions/client-config.snbt').text = '{\n\tanimations: { quest_hover: true }\n\tappearance: { quest_hover_glow_alpha: 77 }\n}\n'
+    }
+}
+tasks.matching { it.name == 'runClientDevtest' }.configureEach { dependsOn prepareDevtest, prepareVisualsDevtest }
