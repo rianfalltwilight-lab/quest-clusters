@@ -48,7 +48,8 @@ public final class ClusterCodecs {
                     buf.readDouble(),
                     buf.readDouble(),
                     buf.readDouble(),
-                    ID_LIST.decode(buf)
+                    ID_LIST.decode(buf),
+                    new ClusterStyle(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt())
             );
         }
 
@@ -65,6 +66,10 @@ public final class ClusterCodecs {
             buf.writeDouble(c.width());
             buf.writeDouble(c.height());
             ID_LIST.encode(buf, c.members());
+            buf.writeInt(c.style().titleColor());
+            buf.writeInt(c.style().subtitleColor());
+            buf.writeInt(c.style().borderColor());
+            buf.writeInt(c.style().frameColor());
         }
     };
 

@@ -45,6 +45,15 @@ public final class ClusterNbt {
             members.add(StringTag.valueOf(QuestCluster.idToString(m)));
         }
         tag.put("members", members);
+        ClusterStyle st = c.style();
+        if (!st.isDefault()) {
+            CompoundTag style = factory.get();
+            if (st.titleColor() != 0) style.putString("title_color", String.format("#%08X", st.titleColor()));
+            if (st.subtitleColor() != 0) style.putString("subtitle_color", String.format("#%08X", st.subtitleColor()));
+            if (st.borderColor() != 0) style.putString("border_color", String.format("#%08X", st.borderColor()));
+            if (st.frameColor() != 0) style.putString("frame_color", String.format("#%08X", st.frameColor()));
+            tag.put("style", style);
+        }
         return tag;
     }
 
@@ -73,7 +82,8 @@ public final class ClusterNbt {
                 tag.getDouble("y"),
                 tag.contains("width", Tag.TAG_ANY_NUMERIC) ? tag.getDouble("width") : 3D,
                 tag.contains("height", Tag.TAG_ANY_NUMERIC) ? tag.getDouble("height") : 1D,
-                members
+                members,
+                readStyle(tag.getCompound("style"))
         ));
     }
 
@@ -105,6 +115,18 @@ public final class ClusterNbt {
             read(list.getCompound(i), chapterId).ifPresent(out::add);
         }
         return out;
+    }
+
+    private static ClusterStyle readStyle(CompoundTag t) {
+        if (t.isEmpty()) {
+            return ClusterStyle.DEFAULT;
+        }
+        return new ClusterStyle(optColor(t, "title_color"), optColor(t, "subtitle_color"),
+                optColor(t, "border_color"), optColor(t, "frame_color"));
+    }
+
+    private static int optColor(CompoundTag t, String key) {
+        return t.contains(key, Tag.TAG_STRING) ? parseColor(t.getString(key)) : 0;
     }
 
     static int parseColor(String s) {

@@ -73,13 +73,11 @@ public final class QuestClustersAPI {
     }
 
     public static QuestCluster setTitle(Object clusterId, String title, String subtitle) {
-        return change(clusterId, c -> new QuestCluster(c.id(), c.chapterId(), title, subtitle == null ? c.subtitle() : subtitle,
-                c.color(), c.defaultExpanded(), c.x(), c.y(), c.width(), c.height(), c.members()), "setTitle");
+        return change(clusterId, c -> c.withText(title, subtitle == null ? c.subtitle() : subtitle), "setTitle");
     }
 
     public static QuestCluster setDefaultExpanded(Object clusterId, boolean expanded) {
-        return change(clusterId, c -> new QuestCluster(c.id(), c.chapterId(), c.title(), c.subtitle(), c.color(), expanded,
-                c.x(), c.y(), c.width(), c.height(), c.members()), "setDefaultExpanded");
+        return change(clusterId, c -> c.withDefaultExpanded(expanded), "setDefaultExpanded");
     }
 
     public static boolean dissolve(Object clusterId) {

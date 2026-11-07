@@ -31,6 +31,10 @@ abstract class ClusterWidgetBase extends Widget {
         return Anim.progress(com.questclusters.client.ClusterViewState.lastChange(cluster.id()), 180F);
     }
 
+    public long clusterId() {
+        return cluster.id();
+    }
+
     /** What a plain left click does. */
     protected abstract void onToggle();
 

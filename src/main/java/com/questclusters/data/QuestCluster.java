@@ -20,6 +20,7 @@ import java.util.List;
  * @param width           width of the collapsed box
  * @param height          height of the collapsed box
  * @param members         FTB Quests ids of the member objects, in insertion order, no duplicates
+ * @param style           optional colours (title, subtitle, border, frame)
  */
 public record QuestCluster(
         long id,
@@ -32,7 +33,8 @@ public record QuestCluster(
         double y,
         double width,
         double height,
-        List<Long> members
+        List<Long> members,
+        ClusterStyle style
 ) {
     public static final int MAX_TITLE_LENGTH = 128;
     public static final int MAX_SUBTITLE_LENGTH = 256;
@@ -46,14 +48,50 @@ public record QuestCluster(
         title = title == null ? "" : title;
         subtitle = subtitle == null ? "" : subtitle;
         members = members == null ? List.of() : List.copyOf(members);
+        style = style == null ? ClusterStyle.DEFAULT : style;
+    }
+
+    /** Without style (defaults). */
+    public QuestCluster(long id, long chapterId, String title, String subtitle, int color, boolean defaultExpanded,
+                        double x, double y, double width, double height, List<Long> members) {
+        this(id, chapterId, title, subtitle, color, defaultExpanded, x, y, width, height, members, ClusterStyle.DEFAULT);
     }
 
     public QuestCluster withMembers(List<Long> newMembers) {
-        return new QuestCluster(id, chapterId, title, subtitle, color, defaultExpanded, x, y, width, height, newMembers);
+        return new QuestCluster(id, chapterId, title, subtitle, color, defaultExpanded, x, y, width, height, newMembers, style);
     }
 
     public QuestCluster withId(long newId) {
-        return new QuestCluster(newId, chapterId, title, subtitle, color, defaultExpanded, x, y, width, height, members);
+        return new QuestCluster(newId, chapterId, title, subtitle, color, defaultExpanded, x, y, width, height, members, style);
+    }
+
+    public QuestCluster withText(String newTitle, String newSubtitle) {
+        return new QuestCluster(id, chapterId, newTitle, newSubtitle, color, defaultExpanded, x, y, width, height, members, style);
+    }
+
+    public QuestCluster withBoxPosition(double newX, double newY) {
+        return new QuestCluster(id, chapterId, title, subtitle, color, defaultExpanded, newX, newY, width, height, members, style);
+    }
+
+    public QuestCluster withBoxSize(double newWidth, double newHeight) {
+        return new QuestCluster(id, chapterId, title, subtitle, color, defaultExpanded, x, y, newWidth, newHeight, members, style);
+    }
+
+    public QuestCluster withColor(int newColor) {
+        return new QuestCluster(id, chapterId, title, subtitle, newColor, defaultExpanded, x, y, width, height, members, style);
+    }
+
+    public QuestCluster withDefaultExpanded(boolean expanded) {
+        return new QuestCluster(id, chapterId, title, subtitle, color, expanded, x, y, width, height, members, style);
+    }
+
+    public QuestCluster withStyle(ClusterStyle newStyle) {
+        return new QuestCluster(id, chapterId, title, subtitle, color, defaultExpanded, x, y, width, height, members, newStyle);
+    }
+
+    /** Same cluster placed in another chapter with a new id (paste). */
+    public QuestCluster copyAs(long newId, long newChapterId, double newX, double newY, List<Long> newMembers) {
+        return new QuestCluster(newId, newChapterId, title, subtitle, color, defaultExpanded, newX, newY, width, height, newMembers, style);
     }
 
     /** Formats an id the same way FTB Quests does in its snbt files (16 upper-case hex digits). */

@@ -59,7 +59,7 @@ public final class ClusterEditor {
                     b -> setMembers(c, without(c.members(), Set.of(id)))));
         } else {
             menu.add(new ContextMenuItem(tr("create"), ThemeProperties.ADD_ICON.get(),
-                    b -> promptCreate(chapter, List.of(id))));
+                    b -> promptCreate(screen, chapter, List.of(id))));
             List<ContextMenuItem> targets = new ArrayList<>();
             for (QuestCluster c : ClientClusters.store().byChapter(chapter.id)) {
                 targets.add(new ContextMenuItem(ClusterText.title(c), Icons.ADD,
@@ -82,7 +82,7 @@ public final class ClusterEditor {
         }
         menu.add(ContextMenuItem.SEPARATOR);
         menu.add(new ContextMenuItem(tr("create_from_selection", ids.size()), ThemeProperties.ADD_ICON.get(),
-                b -> promptCreate(chapter, ids)));
+                b -> promptCreate(screen, chapter, ids)));
         List<ContextMenuItem> targets = new ArrayList<>();
         for (QuestCluster c : ClientClusters.store().byChapter(chapter.id)) {
             targets.add(new ContextMenuItem(ClusterText.title(c), Icons.ADD,
@@ -109,7 +109,7 @@ public final class ClusterEditor {
         List<ContextMenuItem> menu = new ArrayList<>();
         menu.add(new ContextMenuItem(Component.literal("\"").append(ClusterText.title(c)).append("\""), Color4I.empty(), null).setCloseMenu(false));
         menu.add(ContextMenuItem.SEPARATOR);
-        menu.add(new ContextMenuItem(tr("edit"), ThemeProperties.EDIT_ICON.get(), b -> openEditor(c)));
+        menu.add(new ContextMenuItem(tr("edit"), ThemeProperties.EDIT_ICON.get(), b -> openEditor(screen, c)));
         menu.add(new ContextMenuItem(ClusterViewState.isExpanded(c) ? tr("collapse") : tr("expand"), Icons.INFO,
                 b -> ClusterViewState.toggle(c)));
         menu.add(new ContextMenuItem(tr("select_members"), Icons.ADD, b -> selectMembers(screen, c)));
@@ -138,36 +138,68 @@ public final class ClusterEditor {
 
     // ------------------------------------------------------------------ actions
 
-    static void promptCreate(Chapter chapter, List<Long> members) {
+    static void promptCreate(QuestScreen screen, Chapter chapter, List<Long> members) {
         String[] title = {Component.translatable("quest_clusters.default_title").getString()};
         ConfigGroup group = new ConfigGroup("quest_clusters", accepted -> {
             if (accepted && !title[0].isBlank()) {
                 PacketDistributor.sendToServer(new ClusterPayloads.Create(chapter.id, title[0].strip(), List.copyOf(members)));
             }
-            reopenQuestScreen();
+            reopen(screen);
         });
         group.addString("title", title[0], v -> title[0] = v, title[0]);
         new EditConfigScreen(group).openGui();
     }
 
-    public static void openEditor(QuestCluster c) {
-        QuestCluster[] edited = {c};
+    public static void openEditor(QuestScreen screen, QuestCluster c) {
+        QuestCluster[] e = {c};
+        boolean[] autoBorder = {c.style().borderColor() == 0};
+        boolean[] boxFrame = {c.style().frameColor() == 0};
+        int[] border = {c.style().borderColor() != 0 ? c.style().borderColor() : 0xFFFFFFFF};
+        int[] frame = {c.style().frameColor() != 0 ? c.style().frameColor() : c.color()};
         ConfigGroup group = new ConfigGroup("quest_clusters", accepted -> {
-            if (accepted && !edited[0].equals(c)) {
-                update(edited[0]);
+            reopen(screen);
+            if (!accepted) {
+                return;
             }
-            reopenQuestScreen();
+            QuestCluster out = e[0].withStyle(e[0].style()
+                    .withBorder(autoBorder[0] ? 0 : border[0])
+                    .withFrame(boxFrame[0] ? 0 : frame[0]));
+            if (!out.equals(c)) {
+                update(out);
+            }
         });
-        group.addString("title", c.title(), v -> edited[0] = copy(edited[0], v, null, null, null, null, null), c.title()).setOrder(0);
-        group.addString("subtitle", c.subtitle(), v -> edited[0] = copy(edited[0], null, v, null, null, null, null), "").setOrder(1);
-        group.addColor("color", Color4I.rgba(c.color()), v -> edited[0] = copy(edited[0], null, null, v.rgba(), null, null, null),
-                Color4I.rgba(QuestCluster.DEFAULT_COLOR)).setOrder(2);
-        group.addBool("default_expanded", c.defaultExpanded(), v -> edited[0] = copy(edited[0], null, null, null, v, null, null), true).setOrder(3);
-        group.addDouble("width", c.width(), v -> edited[0] = copy(edited[0], null, null, null, null, v, null), 3D,
-                QuestCluster.MIN_BOX_SIZE, QuestCluster.MAX_BOX_SIZE).setOrder(4);
-        group.addDouble("height", c.height(), v -> edited[0] = copy(edited[0], null, null, null, null, null, v), 1D,
-                QuestCluster.MIN_BOX_SIZE, QuestCluster.MAX_BOX_SIZE).setOrder(5);
+        int o = 0;
+        group.addString("title", c.title(), v -> e[0] = e[0].withText(v, e[0].subtitle()), c.title()).setOrder(o++);
+        group.addString("subtitle", c.subtitle(), v -> e[0] = e[0].withText(e[0].title(), v), "").setOrder(o++);
+        group.addColor("color", Color4I.rgba(c.color()), v -> e[0] = e[0].withColor(v.rgba() | 0xFF000000),
+                Color4I.rgba(QuestCluster.DEFAULT_COLOR)).setOrder(o++);
+        group.addColor("title_color", Color4I.rgba(c.style().titleOr()),
+                v -> e[0] = e[0].withStyle(e[0].style().withTitle(v.rgba() | 0xFF000000)), Color4I.WHITE).setOrder(o++);
+        group.addColor("subtitle_color", Color4I.rgba(c.style().subtitleOr()),
+                v -> e[0] = e[0].withStyle(e[0].style().withSubtitle(v.rgba() | 0xFF000000)), Color4I.rgba(com.questclusters.data.ClusterStyle.DEFAULT_SUBTITLE)).setOrder(o++);
+        group.addBool("border_auto", autoBorder[0], v -> autoBorder[0] = v, true).setOrder(o++);
+        group.addColor("border_color", Color4I.rgba(border[0]), v -> border[0] = v.rgba() | 0xFF000000, Color4I.WHITE).setOrder(o++);
+        group.addBool("frame_from_box", boxFrame[0], v -> boxFrame[0] = v, true).setOrder(o++);
+        group.addColor("frame_color", Color4I.rgba(frame[0]), v -> frame[0] = v.rgba() | 0xFF000000,
+                Color4I.rgba(QuestCluster.DEFAULT_COLOR)).setOrder(o++);
+        group.addBool("default_expanded", c.defaultExpanded(), v -> e[0] = e[0].withDefaultExpanded(v), true).setOrder(o++);
+        group.addDouble("width", c.width(), v -> e[0] = e[0].withBoxSize(v, e[0].height()), 3D,
+                QuestCluster.MIN_BOX_SIZE, QuestCluster.MAX_BOX_SIZE).setOrder(o++);
+        group.addDouble("height", c.height(), v -> e[0] = e[0].withBoxSize(e[0].width(), v), 1D,
+                QuestCluster.MIN_BOX_SIZE, QuestCluster.MAX_BOX_SIZE).setOrder(o++);
         new EditConfigScreen(group).openGui();
+    }
+
+    /**
+     * Back to the quest screen we came from. Re-opening that same screen keeps its "previous screen" (the game),
+     * so Esc / the inventory key then close it normally instead of returning to the config screen.
+     */
+    private static void reopen(QuestScreen screen) {
+        if (screen != null) {
+            screen.openGui();
+        } else {
+            ClientQuestFile.openGui();
+        }
     }
 
     static void setMembers(QuestCluster c, List<Long> members) {
@@ -270,25 +302,7 @@ public final class ClusterEditor {
         if (minX == Double.MAX_VALUE) {
             return c;
         }
-        return new QuestCluster(c.id(), c.chapterId(), c.title(), c.subtitle(), c.color(), c.defaultExpanded(),
-                (minX + maxX) / 2, (minY + maxY) / 2, c.width(), c.height(), c.members());
-    }
-
-    private static void reopenQuestScreen() {
-        ClientQuestFile.openGui();
-    }
-
-    private static QuestCluster copy(QuestCluster c, String title, String subtitle, Integer color, Boolean defExp,
-                                     Double width, Double height) {
-        return new QuestCluster(c.id(), c.chapterId(),
-                title != null ? title : c.title(),
-                subtitle != null ? subtitle : c.subtitle(),
-                color != null ? color : c.color(),
-                defExp != null ? defExp : c.defaultExpanded(),
-                c.x(), c.y(),
-                width != null ? width : c.width(),
-                height != null ? height : c.height(),
-                c.members());
+        return c.withBoxPosition((minX + maxX) / 2, (minY + maxY) / 2);
     }
 
     static List<Long> with(List<Long> members, List<Long> add) {

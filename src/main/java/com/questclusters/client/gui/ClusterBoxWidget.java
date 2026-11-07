@@ -45,6 +45,11 @@ public final class ClusterBoxWidget extends ClusterWidgetBase {
     }
 
     @Override
+    public dev.ftb.mods.ftblibrary.ui.CursorType getCursor() {
+        return ClusterWidgets.canEdit() ? dev.ftb.mods.ftblibrary.ui.CursorType.MOVE : null;
+    }
+
+    @Override
     public boolean shouldDraw() {
         return !ClusterViewState.isExpanded(cluster) && (ClusterWidgets.canEdit() || status().visible() > 0);
     }
@@ -132,7 +137,7 @@ public final class ClusterBoxWidget extends ClusterWidgetBase {
         float innerW = w - pad * 2;
         float titleH = Math.min(h * (twoRows ? 0.40F : 0.55F), 18F);
         float titleY = twoRows ? y + h * 0.38F : y + h / 2F;
-        ClusterRender.centredText(g, ClusterText.title(cluster), x + w / 2F, titleY, titleH, innerW, 0xFFFFFFFF);
+        ClusterRender.centredText(g, ClusterText.title(cluster), x + w / 2F, titleY, titleH, innerW, cluster.style().titleOr());
 
         if (twoRows) {
             float rowH = Math.min(h * 0.24F, 10F);
@@ -141,7 +146,7 @@ public final class ClusterBoxWidget extends ClusterWidgetBase {
             if (hasSub) {
                 float subW = innerW - progressW - (showProgress ? 2 : 0);
                 ClusterRender.centredText(g, ClusterText.subtitle(cluster), x + pad + subW / 2F, rowY,
-                        rowH, subW, 0xFFBBBBBB);
+                        rowH, subW, cluster.style().subtitleOr());
             }
             if (showProgress) {
                 Component p = Component.literal(s.completed() + "/" + s.visible());
@@ -176,6 +181,9 @@ public final class ClusterBoxWidget extends ClusterWidgetBase {
     }
 
     private int borderColor(ClusterStatus s) {
+        if (cluster.style().borderColor() != 0) {
+            return cluster.style().borderColor();
+        }
         var chapter = ClusterWidgets.chapter(questPanel);
         Color4I c;
         if (s.allComplete()) {

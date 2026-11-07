@@ -70,7 +70,22 @@ public final class ClusterFrameWidget extends ClusterWidgetBase {
         if (ClusterWidgets.blockedByOverlay(questPanel) || !super.checkMouseOver(mouseX, mouseY)) {
             return false;
         }
-        return mouseY < getY() + headerH; // header strip only
+        if (mouseY < getY() + headerH) {
+            return true; // title strip
+        }
+        // in edit mode the frame's edges are drag handles too; the inside still lets clicks through for panning
+        if (ClusterWidgets.canEdit()) {
+            int e = EDGE;
+            return mouseX < getX() + e || mouseX >= getX() + width - e || mouseY >= getY() + height - e;
+        }
+        return false;
+    }
+
+    private static final int EDGE = 4;
+
+    @Override
+    public dev.ftb.mods.ftblibrary.ui.CursorType getCursor() {
+        return ClusterWidgets.canEdit() ? dev.ftb.mods.ftblibrary.ui.CursorType.MOVE : null;
     }
 
     @Override
@@ -96,17 +111,17 @@ public final class ClusterFrameWidget extends ClusterWidgetBase {
             g.pose().popPose();
         }
         float a = appear(); // fade in after expanding
-        int base = cluster.color();
+        int base = cluster.style().frameColor() != 0 ? cluster.style().frameColor() : cluster.color();
         int edge = ClusterRender.lighten(ClusterRender.withAlpha(base, (int) (200 * a)), 0.35F);
         g.fill(x, y + headerH, x + w, y + h, ClusterRender.withAlpha(base, (int) (70 * a)));
-        ClusterRender.outline(g, x, y, w, h, edge, 1);
+        ClusterRender.outline(g, x, y, w, h, edge, ClusterWidgets.canEdit() && isMouseOver() ? 2 : 1);
         g.fill(x, y, x + w, y + headerH, ClusterRender.withAlpha(base, (int) ((isMouseOver() ? 255 : 220) * a)));
 
         float tx = x + 3;
         float avail = w - headerH - 6;
         // title left-aligned-ish: centre it within the strip minus the collapse glyph
         ClusterRender.centredText(g, ClusterText.title(cluster), tx + avail / 2F, y + headerH / 2F,
-                headerH * 0.8F, avail, 0xFFFFFFFF);
+                headerH * 0.8F, avail, cluster.style().titleOr());
         ClusterRender.centredText(g, Component.literal("−"), x + w - headerH / 2F - 1, y + headerH / 2F,
                 headerH * 0.9F, headerH, 0xFFFFFFFF);
     }

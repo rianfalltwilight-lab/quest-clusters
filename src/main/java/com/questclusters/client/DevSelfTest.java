@@ -45,6 +45,7 @@ public final class DevSelfTest {
     private static int failures = 0;
     private static QuestScreen screen;
     private static double[] before;
+    private static int[] dragFrom;
 
     private DevSelfTest() {
     }
@@ -175,6 +176,38 @@ public final class DevSelfTest {
         STEPS.add(() -> {
             check(Math.abs(cluster().x() - (before[0] + 2)) < 1e-6 && Math.abs(ClientQuestFile.INSTANCE.getQuest(D1).getX() - (before[2] + 2)) < 1e-6,
                     "redo moves them again");
+            // ---- the same drag through Minecraft's real mouse handler (hover, press, move over frames, release)
+            before = new double[]{cluster().x(), cluster().y(), ClientQuestFile.INSTANCE.getQuest(D1).getX()};
+            int[] p = centre(box());
+            realMove(p[0], p[1]);
+            dragFrom = p;
+            return 3;
+        });
+        STEPS.add(() -> {
+            realButton(0, true);
+            return 3;
+        });
+        for (int i = 1; i <= 5; i++) {
+            final int k = i;
+            STEPS.add(() -> {
+                double cell = screen.getQuestButtonSize() + screen.getQuestButtonSpacing();
+                realMove(dragFrom[0] + 2 * cell * k / 5D, dragFrom[1] + cell * k / 5D);
+                return 2;
+            });
+        }
+        STEPS.add(() -> {
+            realButton(0, false);
+            return 30;
+        });
+        STEPS.add(() -> {
+            QuestCluster c = cluster();
+            check(Math.abs(c.x() - (before[0] + 2)) < 1e-6 && Math.abs(c.y() - (before[1] + 1)) < 1e-6,
+                    "real mouse drag moves the box by (2,1): " + before[0] + "," + before[1] + " -> " + c.x() + "," + c.y());
+            check(Math.abs(ClientQuestFile.INSTANCE.getQuest(D1).getX() - (before[2] + 2)) < 1e-6, "real mouse drag moves members");
+            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
+            return 20;
+        });
+        STEPS.add(() -> {
             int[] p = centre(box());
             click(p[0], p[1], 1); // right click: cluster menu
             return 15;
@@ -375,8 +408,112 @@ public final class DevSelfTest {
             ClusterViewState.setExpanded(cluster(), true);
             return 5;
         });
+        // ---------------------------------------------------------------- user reports (v0.1.0)
+        // 1) Esc / E after the editor must go back to the quest screen, then out to the game
+        for (int key : new int[]{256, 69}) { // GLFW_KEY_ESCAPE, GLFW_KEY_E
+            STEPS.add(() -> {
+                Minecraft.getInstance().setScreen(null); // like a player: open the quest book from the game
+                return 5;
+            });
+            STEPS.add(() -> {
+                screen = ClientQuestFile.openGui();
+                return 10;
+            });
+            STEPS.add(() -> {
+                ClusterEditor.openEditor(screen, cluster());
+                return 10;
+            });
+            STEPS.add(() -> {
+                realKey(256); // Esc closes the editor (cancel)
+                return 10;
+            });
+            STEPS.add(() -> {
+                check(dev.ftb.mods.ftblibrary.util.client.ClientUtils.getCurrentGuiAs(QuestScreen.class) != null,
+                        "closing the editor returns to the quest screen");
+                realKey(key);
+                return 10;
+            });
+            STEPS.add(() -> {
+                check(Minecraft.getInstance().screen == null, (key == 256 ? "Esc" : "E") + " then closes the quest book (screen now "
+                        + Minecraft.getInstance().screen + ")");
+                return 5;
+            });
+        }
         STEPS.add(() -> {
-            ClusterEditor.openEditor(cluster());
+            screen = ClientQuestFile.openGui();
+            screen.open(ClientQuestFile.INSTANCE.getChapter(chapterId()), false);
+            // 2) FTB text formats
+            var gold = com.questclusters.client.gui.ClusterText.text("&6Gold");
+            var json = com.questclusters.client.gui.ClusterText.text("{\"text\":\"JSON\",\"color\":\"red\"}");
+            log("parsed: " + gold + " | " + json);
+            check(gold.getString().equals("Gold") && hasColor(gold, net.minecraft.ChatFormatting.GOLD), "& colour codes are parsed");
+            check(json.getString().equals("JSON") && hasColor(json, net.minecraft.ChatFormatting.RED), "JSON text is parsed");
+            // 3) colours are stored and synced
+            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withStyle(
+                    new com.questclusters.data.ClusterStyle(0xFF00FF00, 0xFFFF00FF, 0xFFFF0000, 0xFF123456))));
+            return 20;
+        });
+        STEPS.add(() -> {
+            var st = cluster().style();
+            check(st.titleColor() == 0xFF00FF00 && st.borderColor() == 0xFFFF0000 && st.frameColor() == 0xFF123456, "custom colours saved and synced: " + st);
+            // 4) moving all members with FTB Quests' own move request: box follows
+            before = new double[]{cluster().x(), cluster().y()};
+            var ch = ClientQuestFile.INSTANCE.getChapter(chapterId());
+            for (long m : cluster().members()) {
+                var mv = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(m);
+                dev.architectury.networking.NetworkManager.sendToServer(new dev.ftb.mods.ftbquests.net.MoveMovableMessage(m, ch.id, mv.getX() + 1, mv.getY()));
+            }
+            return 40;
+        });
+        STEPS.add(() -> {
+            check(Math.abs(cluster().x() - (before[0] + 1)) < 1e-6 && Math.abs(cluster().y() - before[1]) < 1e-6,
+                    "box follows when all members are moved with FTB Quests' move: " + before[0] + " -> " + cluster().x());
+            // 5) drag an expanded frame by its left edge with the real mouse
+            ClusterViewState.setExpanded(cluster(), true);
+            double cx = 0, cy = 0;
+            for (long m : cluster().members()) {
+                var mv = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(m);
+                cx += mv.getX() / cluster().members().size();
+                cy += mv.getY() / cluster().members().size();
+            }
+            screen.questPanel.scrollTo(cx, cy); // frame in the middle of the screen
+            return 15;
+        });
+        STEPS.add(() -> {
+            before = new double[]{cluster().x(), cluster().y()};
+            ClusterFrameWidget f = frame();
+            dragFrom = new int[]{(int) (screenX(f) + f.width - 3), (int) (screenY(f) + f.height - 2)}; // bottom edge, right end
+            realMove(dragFrom[0], dragFrom[1]);
+            return 3;
+        });
+        STEPS.add(() -> {
+            ClusterFrameWidget f = frame();
+            log("frame drag: frame at " + screenX(f) + "," + screenY(f) + " " + f.width + "x" + f.height + ", press at "
+                    + dragFrom[0] + "," + dragFrom[1] + ", mouse " + screen.getMouseX() + "," + screen.getMouseY()
+                    + ", over=" + f.isMouseOver() + ", draw=" + f.shouldDraw());
+            realButton(0, true);
+            return 3;
+        });
+        for (int i = 1; i <= 4; i++) {
+            final int k = i;
+            STEPS.add(() -> {
+                double cell = screen.getQuestButtonSize() + screen.getQuestButtonSpacing();
+                realMove(dragFrom[0], dragFrom[1] + cell * k / 4D);
+                return 2;
+            });
+        }
+        STEPS.add(() -> {
+            realButton(0, false);
+            return 30;
+        });
+        STEPS.add(() -> {
+            check(Math.abs(cluster().y() - (before[1] + 1)) < 1e-6, "dragging the expanded frame's edge moves the cluster: "
+                    + before[1] + " -> " + cluster().y());
+            shot("qc_9_colours");
+            return 5;
+        });
+        STEPS.add(() -> {
+            ClusterEditor.openEditor(screen, cluster());
             return 15;
         });
         STEPS.add(() -> {
@@ -460,12 +597,62 @@ public final class DevSelfTest {
         }
     }
 
+    /** Mouse move through Minecraft's own input path (GUI coordinates in). */
+    private static void realMove(double gx, double gy) {
+        Minecraft mc = Minecraft.getInstance();
+        var w = mc.getWindow();
+        double sx = (double) w.getScreenWidth() / w.getGuiScaledWidth();
+        double sy = (double) w.getScreenHeight() / w.getGuiScaledHeight();
+        try {
+            var m = net.minecraft.client.MouseHandler.class.getDeclaredMethod("onMove", long.class, double.class, double.class);
+            m.setAccessible(true);
+            m.invoke(mc.mouseHandler, w.getWindow(), gx * sx, gy * sy);
+        } catch (Throwable t) {
+            check(false, "realMove: " + t);
+        }
+    }
+
+    private static void realButton(int button, boolean down) {
+        Minecraft mc = Minecraft.getInstance();
+        try {
+            var m = net.minecraft.client.MouseHandler.class.getDeclaredMethod("onPress", long.class, int.class, int.class, int.class);
+            m.setAccessible(true);
+            m.invoke(mc.mouseHandler, mc.getWindow().getWindow(), button, down ? 1 : 0, 0);
+        } catch (Throwable t) {
+            check(false, "realButton: " + t);
+        }
+    }
+
+    private static boolean hasColor(net.minecraft.network.chat.Component c, net.minecraft.ChatFormatting f) {
+        int want = f.getColor();
+        boolean[] found = {false};
+        c.visit((style, text) -> {
+            if (style.getColor() != null && style.getColor().getValue() == want && !text.isEmpty()) found[0] = true;
+            return java.util.Optional.empty();
+        }, net.minecraft.network.chat.Style.EMPTY);
+        return found[0];
+    }
+
+    private static void realKey(int glfwKey) {
+        Minecraft mc = Minecraft.getInstance();
+        long w = mc.getWindow().getWindow();
+        mc.keyboardHandler.keyPress(w, glfwKey, 0, 1, 0);
+        mc.keyboardHandler.keyPress(w, glfwKey, 0, 0, 0);
+    }
+
+    /** Widgets of the fixture cluster F1 (other clusters exist later in the test). */
     private static ClusterBoxWidget box() {
-        return find(ClusterBoxWidget.class);
+        for (Widget w : screen.questPanel.getWidgets()) {
+            if (w instanceof ClusterBoxWidget b && b.clusterId() == CLUSTER) return b;
+        }
+        throw new IllegalStateException("no box for F1");
     }
 
     private static ClusterFrameWidget frame() {
-        return find(ClusterFrameWidget.class);
+        for (Widget w : screen.questPanel.getWidgets()) {
+            if (w instanceof ClusterFrameWidget f && f.clusterId() == CLUSTER) return f;
+        }
+        throw new IllegalStateException("no frame for F1");
     }
 
     private static double screenX(Widget w) {

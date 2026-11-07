@@ -25,6 +25,7 @@ public final class ClientEvents {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         ClusterViewState.onLogout();
         ClientClusters.clear();
+        com.questclusters.client.gui.ClusterText.clearCache();
     }
 
     /** Rebuild the open quest panel when cluster data arrives from the server. */

@@ -85,7 +85,7 @@ public final class ClusterClipboard {
                 }
             }
             templates.add(new ClusterTemplate(c.title(), c.subtitle(), c.color(), c.defaultExpanded(),
-                    tx + (c.x() - copied.anchorX()), ty + (c.y() - copied.anchorY()), c.width(), c.height(), specs));
+                    tx + (c.x() - copied.anchorX()), ty + (c.y() - copied.anchorY()), c.width(), c.height(), specs, c.style()));
         }
         var payload = new ClusterPayloads.Paste(target.id, templates);
         // after this tick's copy requests have gone out

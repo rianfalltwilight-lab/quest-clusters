@@ -36,6 +36,6 @@ public record ClusterChangeEvent(QuestCluster before, QuestCluster after) implem
                 : "members";
         QuestCluster shown = after != null ? after : before;
         return List.of(Component.translatable("quest_clusters.event." + key,
-                QuestBookEditEvent.sanitizeComponent(Component.literal(shown.title()))));
+                QuestBookEditEvent.sanitizeComponent(com.questclusters.client.gui.ClusterText.text(shown.title()))));
     }
 }

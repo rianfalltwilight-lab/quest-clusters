@@ -12,7 +12,8 @@ import java.util.List;
  * copied from plus the exact position the copy was placed at. The server finds the new copies by that position.
  */
 public record ClusterTemplate(String title, String subtitle, int color, boolean defaultExpanded,
-                              double x, double y, double width, double height, List<MemberSpec> members) {
+                              double x, double y, double width, double height, List<MemberSpec> members,
+                              ClusterStyle style) {
 
     public record MemberSpec(long sourceId, double x, double y) {
     }
@@ -33,7 +34,8 @@ public record ClusterTemplate(String title, String subtitle, int color, boolean 
             for (int i = 0; i < n; i++) {
                 members.add(new MemberSpec(buf.readLong(), buf.readDouble(), buf.readDouble()));
             }
-            return new ClusterTemplate(title, subtitle, color, exp, x, y, w, h, members);
+            ClusterStyle style = new ClusterStyle(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt());
+            return new ClusterTemplate(title, subtitle, color, exp, x, y, w, h, members, style);
         }
 
         @Override
@@ -52,6 +54,10 @@ public record ClusterTemplate(String title, String subtitle, int color, boolean 
                 buf.writeDouble(m.x());
                 buf.writeDouble(m.y());
             }
+            buf.writeInt(t.style().titleColor());
+            buf.writeInt(t.style().subtitleColor());
+            buf.writeInt(t.style().borderColor());
+            buf.writeInt(t.style().frameColor());
         }
     };
 }

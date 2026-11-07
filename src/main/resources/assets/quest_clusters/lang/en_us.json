@@ -59,5 +59,14 @@
   "quest_clusters.event.edit": "Edit quest cluster '%s'",
   "quest_clusters.event.move": "Move quest cluster '%s'",
   "quest_clusters.event.members": "Change members of quest cluster '%s'",
-  "quest_clusters.event.dissolve": "Dissolve quest cluster '%s'"
+  "quest_clusters.event.dissolve": "Dissolve quest cluster '%s'",
+  "quest_clusters.title_color": "Title colour",
+  "quest_clusters.subtitle_color": "Subtitle colour",
+  "quest_clusters.border_auto": "Border follows progress",
+  "quest_clusters.border_auto.tooltip": "Like quest outlines: locked / not started / started / completed",
+  "quest_clusters.border_color": "Border colour (when not following progress)",
+  "quest_clusters.frame_from_box": "Frame uses box colour",
+  "quest_clusters.frame_color": "Frame colour (expanded)",
+  "quest_clusters.title.tooltip": "Supports & colour codes, JSON text and {lang.key}",
+  "quest_clusters.subtitle.tooltip": "Supports & colour codes, JSON text and {lang.key}"
 }

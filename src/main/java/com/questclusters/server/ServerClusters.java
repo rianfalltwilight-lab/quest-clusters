@@ -31,6 +31,10 @@ public final class ServerClusters {
     private static boolean dirty;
     private static boolean pruneRequested;
     private static final com.questclusters.data.ClusterRevival REVIVAL = new com.questclusters.data.ClusterRevival();
+    /** Last seen bounds of each cluster's members (cx, cy, w, h): lets the box follow when they all move together. */
+    private static final java.util.Map<Long, double[]> LAST_BOUNDS = new java.util.HashMap<>();
+    /** Clusters whose box was just set explicitly (move/undo/redo): only refresh their baseline. */
+    private static final java.util.Set<Long> SKIP_FOLLOW = new java.util.HashSet<>();
 
     private ServerClusters() {
     }
@@ -78,12 +82,19 @@ public final class ServerClusters {
     public static void onUnload() {
         STORE.clear();
         REVIVAL.clear();
+        LAST_BOUNDS.clear();
+        SKIP_FOLLOW.clear();
         dirty = false;
         pruneRequested = false;
     }
 
     /** Server tick: apply pending prunes so clients learn about removed members promptly. */
+    private static int tickCounter;
+
     public static void tick() {
+        if (++tickCounter % 20 == 0) {
+            pruneRequested = true;
+        }
         if (pruneRequested) {
             ServerQuestFile.getInstance().filter(f -> !f.isLoading()).ifPresent(ServerClusters::runPrune);
         }
@@ -112,12 +123,58 @@ public final class ServerClusters {
                 r.updated().forEach(c -> ClusterNetwork.sendUpsertToAll(server, c));
                 r.removed().forEach(id -> ClusterNetwork.sendRemoveToAll(server, id));
             }
+            r.removed().forEach(LAST_BOUNDS::remove);
         }
+        followMembers(file, server);
+    }
+
+    /**
+     * Members moved with FTB Quests' own tools (multi-select move, arrow keys, its undo): if all of a cluster's
+     * members moved together, move the box by the same amount so it stays with them.
+     */
+    private static void followMembers(ServerQuestFile file, MinecraftServer server) {
+        for (QuestCluster c : STORE.all()) {
+            double[] b = memberBounds(file, c);
+            if (b == null) {
+                continue;
+            }
+            double[] prev = LAST_BOUNDS.put(c.id(), b);
+            if (SKIP_FOLLOW.remove(c.id()) || prev == null) {
+                continue;
+            }
+            boolean sameShape = Math.abs(b[2] - prev[2]) < 1e-6 && Math.abs(b[3] - prev[3]) < 1e-6;
+            double dx = b[0] - prev[0], dy = b[1] - prev[1];
+            if (sameShape && (Math.abs(dx) > 1e-6 || Math.abs(dy) > 1e-6)) {
+                QuestCluster moved = c.withBoxPosition(c.x() + dx, c.y() + dy);
+                STORE.put(moved);
+                dirty = true;
+                if (server != null) {
+                    ClusterNetwork.sendUpsertToAll(server, moved);
+                }
+            }
+        }
+        LAST_BOUNDS.keySet().removeIf(id -> !STORE.contains(id));
+    }
+
+    private static double[] memberBounds(ServerQuestFile file, QuestCluster c) {
+        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+        boolean any = false;
+        for (long id : c.members()) {
+            if (file.getBase(id) instanceof Movable m) {
+                any = true;
+                minX = Math.min(minX, m.getX() - m.getWidth() / 2D);
+                maxX = Math.max(maxX, m.getX() + m.getWidth() / 2D);
+                minY = Math.min(minY, m.getY() - m.getHeight() / 2D);
+                maxY = Math.max(maxY, m.getY() + m.getHeight() / 2D);
+            }
+        }
+        return any ? new double[]{(minX + maxX) / 2D, (minY + maxY) / 2D, maxX - minX, maxY - minY} : null;
     }
 
     /** Sets a cluster to the given state (null = removed) without validation; used by undo/redo. */
     static void setRaw(ServerQuestFile file, long id, QuestCluster state) {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        SKIP_FOLLOW.add(id);
         if (state == null) {
             if (STORE.remove(id).isPresent() && server != null) {
                 ClusterNetwork.sendRemoveToAll(server, id);
@@ -170,8 +227,7 @@ public final class ServerClusters {
             }
             QuestCluster c = current.get();
             dev.ftb.mods.ftbquests.quest.Chapter chapter = file.getChapter(c.chapterId());
-            QuestCluster moved = new QuestCluster(c.id(), c.chapterId(), c.title(), c.subtitle(), c.color(), c.defaultExpanded(),
-                    c.x() + dx, c.y() + dy, c.width(), c.height(), c.members());
+            QuestCluster moved = c.withBoxPosition(c.x() + dx, c.y() + dy);
             Optional<ValidationError> err = ClusterValidator.validate(moved, STORE, new FtbqMemberLookup(file));
             if (err.isPresent() || chapter == null) {
                 reject(player, err.orElse(new ValidationError("no_chapter", QuestCluster.idToString(c.chapterId()))));
@@ -220,7 +276,7 @@ public final class ServerClusters {
                 }
                 // separate step after Quest Enhance's paste steps; undo it first, then the pasted quests
                 applyWithHistory(player, file, new QuestCluster(newId(), chapterId, t.title(), t.subtitle(), t.color(),
-                        t.defaultExpanded(), t.x(), t.y(), t.width(), t.height(), members));
+                        t.defaultExpanded(), t.x(), t.y(), t.width(), t.height(), members, t.style()));
             }
         });
     }
@@ -254,6 +310,7 @@ public final class ServerClusters {
             return err;
         }
         STORE.put(cluster);
+        SKIP_FOLLOW.add(cluster.id());
         dirty = true;
         file.markDirty();
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
@@ -324,7 +381,6 @@ public final class ServerClusters {
         if (movables.isEmpty()) {
             return c;
         }
-        return new QuestCluster(c.id(), c.chapterId(), c.title(), c.subtitle(), c.color(), c.defaultExpanded(),
-                (minX + maxX) / 2D, (minY + maxY) / 2D, 3D, 1D, c.members());
+        return c.withBoxPosition((minX + maxX) / 2D, (minY + maxY) / 2D).withBoxSize(3D, 1D);
     }
 }

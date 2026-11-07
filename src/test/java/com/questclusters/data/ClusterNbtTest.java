@@ -25,4 +25,13 @@ class ClusterNbtTest {
         t.putString("title", "x");
         assertEquals(true, ClusterNbt.read(t, 5L).orElseThrow().defaultExpanded());
     }
+
+    @Test
+    void styleRoundTrip() {
+        QuestCluster c = new QuestCluster(0x1L, 0x55L, "&6Gold", "{\"text\":\"x\"}", 0xFF112233, true, 0, 0, 3, 1, List.of(7L),
+                new ClusterStyle(0xFF00FF00, 0, 0xFFFF0000, 0));
+        assertEquals(List.of(c), ClusterNbt.readChapterFile(ClusterNbt.writeChapterFile(0x55L, List.of(c))));
+        QuestCluster plain = c.withStyle(ClusterStyle.DEFAULT);
+        assertEquals(false, ClusterNbt.write(plain).contains("style"), "default style is not written");
+    }
 }
