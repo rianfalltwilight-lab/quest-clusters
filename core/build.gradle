@@ -59,6 +59,13 @@ dependencies {
     if (devModules.contains('filters') && !project.hasProperty('noFfs')) {
         localRuntime("dev.ftb.mods:ftb-filter-system-neoforge:${rootProject.ftb_filter_system_version}") { transitive = false }
     }
+    if (project.hasProperty('withXmod')) { // FTB XMod Compat, to test the take-over of its FTB Quests part
+        localRuntime("dev.ftb.mods:ftb-xmod-compat-neoforge:${rootProject.ftb_xmod_compat_version}") { transitive = false }
+    }
+    if (project.hasProperty('withKubejs')) {
+        localRuntime("dev.latvian.mods:kubejs-neoforge:${rootProject.kubejs_version}") { transitive = false }
+        localRuntime("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
+    }
     if (project.hasProperty('withJei')) {
         localRuntime("mezz.jei:jei-1.21.1-neoforge:${rootProject.jei_version}") { transitive = false }
     }
@@ -88,4 +95,12 @@ def prepareTour = tasks.register('prepareTour', Sync) {
     outputs.upToDateWhen { false }
 }
 tasks.matching { it.name == 'runClientTour' }.configureEach { dependsOn prepareTour }
+// -PwithKubejs: the dev self-test's KubeJS script
+def prepareKubejsDevtest = tasks.register('prepareKubejsDevtest', Sync) {
+    onlyIf { project.hasProperty('withKubejs') }
+    from 'devtest/kubejs/server_scripts'
+    into 'run/kubejs/server_scripts'
+    outputs.upToDateWhen { false }
+}
+tasks.matching { it.name == 'runClientDevtest' }.configureEach { dependsOn prepareKubejsDevtest }
 tasks.matching { it.name == 'runClientDevtest' }.configureEach { dependsOn prepareDevtest, prepareVisualsDevtest }

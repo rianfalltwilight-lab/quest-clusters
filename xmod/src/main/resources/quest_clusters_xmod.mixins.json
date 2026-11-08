@@ -3,7 +3,10 @@
   "minVersion": "0.8",
   "package": "com.questclusters.xmod.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "xmod.XModQuestsKubeJSMixin",
+    "xmod.XModQuestsSetupMixin"
+  ],
   "client": [],
   "injectors": {
     "defaultRequire": 1

@@ -11,6 +11,6 @@
 	quest_enhance_hidden_dependency_lines: [ ]
 	quest_links: [ ]
 	quests: [
-		{ id: "00000000000000D7", x: 0.0d, y: 0.0d, title: "Behind the lock", tasks: [{ id: "00000000000000E7", type: "checkmark" }] }
+		{ id: "00000000000000D7", x: 0.0d, y: 0.0d, title: "Behind the lock", tags: ["qc_tag"], tasks: [{ id: "00000000000000E7", type: "checkmark" }] }
 	]
 }

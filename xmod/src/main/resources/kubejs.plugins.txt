@@ -1,0 +1,1 @@
+com.questclusters.xmod.kubejs.QuestsKubeJSPlugin

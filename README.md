@@ -6,7 +6,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 - FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
 - 客户端和服务端都需要安装
 
-## 当前进度：阶段 0–2、4、A、B、C、D、E、F
+## 当前进度：阶段 0–2、4、A、B、C、D、E、F、G1
 
 ## 模块（阶段 C 起为多模块仓库）
 
@@ -16,7 +16,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 | `visuals/` | `quest_clusters_visuals` | 任务书视觉增强，替代 Certain Questing Additions（见下）；声明与之不兼容；纯客户端 | 已发布 |
 | `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（阶段 E 全部完成） |
 | `filters/` | `quest_clusters_filters` | FTB 筛选系统的额外筛选，替代 Smart Filter Extras（见下）；声明与之不兼容 | 已发布 |
-| `xmod/` | `quest_clusters_xmod` | 阶段 G：FTB XMod Compat 的 FTB Quests 部分（接管，不声明不兼容） | 占位，未发布 |
+| `xmod/` | `quest_clusters_xmod` | FTB XMod Compat 的 FTB Quests 部分（见下）；与 XMod 共存时接管这部分 | 已发布（G1：筛选器、KubeJS；JEI/REI 在 G2，Jade 等在 G3） |
 | `bundle/` | `quest_clusters_bundle` | 把所有已发布模块嵌套进一个 jar（jar-in-jar） | 已发布 |
 
 发布页提供每个已发布模块的单独 jar，以及包含全部已发布模块的 `quest_clusters_bundle-*.jar`；装单独模块或 bundle 二选一。
@@ -106,6 +106,15 @@ E4（本版）：脚本、视频、粘贴图片。
 - **卸载前**：`/qcfilters downgrade`（或 `/smart_filter_extras downgrade`）把主手筛选器里能转换的部分改写成 FFS 自带写法（物品列表 → `item` / `or(item...)` / `and(item component(fuzzy:...))`，物品标签 → `item_tag` / `or(item_tag...)`）；方块标签、燃料值没有等价写法，保持不变并提示。
 - 服务端和客户端都要装（只有一端装时 NeoForge 会拒绝连接）。没装 FTB 筛选系统时本模块什么也不做，所以 bundle 不强制要求 FFS。
 
+### 跨模组联动模块（`xmod/`，替代 FTB XMod Compat 21.1.14 的 FTB Quests 部分，未复用其代码）
+- **与 XMod 共存**：装了 FTB XMod Compat 时，只关掉它的 FTB Quests 部分并由本模块提供，XMod 的其他功能（FTB Chunks、FTB Teams、阶段 / 权限 / 货币实现选择等）不变。
+  接管针对 XMod 21.1.14 编写，模组信息里声明了版本范围 `[21.1.14,21.2)`：版本不对时启动时就会明确提示，而不是静默地重复注册。
+- **任务里的筛选器**（G1）：FTB 任务的物品任务可以用 FTB 筛选系统的智能筛选器作为物品，背包里任一匹配的物品都会计入（Item Filters 模组没有 1.21.1 版本，所以只支持 FTB 筛选系统）。
+- **KubeJS**（G1）：事件组 `FTBQuestsEvents`（`customTask`、`customReward`、`completed`、`started`、客户端 `customFilterItem`）、绑定 `FTBQuests`、`player.data.ftbquests`，名字和方法与 XMod 相同，脚本不用改。
+  - `completed` / `started` 可按对象 ID 或 `#标签` 过滤；不带过滤的监听器每次只触发一次（XMod 对每个标签都会再触发一次）。
+  - FTB 任务在客户端为本地副本也会触发这些事件，现在只把服务端真实的完成 / 开始交给服务端脚本。
+- 开发测试：`-PdevModules=xmod -PwithKubejs -PwithXmod -PwithJei`（带 KubeJS 时自动放入 `core/devtest/kubejs` 的测试脚本）。
+
 ### 迁移框架（`core/.../migration`）
 - 模块用 `MigrationRegistry.register(...)` 注册一次性迁移；服务器读完任务书后、本附属加载自己的数据前执行。
 - 迁移直接读磁盘上的原始章节文件（`MigrationContext.rawChapters()`），所以已卸载附属留下的字段仍能读到——FTB Quests 下次保存章节时会丢掉这些字段。
@@ -192,6 +201,7 @@ QuestClusters.dissolve(clusterId)
 | 两者同时安装（不含 visuals） | 同上 | 93 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
 | 默认全部已发布模块（visuals + editor + filters，含 JEI） | — | 185 项通过 |
 | 同上但不装 FTB 筛选系统 | — | 全部通过（filters 自动停用） |
+| xmod + KubeJS，以及再加 FTB XMod Compat 21.1.14 + JEI（接管测试） | KubeJS 2101.7.2 | 全部通过：事件只触发一次、只有一个筛选适配器，XMod 的 JEI 等照常 |
 | visuals + Quest Enhance（不带 editor，`-PskipModules=editor`） | 3.12 | 105 项通过 |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：

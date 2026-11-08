@@ -3,4 +3,7 @@ apply from: rootProject.file('gradle/module.gradle')
 dependencies {
     compileOnly project(':core')
     testImplementation project(':core')
+    compileOnly("dev.ftb.mods:ftb-filter-system-neoforge:${rootProject.ftb_filter_system_version}") { transitive = false }
+    compileOnly("dev.latvian.mods:kubejs-neoforge:${rootProject.kubejs_version}") { transitive = false }
+    compileOnly("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
 }

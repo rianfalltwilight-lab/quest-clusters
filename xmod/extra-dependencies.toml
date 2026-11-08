@@ -1,7 +1,22 @@
-
 [[dependencies.${module_id}]]
 modId = "quest_clusters"
 type = "required"
 versionRange = "[${mod_version},)"
 ordering = "AFTER"
+side = "BOTH"
+
+# FTB XMod Compat keeps everything except its FTB Quests part, which this module takes over with targeted mixins.
+# Those are written against these versions: a different XMod version is reported here instead of failing later.
+[[dependencies.${module_id}]]
+modId = "ftbxmodcompat"
+type = "optional"
+versionRange = "[21.1.14,21.2)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.${module_id}]]
+modId = "ftbfiltersystem"
+type = "optional"
+versionRange = "[21.1.4,21.2)"
+ordering = "NONE"
 side = "BOTH"
