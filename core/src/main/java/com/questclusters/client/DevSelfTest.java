@@ -735,6 +735,7 @@ public final class DevSelfTest {
             realButton(0, true);
             return 3;
         });
+        STEPS.add(waitFrames(2));
         for (int i = 1; i <= 4; i++) {
             final int k = i;
             STEPS.add(() -> {
@@ -742,6 +743,7 @@ public final class DevSelfTest {
                 realMove(dragFrom[0], dragFrom[1] + cell * k / 4D);
                 return 2;
             });
+            STEPS.add(waitFrames(2));
         }
         STEPS.add(() -> {
             realButton(0, false);
@@ -766,6 +768,30 @@ public final class DevSelfTest {
     }
 
     private static boolean creatingWorld;
+    private static volatile long frames;
+
+    @SubscribeEvent
+    public static void countFrame(net.neoforged.neoforge.client.event.RenderFrameEvent.Post event) {
+        frames++;
+    }
+
+    /**
+     * A step that waits until {@code n} frames have been rendered since it first ran. Widgets that follow the mouse
+     * while drawing need real frames; on slow renderers (software OpenGL in CI) a few ticks can pass without one.
+     */
+    public static IntSupplier waitFrames(int n) {
+        long[] mark = {-1};
+        return () -> {
+            if (mark[0] < 0) {
+                mark[0] = frames;
+            }
+            if (frames - mark[0] < n) {
+                return -1;
+            }
+            mark[0] = -1;
+            return 0;
+        };
+    }
 
     /**
      * A fresh checkout (CI) has no "devtest" world, and quick play then only shows an error screen. Create it with

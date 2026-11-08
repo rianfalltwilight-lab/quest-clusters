@@ -34,13 +34,16 @@ final class VisualsDevTest {
                     size0 = qs.getQuestButtonSize();
                     zoom0 = qs.getZoom();
                     qs.addZoom(1);
+                    long started = System.nanoTime();
                     DevSelfTest.moduleCheck(qs.getZoom() == Math.min(28, zoom0 + 4), "visuals: wheel sets the zoom target at once (" + zoom0 + " -> " + qs.getZoom() + ")");
                     DevSelfTest.moduleCheck(Math.abs(qs.getQuestButtonSize() - size0) < 0.5, "visuals: button size starts gliding, not jumping");
-                    return 2;
-                },
-                () -> {
-                    double mid = DevSelfTest.questScreen().getQuestButtonSize();
-                    DevSelfTest.moduleCheck(mid > size0 + 0.01 && mid < DevSelfTest.questScreen().getZoom() * 1.5 - 0.01,
+                    // the glide runs on wall-clock time (0.2 s): sample it 60 ms in, whatever the frame rate
+                    try {
+                        Thread.sleep(Math.max(0, 60 - (System.nanoTime() - started) / 1_000_000));
+                    } catch (InterruptedException ignored) {
+                    }
+                    double mid = qs.getQuestButtonSize();
+                    DevSelfTest.moduleCheck(mid > size0 + 0.01 && mid < qs.getZoom() * 1.5 - 0.01,
                             "visuals: smooth zoom in between (" + String.format("%.2f", mid) + ")");
                     return 20;
                 },
