@@ -765,6 +765,33 @@ public final class DevSelfTest {
         });
     }
 
+    private static boolean creatingWorld;
+
+    /**
+     * A fresh checkout (CI) has no "devtest" world, and quick play then only shows an error screen. Create it with
+     * the settings of the world the checks were written against: survival, peaceful, no cheats, normal terrain,
+     * fixed seed. An existing world is left alone.
+     */
+    @SubscribeEvent
+    public static void createMissingWorld(net.neoforged.neoforge.client.event.ScreenEvent.Opening event) {
+        if (PROP == null || creatingWorld || !(event.getNewScreen() instanceof net.minecraft.client.gui.screens.DisconnectedScreen)) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.getLevelSource().levelExists("devtest")) {
+            return;
+        }
+        creatingWorld = true;
+        log("no devtest world: creating one");
+        mc.execute(() -> mc.createWorldOpenFlows().createFreshLevel("devtest",
+                new net.minecraft.world.level.LevelSettings("devtest", net.minecraft.world.level.GameType.SURVIVAL, false,
+                        net.minecraft.world.Difficulty.PEACEFUL, false, new net.minecraft.world.level.GameRules(),
+                        net.minecraft.world.level.WorldDataConfiguration.DEFAULT),
+                new net.minecraft.world.level.levelgen.WorldOptions(-6938601152623422702L, true, false),
+                net.minecraft.world.level.levelgen.presets.WorldPresets::createNormalWorldDimensions,
+                new net.minecraft.client.gui.screens.TitleScreen()));
+    }
+
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post event) {
         if (PROP == null || step == Integer.MAX_VALUE) {

@@ -131,7 +131,7 @@ E4（本版）：脚本、视频、粘贴图片。
   - Game Stages 官方没有 1.21.1 版本；非官方移植 “Game Stages Reborn” 保留了模组 ID 和 API，本模块通过反射调用它，不把任何移植版作为构建依赖。**这条路径尚未实际运行测试**（找不到可下载的构建）。
 - 与 XMod 共存时，XMod 的 Jade 屏障设置、GuideME 和 Patchouli 注册也被关掉；XMod 的阶段实现选择属于它的通用部分，保持不变。
 - 开发测试：`-PdevModules=xmod -PwithKubejs -PwithXmod -PwithJei`，或用 `-PwithRei` 换成 REI。测试任务书里的 `recipe_test` 章节（含阶段任务）和 `qc_test_crate` 战利品箱专供这部分检查；`-PwithJade`、`-PwithDocs`（GuideME + Patchouli）加载 G3 相关模组。
-  - 已知未解决：开发环境下 REI 里的流体格子显示为深色方块（JEI 显示正常，REI 自己查水的用途也能找到该任务），尚未确认是否为 REI 本身的问题。（带 KubeJS 时自动放入 `core/devtest/kubejs` 的测试脚本）。
+  - 已知未解决：开发环境下 REI 里的流体格子显示为深色方块（JEI 显示正常，REI 自己查水的用途也能找到该任务），尚未确认是否为 REI 本身的问题。
 
 ### 迁移框架（`core/.../migration`）
 - 模块用 `MigrationRegistry.register(...)` 注册一次性迁移；服务器读完任务书后、本附属加载自己的数据前执行。
@@ -268,7 +268,14 @@ QuestClusters.dissolve(clusterId)
 ./gradlew :core:runClientDevtest -PskipModules=editor   # 不加载某个已发布模块（例如和 Quest Enhance 一起测）
 ./gradlew :editor:test -PlegacyBook=<任务书目录>         # 额外用一本本地任务书测试 Quest Enhance 导入
 ./gradlew :core:runClientTour -PtourBook=<任务书目录>    # 载入这本任务书，逐章截图到 core/run/screenshots/tour_*.png（下次 devtest 会恢复测试任务书）
+scripts/devtest-matrix.sh                 # 依次跑所有模组组合的界面自检，最后输出汇总表
+scripts/devtest-matrix.sh default rei     # 只跑指定组合；--list 列出全部组合
 ```
+
+`devtest-matrix.sh` 的组合：`default`（已发布模块）、`core-only`、`no-ffs`、`addons`（KubeJS + Jade + GuideME + Patchouli）、`xmod-jei`（FTB XMod Compat 接管测试）、`rei`。
+每个组合的日志在 `build/devtest-matrix/<组合>.log`，汇总在 `build/devtest-matrix/summary.md`。Gradle 在检查失败时也返回 0，所以脚本按日志末尾的 `ALL CHECKS PASSED` 判断；没有这一行（崩溃、超时）也算失败。
+和 Quest Enhance、Certain Questing Additions 一起的组合需要手动放入它们的 jar，不在脚本里。
+本机没有 `devtest` 存档时（例如新克隆的仓库），自检会按原测试世界的设置自动创建一个（生存、和平、不开作弊、固定种子）。
 
 ## 构建与发布
 
@@ -277,7 +284,7 @@ QuestClusters.dissolve(clusterId)
   ```
   git tag v0.2.0 && git push origin v0.2.0
   ```
-- 界面自检 `runClientDevtest` 需要图形环境，不在 CI 里跑，发布前在本机跑一次。
+- 界面自检也在 CI 里跑（`.github/workflows/devtest.yml`）：在虚拟显示器 + 软件 OpenGL 下启动真实客户端，上面六个组合并行各跑一次；日志、截图和崩溃报告作为构建产物上传，汇总表显示在运行页面上。
 
 ## 许可证
 

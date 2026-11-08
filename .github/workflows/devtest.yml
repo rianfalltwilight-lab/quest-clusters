@@ -1,0 +1,56 @@
+name: In-game self-test
+
+# Boots the real client headless (Xvfb + Mesa software OpenGL) and runs the dev self-test (core/client/DevSelfTest)
+# once per mod combination, the same profiles as scripts/devtest-matrix.sh. A run counts as failed unless its log
+# ends with "ALL CHECKS PASSED".
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devtest-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  devtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [default, core-only, no-ffs, addons, xmod-jei, rei]
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      DEVTEST_TIMEOUT: '1200'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install a virtual display and software OpenGL
+        run: sudo apt-get update -q && sudo apt-get install -y -q xvfb libgl1 libgl1-mesa-dri libglx-mesa0
+
+      - name: Self-test (${{ matrix.profile }})
+        run: xvfb-run -a -s "-screen 0 1280x720x24" scripts/devtest-matrix.sh ${{ matrix.profile }}
+
+      - name: Upload log and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devtest-${{ matrix.profile }}
+          path: |
+            build/devtest-matrix/
+            core/run/screenshots/
+            core/run/logs/latest.log
+            core/run/crash-reports/
+          if-no-files-found: ignore
