@@ -97,7 +97,8 @@ def prepareVisualsDevtest = tasks.register('prepareVisualsDevtest') {
         def options = file('run/options.txt')
         if (!options.exists()) {
             options.parentFile.mkdirs()
-            options.text = 'onboardAccessibility:false\n'
+            // ...and no movement tutorial toast over the screenshots
+            options.text = 'onboardAccessibility:false\ntutorialStep:none\n'
         }
         delete 'run/local/quest_clusters_visuals'
         file('run/local/certain_questing_additions').mkdirs()

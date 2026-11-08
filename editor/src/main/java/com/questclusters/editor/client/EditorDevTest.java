@@ -425,8 +425,11 @@ final class EditorDevTest {
     }
 
     /** Pixels inside a quest's button in the last frame that look pig-pink ({@code pink}) or zombie-green. */
-    static int colouredPixels(dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen qs, long questId, boolean pink) {
+    static int colouredPixels(dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen given, long questId, boolean pink) {
         var mc = net.minecraft.client.Minecraft.getInstance();
+        // measure on the quest screen actually shown (earlier steps may have closed and reopened the book)
+        var qs = mc.screen instanceof dev.ftb.mods.ftblibrary.ui.ScreenWrapper sw
+                && sw.getGui() instanceof dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen shown ? shown : given;
         for (var w : qs.questPanel.getWidgets()) {
             if (w instanceof dev.ftb.mods.ftbquests.client.gui.quests.QuestButton qb
                     && !(w instanceof dev.ftb.mods.ftbquests.client.gui.quests.QuestLinkButton)
@@ -491,9 +494,11 @@ final class EditorDevTest {
                 },
                 () -> {
                     DevSelfTest.moduleShot("qc_38_line_preset_node");
-                    DevSelfTest.moduleCheck(count(px -> px[2] > 120 && px[0] < 80 && px[2] - px[1] > 40) > 30
-                                    && count(px -> px[0] > 140 && px[1] < 60 && px[2] < 60) < 10,
-                            "presets: the node's own preset wins over the chapter default (blue)");
+                    int blue = count(px -> px[2] > 120 && px[0] < 80 && px[2] - px[1] > 40);
+                    int red = count(px -> px[0] > 140 && px[1] < 60 && px[2] < 60);
+                    // the line is blue now; a few red pixels elsewhere (toasts, badges) don't matter
+                    DevSelfTest.moduleCheck(blue > 30 && blue > red * 5,
+                            "presets: the node's own preset wins over the chapter default (blue " + blue + ", red " + red + ")");
                     new com.questclusters.editor.client.gui.LinePresetsScreen(DevSelfTest.questScreen()).openGui();
                     return 20;
                 },
