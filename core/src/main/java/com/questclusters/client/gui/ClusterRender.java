@@ -62,6 +62,10 @@ final class ClusterRender {
         ps.scale(scale, scale, 1F);
         g.drawString(font, line, -tw / 2, -font.lineHeight / 2 + 1, color, false);
         ps.popPose();
+        // drawString flushes the text buffer, which leaves blending off; widgets drawn after the cluster (FTB icons,
+        // e.g. guide points of members) expect it on and would come out opaque
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
         return true;
     }
 

@@ -621,14 +621,36 @@ public final class DevSelfTest {
         });
         STEPS.add(() -> {
             check(cluster().members().contains(IMAGE_A3), "selected image joined the cluster");
-            List<Long> members = new ArrayList<>(cluster().members());
-            members.remove(IMAGE_A3);
-            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withMembers(members)));
             screen.toggleSelected((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(IMAGE_A3));
+            var img = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(IMAGE_A3);
+            screen.questPanel.scrollTo(img.getX(), img.getY());
+            return 15;
+        });
+        STEPS.add(() -> {
+            // real right click on the image: FTB Quests builds this menu itself
+            for (Widget w : screen.questPanel.getWidgets()) {
+                if (w instanceof dev.ftb.mods.ftbquests.client.gui.quests.ChapterImageButton b
+                        && b.moveAndDeleteFocus().getMovableID() == IMAGE_A3) {
+                    int[] p = centre(w);
+                    click(p[0], p[1], 1);
+                }
+            }
+            return 10;
+        });
+        STEPS.add(() -> {
+            String want = net.minecraft.network.chat.Component.translatable("quest_clusters.menu.remove_from", cluster().title()).getString();
+            List<String> titles = new ArrayList<>();
+            screen.getContextMenu().ifPresent(m -> m.getWidgets().forEach(w -> titles.add(w.getTitle().getString())));
+            check(titles.contains(want), "image menu offers \"" + want + "\": " + titles);
+            screen.closeContextMenu();
+            List<ContextMenuItem> items = new ArrayList<>();
+            ClusterEditor.addObjectMenuItems(items, screen, (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(IMAGE_A3));
+            items.stream().filter(i -> i.getTitle().getString().equals(want)).findFirst()
+                    .ifPresent(i -> i.onClicked(null, screen.questPanel, dev.ftb.mods.ftblibrary.ui.input.MouseButton.LEFT));
             return 20;
         });
         STEPS.add(() -> {
-            check(!cluster().members().contains(IMAGE_A3), "image removed again");
+            check(!cluster().members().contains(IMAGE_A3), "image removed from the cluster with its own menu");
             return 1;
         });
         // A3) chapter search

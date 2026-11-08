@@ -8,6 +8,7 @@
     "ServerQuestFileMixin"
   ],
   "client": [
+    "client.ChapterImageMenuMixin",
     "client.QuestPanelAccessor",
     "client.QuestScreenAccessor",
     "client.QuestButtonAccessor",

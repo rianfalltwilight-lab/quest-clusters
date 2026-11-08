@@ -97,6 +97,7 @@ final class EditorDevTest {
 
     static void register() {
         DevSelfTest.addModuleSteps(presetSteps());
+        DevSelfTest.addModuleSteps(anchorInClusterSteps());
         DevSelfTest.addModuleSteps(DevSelfTest.configScreenSteps("quest_clusters_editor", "qc_37_editor_settings", () -> List.of(
                 "quest_clusters_editor.configuration.title",
                 "quest_clusters_editor.configuration.render_kill_task_entity_models",
@@ -529,5 +530,67 @@ final class EditorDevTest {
             }
             return n;
         }
+    }
+
+    /** A guide point inside an expanded cluster keeps its grey look (the cluster's title text must not leave blending off). */
+    static List<java.util.function.IntSupplier> anchorInClusterSteps() {
+        long cluster = 0xF1L, anchor = 0xA1L;
+        boolean[] wasExpanded = new boolean[1];
+        return List.of(
+                () -> {
+                    var qs = DevSelfTest.questScreen();
+                    qs.open(ClientQuestFile.INSTANCE.getChapter(C1), false);
+                    var c = com.questclusters.client.ClientClusters.store().get(cluster).orElse(null);
+                    DevSelfTest.moduleCheck(c != null, "guide point check: test cluster exists");
+                    if (c != null) {
+                        wasExpanded[0] = com.questclusters.client.ClusterViewState.isExpanded(c);
+                        com.questclusters.client.ClusterViewState.setExpanded(c, true);
+                    }
+                    var img = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(anchor);
+                    qs.questPanel.scrollTo(img.getX(), img.getY());
+                    return 30;
+                },
+                () -> {
+                    int[] px = regionPixels(DevSelfTest.questScreen(), anchor);
+                    // a decorative line crosses this guide point, so compare the disc's white and grey parts
+                    DevSelfTest.moduleCheck(px[0] > 0 && px[2] > 20 && px[1] < px[2],
+                            "guide point inside an expanded cluster is drawn grey, not white (" + px[1] + " white, " + px[2]
+                                    + " grey of " + px[0] + " px)");
+                    com.questclusters.client.ClientClusters.store().get(cluster)
+                            .ifPresent(c -> com.questclusters.client.ClusterViewState.setExpanded(c, wasExpanded[0]));
+                    return 5;
+                });
+    }
+
+    /** {total, near-white, mid-grey} pixels of the last frame inside a canvas object's widget. */
+    static int[] regionPixels(dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen given, long movableId) {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        var qs = mc.screen instanceof dev.ftb.mods.ftblibrary.ui.ScreenWrapper sw
+                && sw.getGui() instanceof dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen shown ? shown : given;
+        for (var w : qs.questPanel.getWidgets()) {
+            if (w instanceof dev.ftb.mods.ftbquests.client.gui.quests.QuestPositionableButton pb
+                    && pb.moveAndDeleteFocus().getMovableID() == movableId) {
+                double sx = (double) mc.getWindow().getWidth() / mc.getWindow().getGuiScaledWidth();
+                double sy = (double) mc.getWindow().getHeight() / mc.getWindow().getGuiScaledHeight();
+                double gx = qs.questPanel.getX() - qs.questPanel.getScrollX() + w.posX;
+                double gy = qs.questPanel.getY() - qs.questPanel.getScrollY() + w.posY;
+                int x0 = (int) (gx * sx), y0 = (int) (gy * sy);
+                int x1 = (int) ((gx + w.width) * sx), y1 = (int) ((gy + w.height) * sy);
+                try (var img = net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
+                    int total = 0, white = 0, grey = 0;
+                    for (int y = Math.max(0, y0); y < Math.min(img.getHeight(), y1); y++) {
+                        for (int x = Math.max(0, x0); x < Math.min(img.getWidth(), x1); x++) {
+                            int abgr = img.getPixelRGBA(x, y);
+                            int r = abgr & 0xFF, g = (abgr >> 8) & 0xFF, b = (abgr >> 16) & 0xFF;
+                            total++;
+                            if (r > 240 && g > 240 && b > 240) white++;
+                            else if (r > 60 && r < 200 && Math.abs(r - g) < 20 && Math.abs(r - b) < 20) grey++;
+                        }
+                    }
+                    return new int[]{total, white, grey};
+                }
+            }
+        }
+        return new int[]{0, 0, 0};
     }
 }

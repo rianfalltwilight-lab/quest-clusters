@@ -71,6 +71,9 @@ public final class CanvasRender {
     }
 
     static void drawAnchor(GuiGraphics g, int x, int y, int w, int h, boolean selected) {
+        // the layers are translucent; whatever was drawn before (text flushes) may have left blending off
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
         QuestShape shape = QuestShape.get("circle");
         shape.getShape().withColor(Color4I.DARK_GRAY).draw(g, x, y, w, h);
         shape.getBackground().withColor(Color4I.WHITE.withAlpha(150)).draw(g, x, y, w, h);
