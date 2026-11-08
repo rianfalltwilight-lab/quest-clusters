@@ -19,6 +19,10 @@ public final class QuestClustersXMod {
 
     public QuestClustersXMod(IEventBus modBus) {
         modBus.addListener((FMLCommonSetupEvent e) -> e.enqueueWork(QuestClustersXMod::setup));
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+            modBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent e) ->
+                    e.enqueueWork(com.questclusters.xmod.recipe.RecipeViewers::install));
+        }
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient() && System.getProperty("quest_clusters.devtest") != null) {
             com.questclusters.xmod.client.XModDevTestAccess.register();
         }

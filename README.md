@@ -6,7 +6,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 - FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
 - 客户端和服务端都需要安装
 
-## 当前进度：阶段 0–2、4、A、B、C、D、E、F、G1
+## 当前进度：阶段 0–2、4、A、B、C、D、E、F、G1、G2
 
 ## 模块（阶段 C 起为多模块仓库）
 
@@ -16,7 +16,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 | `visuals/` | `quest_clusters_visuals` | 任务书视觉增强，替代 Certain Questing Additions（见下）；声明与之不兼容；纯客户端 | 已发布 |
 | `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（阶段 E 全部完成） |
 | `filters/` | `quest_clusters_filters` | FTB 筛选系统的额外筛选，替代 Smart Filter Extras（见下）；声明与之不兼容 | 已发布 |
-| `xmod/` | `quest_clusters_xmod` | FTB XMod Compat 的 FTB Quests 部分（见下）；与 XMod 共存时接管这部分 | 已发布（G1：筛选器、KubeJS；JEI/REI 在 G2，Jade 等在 G3） |
+| `xmod/` | `quest_clusters_xmod` | FTB XMod Compat 的 FTB Quests 部分（见下）；与 XMod 共存时接管这部分 | 已发布（G1：筛选器、KubeJS；G2：JEI/REI；Jade 等在 G3） |
 | `bundle/` | `quest_clusters_bundle` | 把所有已发布模块嵌套进一个 jar（jar-in-jar） | 已发布 |
 
 发布页提供每个已发布模块的单独 jar，以及包含全部已发布模块的 `quest_clusters_bundle-*.jar`；装单独模块或 bundle 二选一。
@@ -113,7 +113,16 @@ E4（本版）：脚本、视频、粘贴图片。
 - **KubeJS**（G1）：事件组 `FTBQuestsEvents`（`customTask`、`customReward`、`completed`、`started`、客户端 `customFilterItem`）、绑定 `FTBQuests`、`player.data.ftbquests`，名字和方法与 XMod 相同，脚本不用改。
   - `completed` / `started` 可按对象 ID 或 `#标签` 过滤；不带过滤的监听器每次只触发一次（XMod 对每个标签都会再触发一次）。
   - FTB 任务在客户端为本地副本也会触发这些事件，现在只把服务端真实的完成 / 开始交给服务端脚本。
-- 开发测试：`-PdevModules=xmod -PwithKubejs -PwithXmod -PwithJei`（带 KubeJS 时自动放入 `core/devtest/kubejs` 的测试脚本）。
+- **JEI / REI**（G2）：任务和战利品箱作为配方显示，FTB 任务的“查看配方”和书签按键也走这里。有 JEI 时用 JEI，没有 JEI 而有 REI 时用 REI（顺序与 XMod 相同）。
+  - “任务”分类：左边 3×3 是任务要求（物品任务按任务自身的匹配规则显示，筛选器展开成所有匹配物品，流体任务显示为流体，带数量），右边是奖励（物品奖励带数量；随机奖励表列出其内容，表格设了“隐藏提示”时只显示一个占位物品）。超过 9 项时最后一格轮播其余项并提示数量。点标题打开该任务。
+  - 只显示队伍已能开始的任务（避免剧透）、不在“总是隐藏”章节里、没有勾选“在 JEI 中禁用”、且有可见奖励的任务，与 XMod 一致。
+  - 查“用途”时按任务自己的匹配判断（标签、筛选器、组件），所以查铁锭能找到“任意铁锭标签”的任务；流体也能查用途（XMod 只支持物品）。
+  - “战利品箱”分类：箱子、名称和各类生物掉落几率在上，内容在 8×6 网格里按稀有度排序，悬停显示几率；超过 48 种时轮播。每种战利品箱是单独的 JEI/REI 条目，任务书里增删箱子时条目随之更新。
+  - 书签：JEI 书签；REI 收藏（XMod 的 REI 部分不支持）。装了 Too Many Recipe Viewers 时不提供 JEI 书签（与 XMod 相同）。
+  - 分类 ID 仍是 `ftbquests:quest` / `ftbquests:loot_crate`，JEI/REI 里隐藏分类等设置不受影响；背景图用 FTB 任务自带的贴图。
+  - 与 XMod 共存时，XMod 的配方查看器入口、它的 JEI 插件和 REI 插件都被关掉（XMod 的设置入口整体由本模块接管）。
+- 开发测试：`-PdevModules=xmod -PwithKubejs -PwithXmod -PwithJei`，或用 `-PwithRei` 换成 REI。测试任务书里的 `recipe_test` 章节和 `qc_test_crate` 战利品箱专供这部分检查。
+  - 已知未解决：开发环境下 REI 里的流体格子显示为深色方块（JEI 显示正常，REI 自己查水的用途也能找到该任务），尚未确认是否为 REI 本身的问题。（带 KubeJS 时自动放入 `core/devtest/kubejs` 的测试脚本）。
 
 ### 迁移框架（`core/.../migration`）
 - 模块用 `MigrationRegistry.register(...)` 注册一次性迁移；服务器读完任务书后、本附属加载自己的数据前执行。
@@ -201,7 +210,9 @@ QuestClusters.dissolve(clusterId)
 | 两者同时安装（不含 visuals） | 同上 | 93 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
 | 默认全部已发布模块（visuals + editor + filters，含 JEI） | — | 185 项通过 |
 | 同上但不装 FTB 筛选系统 | — | 全部通过（filters 自动停用） |
-| xmod + KubeJS，以及再加 FTB XMod Compat 21.1.14 + JEI（接管测试） | KubeJS 2101.7.2 | 全部通过：事件只触发一次、只有一个筛选适配器，XMod 的 JEI 等照常 |
+| xmod + KubeJS + FTB XMod Compat 21.1.14 + JEI（接管测试） | KubeJS 2101.7.2，JEI 19.70.0.469 | 214 项全部通过：事件只触发一次、只有一个筛选适配器、只有本模块的两个 FTB 任务分类和配方查看器入口 |
+| 默认全部已发布模块（含 xmod 配方检查） | — | 203 项通过 |
+| REI（不装 JEI），带和不带 FTB XMod Compat | REI 16.0.799 | 全部通过 |
 | visuals + Quest Enhance（不带 editor，`-PskipModules=editor`） | 3.12 | 105 项通过 |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：

@@ -17,6 +17,10 @@ repositories {
         url = 'https://maven.blamejared.com'
         content { includeGroup 'mezz.jei' }
     }
+    maven { // REI (optional, compile only)
+        url = 'https://maven.shedaniel.me'
+        content { includeGroup 'me.shedaniel'; includeGroup 'me.shedaniel.cloth' }
+    }
     maven { // WATERMeDIA, EMI (optional, compile only)
         url = 'https://api.modrinth.com/maven'
         content { includeGroup 'maven.modrinth' }

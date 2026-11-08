@@ -1,0 +1,15 @@
+{
+	id: "0000000000000F30"
+	title: "QC test crate"
+	loot_size: 1
+	loot_crate: {
+		string_id: "qc_test_crate"
+		item_name: "QC Test Crate"
+		color: 16733525
+		drops: { passive: 10, monster: 40, boss: 0 }
+	}
+	rewards: [
+		{ id: "0000000000000F31", type: "item", item: "minecraft:apple", weight: 3.0f }
+		{ id: "0000000000000F32", type: "item", item: "minecraft:golden_apple", weight: 1.0f }
+	]
+}

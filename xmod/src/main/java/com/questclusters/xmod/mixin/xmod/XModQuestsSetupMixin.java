@@ -7,12 +7,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * FTB XMod Compat's item filter adapters for FTB Quests: replaced by this module. (Its recipe-viewer helper is
- * left alone until this module provides JEI/REI support.)
+ * FTB XMod Compat's FTB Quests setup (recipe-viewer helper and item filter adapters): replaced by this module.
  * Pseudo: skipped without XMod; a changed XMod fails here at startup rather than registering everything twice.
  */
 @Pseudo
-@Mixin(targets = "dev.ftb.mods.ftbxmodcompat.ftbquests.filtering.ItemFilteringSetup", remap = false)
+@Mixin(targets = "dev.ftb.mods.ftbxmodcompat.ftbquests.FTBQuestsSetup", remap = false)
 public abstract class XModQuestsSetupMixin {
     @Inject(method = "init", at = @At("HEAD"), cancellable = true, require = 1)
     private static void quest_clusters_xmod$takeOver(CallbackInfo ci) {

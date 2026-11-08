@@ -5,5 +5,10 @@ dependencies {
     testImplementation project(':core')
     compileOnly("dev.ftb.mods:ftb-filter-system-neoforge:${rootProject.ftb_filter_system_version}") { transitive = false }
     compileOnly("dev.latvian.mods:kubejs-neoforge:${rootProject.kubejs_version}") { transitive = false }
+    compileOnly("mezz.jei:jei-1.21.1-common-api:${rootProject.jei_version}") { transitive = false }
+    compileOnly("mezz.jei:jei-1.21.1-neoforge-api:${rootProject.jei_version}") { transitive = false }
+    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rootProject.rei_version}") { transitive = false }
+    compileOnly("me.shedaniel.cloth:basic-math:0.6.1") { transitive = false }
+    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") { transitive = false }
     compileOnly("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
 }

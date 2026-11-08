@@ -34,6 +34,7 @@ final class XModDevTest {
     }
 
     static void register() {
+        DevSelfTest.addModuleSteps(RecipeDevTest.steps());
         DevSelfTest.addModuleSteps(List.<IntSupplier>of(
                 () -> {
                     boolean xmod = ModList.get().isLoaded("ftbxmodcompat");
