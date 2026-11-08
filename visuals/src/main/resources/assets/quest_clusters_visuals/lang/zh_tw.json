@@ -1,0 +1,21 @@
+{
+  "quest_clusters_visuals": "任務集視覺增強",
+  "quest_clusters_visuals.animations": "動畫",
+  "quest_clusters_visuals.animations.quest_hover": "任務懸停動畫",
+  "quest_clusters_visuals.animations.quest_hover.tooltip": "滑鼠移到任務上時，任務按鈕平滑放大並發光",
+  "quest_clusters_visuals.animations.panel_button_hover": "章節列表懸停漸變",
+  "quest_clusters_visuals.animations.panel_button_hover.tooltip": "章節列表按鈕的醒目提示漸入漸出，而不是直接切換",
+  "quest_clusters_visuals.animations.panel_animation": "任務詳情滑入",
+  "quest_clusters_visuals.animations.panel_animation.tooltip": "開啟任務時，詳情面板滑入",
+  "quest_clusters_visuals.animations.smooth_scrolling": "平滑縮放",
+  "quest_clusters_visuals.animations.smooth_scrolling.tooltip": "用滾輪縮放任務畫布時平滑過渡，而不是一下跳到目標大小",
+  "quest_clusters_visuals.appearance": "外觀",
+  "quest_clusters_visuals.appearance.smooth_animations": "緩動動畫",
+  "quest_clusters_visuals.appearance.smooth_animations.tooltip": "動畫在接近結束時減速；關閉則等速",
+  "quest_clusters_visuals.appearance.shader_background": "章節著色器背景",
+  "quest_clusters_visuals.appearance.shader_background.tooltip": "設定了著色器（chapter_shaders.json）的章節，在任務畫布後方繪製著色器，取代主題背景",
+  "quest_clusters_visuals.appearance.button_hover_glow_alpha": "章節列表發光強度",
+  "quest_clusters_visuals.appearance.button_hover_glow_alpha.tooltip": "章節列表按鈕懸停醒目提示的不透明度：0 不顯示，255 完全不透明",
+  "quest_clusters_visuals.appearance.quest_hover_glow_alpha": "任務發光強度",
+  "quest_clusters_visuals.appearance.quest_hover_glow_alpha.tooltip": "懸停任務後方光暈的不透明度：0 不顯示，255 完全不透明"
+}

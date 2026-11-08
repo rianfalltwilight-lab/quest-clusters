@@ -128,5 +128,8 @@
   "quest_clusters.leaderboard.col_quests": "任务数",
   "quest_clusters.leaderboard.col_score": "分数",
   "quest_clusters.migrate.header": "Quest Clusters 迁移（已注册 %s 个）：",
-  "quest_clusters.migrate.backup": "备份：config/ftbquests/quest_clusters_backups/%s"
+  "quest_clusters.migrate.backup": "备份：config/ftbquests/quest_clusters_backups/%s",
+  "quest_clusters.migrate.notice.title": "[任务集] 已导入被移除附属的数据：",
+  "quest_clusters.migrate.notice.failed": "导入失败的项目会在下次启动时重试；下面的备份是导入前的任务书。错误原因见服务器日志。",
+  "quest_clusters.migrate.notice.details": "详情：%s"
 }

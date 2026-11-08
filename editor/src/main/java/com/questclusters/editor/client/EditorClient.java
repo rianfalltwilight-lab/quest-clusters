@@ -28,4 +28,14 @@ public final class EditorClient {
             EditorTour.register();
         }
     }
+
+    /**
+     * "Config" button in the mods list: NeoForge's screen for the client options. The internal flag that records the
+     * one-time Quest Enhance import is not shown.
+     */
+    public static void registerConfigScreen(net.neoforged.fml.ModContainer container) {
+        container.registerExtensionPoint(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+                (mod, parent) -> new net.neoforged.neoforge.client.gui.ConfigurationScreen(mod, parent,
+                        (context, key, element) -> "imported_quest_enhance".equals(key) ? null : element));
+    }
 }

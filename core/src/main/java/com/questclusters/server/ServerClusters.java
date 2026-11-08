@@ -54,6 +54,7 @@ public final class ServerClusters {
             lastMigration = com.questclusters.migration.MigrationRunner.run(
                     new com.questclusters.migration.MigrationContext(folder, net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get(), file),
                     com.questclusters.migration.MigrationRegistry.all(), System.currentTimeMillis());
+            MigrationNotice.record(folder, lastMigration);
         }
         STORE.replaceAll(folder == null ? List.of() : ClusterStorage.load(folder));
         dirty = false;

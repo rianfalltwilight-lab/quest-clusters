@@ -1,0 +1,21 @@
+{
+  "quest_clusters_visuals": "Quest Clusters Visuals",
+  "quest_clusters_visuals.animations": "Animations",
+  "quest_clusters_visuals.animations.quest_hover": "Quest hover animation",
+  "quest_clusters_visuals.animations.quest_hover.tooltip": "Quest buttons grow and glow smoothly under the mouse",
+  "quest_clusters_visuals.animations.panel_button_hover": "Chapter list hover fade",
+  "quest_clusters_visuals.animations.panel_button_hover.tooltip": "The highlight on chapter list buttons fades in and out instead of switching",
+  "quest_clusters_visuals.animations.panel_animation": "Quest details slide-in",
+  "quest_clusters_visuals.animations.panel_animation.tooltip": "The quest details panel slides in when a quest is opened",
+  "quest_clusters_visuals.animations.smooth_scrolling": "Smooth zoom",
+  "quest_clusters_visuals.animations.smooth_scrolling.tooltip": "The mouse wheel zooms the quest canvas with a short glide instead of jumping",
+  "quest_clusters_visuals.appearance": "Appearance",
+  "quest_clusters_visuals.appearance.smooth_animations": "Eased animations",
+  "quest_clusters_visuals.appearance.smooth_animations.tooltip": "Animations slow down towards their end; off: constant speed",
+  "quest_clusters_visuals.appearance.shader_background": "Chapter shader backgrounds",
+  "quest_clusters_visuals.appearance.shader_background.tooltip": "Chapters with a shader (chapter_shaders.json) draw it behind the quest canvas instead of the theme background",
+  "quest_clusters_visuals.appearance.button_hover_glow_alpha": "Chapter list glow strength",
+  "quest_clusters_visuals.appearance.button_hover_glow_alpha.tooltip": "Opacity of the hover highlight on chapter list buttons: 0 none, 255 solid",
+  "quest_clusters_visuals.appearance.quest_hover_glow_alpha": "Quest glow strength",
+  "quest_clusters_visuals.appearance.quest_hover_glow_alpha.tooltip": "Opacity of the glow behind a hovered quest: 0 none, 255 solid"
+}

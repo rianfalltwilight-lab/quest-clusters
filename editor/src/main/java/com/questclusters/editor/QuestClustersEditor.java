@@ -33,6 +33,7 @@ public final class QuestClustersEditor {
                 (net.neoforged.neoforge.event.RegisterCommandsEvent e) -> EditorCommands.register(e.getDispatcher()));
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             com.questclusters.editor.client.EditorClient.init(modBus);
+            com.questclusters.editor.client.EditorClient.registerConfigScreen(container);
         }
     }
 }

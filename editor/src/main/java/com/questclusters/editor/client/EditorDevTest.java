@@ -96,6 +96,10 @@ final class EditorDevTest {
     }
 
     static void register() {
+        DevSelfTest.addModuleSteps(DevSelfTest.configScreenSteps("quest_clusters_editor", "qc_37_editor_settings", () -> List.of(
+                "quest_clusters_editor.configuration.title",
+                "quest_clusters_editor.configuration.render_kill_task_entity_models",
+                "quest_clusters_editor.configuration.open_advancement_tasks")));
         DevSelfTest.addModuleSteps(List.<IntSupplier>of(
                 () -> {
                     Path quests = FMLPaths.CONFIGDIR.get().resolve("ftbquests/quests");

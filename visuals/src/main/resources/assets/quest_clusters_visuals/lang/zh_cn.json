@@ -1,0 +1,21 @@
+{
+  "quest_clusters_visuals": "任务集视觉增强",
+  "quest_clusters_visuals.animations": "动画",
+  "quest_clusters_visuals.animations.quest_hover": "任务悬停动画",
+  "quest_clusters_visuals.animations.quest_hover.tooltip": "鼠标移到任务上时，任务按钮平滑放大并发光",
+  "quest_clusters_visuals.animations.panel_button_hover": "章节列表悬停渐变",
+  "quest_clusters_visuals.animations.panel_button_hover.tooltip": "章节列表按钮的高亮渐入渐出，而不是直接切换",
+  "quest_clusters_visuals.animations.panel_animation": "任务详情滑入",
+  "quest_clusters_visuals.animations.panel_animation.tooltip": "打开任务时，详情面板滑入",
+  "quest_clusters_visuals.animations.smooth_scrolling": "平滑缩放",
+  "quest_clusters_visuals.animations.smooth_scrolling.tooltip": "用滚轮缩放任务画布时平滑过渡，而不是一下跳到目标大小",
+  "quest_clusters_visuals.appearance": "外观",
+  "quest_clusters_visuals.appearance.smooth_animations": "缓动动画",
+  "quest_clusters_visuals.appearance.smooth_animations.tooltip": "动画在接近结束时减速；关闭则匀速",
+  "quest_clusters_visuals.appearance.shader_background": "章节着色器背景",
+  "quest_clusters_visuals.appearance.shader_background.tooltip": "设置了着色器（chapter_shaders.json）的章节，在任务画布后面绘制着色器，代替主题背景",
+  "quest_clusters_visuals.appearance.button_hover_glow_alpha": "章节列表发光强度",
+  "quest_clusters_visuals.appearance.button_hover_glow_alpha.tooltip": "章节列表按钮悬停高亮的不透明度：0 不显示，255 完全不透明",
+  "quest_clusters_visuals.appearance.quest_hover_glow_alpha": "任务发光强度",
+  "quest_clusters_visuals.appearance.quest_hover_glow_alpha.tooltip": "悬停任务背后光晕的不透明度：0 不显示，255 完全不透明"
+}

@@ -18,9 +18,10 @@ public final class QuestClustersVisuals {
     public static final String MOD_ID = "quest_clusters_visuals";
     public static final Logger LOGGER = LoggerFactory.getLogger("Quest Clusters Visuals");
 
-    public QuestClustersVisuals(IEventBus modBus) {
+    public QuestClustersVisuals(IEventBus modBus, net.neoforged.fml.ModContainer container) {
         if (FMLEnvironment.dist == Dist.CLIENT) {
             VisualsClient.init(modBus);
+            VisualsClient.registerConfigScreen(container);
         }
     }
 }

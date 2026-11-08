@@ -8,6 +8,10 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 
 ## 当前进度：阶段 0–2、4、A、B、C、D、E、F、G（G1–G3）
 
+## 语言
+
+所有模块都有英文、简体中文、繁体中文（zh_tw）。繁体由简体按台湾用语自动转换（OpenCC），并按 Minecraft 官方繁体译名修正了专有用语（例如“生怪蛋”“指令”“儲存格”）；未逐条人工校对，欢迎指正。
+
 ## 模块（阶段 C 起为多模块仓库）
 
 | 目录 | 模组 ID | 内容 | 状态 |
@@ -31,7 +35,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
   `{ "default": "命名空间:着色器", "chapters": { "<章节ID十六进制或文件名>": "命名空间:着色器" } }`；
   着色器为 core 着色器，可用 uniform：`size`、`scrollOffset`、`scrollSize`（像素）、`time`（秒）、`zoom`。为 CQA 写的着色器（包括 `#moj_import <certain_questing_additions:background_compat.glsl>`）可直接使用。
 - **EMI**：从任务书打开的 EMI 配方界面关闭后回到任务书。
-- **设置**：`/qcvisuals` 打开设置界面；文件 `local/quest_clusters_visuals/client-config.snbt`，键名与 CQA 相同。首次启动时如果存在 CQA 的 `local/certain_questing_additions/client-config.snbt`，会自动导入（原文件保留）。
+- **设置**：`/qcvisuals` 或模组列表里的“配置”按钮打开设置界面（中文 / 繁体 / 英文标签，每项有悬停说明）；文件 `local/quest_clusters_visuals/client-config.snbt`，键名与 CQA 相同。首次启动时如果存在 CQA 的 `local/certain_questing_additions/client-config.snbt`，会自动导入（原文件保留）。
 
 ### 编辑器模块（`editor/`，替代 Quest Enhance 3.13 的行为，未复用其代码和素材）
 E1（本版）：读取并显示 Quest Enhance 任务书里的全部数据，在游戏里看起来和以前一样。
@@ -70,7 +74,7 @@ E3（本版）：任务描述与图标。
 - **进度任务**：左键点击进度任务打开原版进度界面并切到对应页。
 - **任务目标“禁用提示”**：完成这个目标而完成整个任务时，任务本身也不弹提示。
 - **批量编辑**：多选任务后“批量编辑任务”：编辑第一个，改动过的属性复制到其余任务；“批量添加任务目标”：给所有选中任务添加同一个目标。
-- 客户端设置 `config/quest_clusters_editor-client.toml`：`render_kill_task_entity_models`、`open_advancement_tasks`（首次启动时从 Quest Enhance 的 `quest_enhance-client.toml` 导入）。
+- 客户端设置（模组列表里的“配置”按钮可直接修改）`config/quest_clusters_editor-client.toml`：`render_kill_task_entity_models`、`open_advancement_tasks`（首次启动时从 Quest Enhance 的 `quest_enhance-client.toml` 导入）。
 
 E4（本版）：脚本、视频、粘贴图片。
 - **KubeJS**：绑定 `QuestUtils`、客户端事件 `QuestEnhanceEvents.click`（点击画布文字时触发），名字和方法与 Quest Enhance 相同，旧脚本不用改。
@@ -139,6 +143,7 @@ E4（本版）：脚本、视频、粘贴图片。
 - 有待执行的迁移时，先把整个 `config/ftbquests/quests` 打包到 `config/ftbquests/quest_clusters_backups/`（保留最近 10 份），再执行。
 - 成功的记录在 `quests/quest_clusters/migrations.snbt`，不再重复；失败的不记录，下次启动重试。
 - `/questclusters migrate status` 查看，`/questclusters migrate backup` 手动备份（需要 OP）。
+- 迁移有结果（导入成功或失败）时，第一个进服且有任务编辑权限的玩家（或单人游戏的房主）会在聊天栏看到一次提示：导入了什么、哪些失败（下次启动重试）、备份文件名，以及可点击的 `/questclusters migrate status`。提示存在 `quests/quest_clusters/migration_notice.snbt`，重启不会丢，显示后删除。
 
 | 部分 | 位置 |
 |---|---|

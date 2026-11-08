@@ -1,0 +1,8 @@
+{
+  "quest_clusters_xmod.recipe.more": "另有 %s 項（輪播顯示）",
+  "quest_clusters_xmod.recipe.open": "點選開啟任務",
+  "quest_clusters_xmod.jade.quest": "完成任務後開啟：%s",
+  "quest_clusters_xmod.jade.stage": "獲得階段後開啟：%s",
+  "quest_clusters_xmod.jade.open": "對你已開啟",
+  "quest_clusters_xmod.jade.closed": "對你未開啟"
+}

@@ -15,6 +15,7 @@ public final class QuestClusters {
     public static final Logger LOGGER = LoggerFactory.getLogger("QuestClusters");
 
     public QuestClusters(IEventBus modBus) {
+        com.questclusters.api.QuestBookHooks.register(com.questclusters.server.MigrationNotice.INSTANCE);
         modBus.addListener(ClusterNetwork::register);
         com.questclusters.task.ClusterTask.init(); // register the "Complete quest cluster" task type early
         com.questclusters.server.ServerScoring.init();

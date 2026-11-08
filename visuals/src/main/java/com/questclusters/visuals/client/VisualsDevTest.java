@@ -19,6 +19,14 @@ final class VisualsDevTest {
     }
 
     static void register() {
+        DevSelfTest.addModuleSteps(DevSelfTest.configScreenSteps("quest_clusters_visuals", "qc_21_visuals_settings", () -> {
+            var group = new dev.ftb.mods.ftblibrary.config.ConfigGroup("quest_clusters_visuals", b -> {
+            });
+            VisualsConfig.CONFIG.createClientConfig(group);
+            List<String> keys = new java.util.ArrayList<>(List.of(group.getNameKey()));
+            collect(group, keys);
+            return keys;
+        }));
         DevSelfTest.addModuleSteps(List.<IntSupplier>of(
                 () -> {
                     var qs = ClientQuestFile.openGui();
@@ -70,6 +78,14 @@ final class VisualsDevTest {
                     return 5;
                 }
         ));
+    }
+
+    private static void collect(dev.ftb.mods.ftblibrary.config.ConfigGroup g, List<String> keys) {
+        g.getValues().forEach(v -> keys.add(v.getNameKey()));
+        g.getSubgroups().forEach(sub -> {
+            keys.add(sub.getNameKey());
+            collect(sub, keys);
+        });
     }
 
     private static boolean hasField(Class<?> c, String name) {

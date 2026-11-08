@@ -37,6 +37,8 @@ import java.util.function.IntSupplier;
 @EventBusSubscriber(modid = QuestClusters.MOD_ID, value = Dist.CLIENT)
 public final class DevSelfTest {
     private static final String PROP = System.getProperty("quest_clusters.devtest");
+    /** System chat messages seen by this client (for the migration notice check). */
+    private static final List<net.minecraft.network.chat.Component> SYSTEM_CHAT = new java.util.concurrent.CopyOnWriteArrayList<>();
     private static final long CLUSTER = 0xF1L, D0 = 0xD0L, D1 = 0xD1L, D3 = 0xD3L;
 
     private static final List<IntSupplier> STEPS = new ArrayList<>();
@@ -106,6 +108,12 @@ public final class DevSelfTest {
                     + com.questclusters.migration.DevProbeMigration.linesSeen + " lines)");
             check(mig != null && mig.backup() != null && java.nio.file.Files.exists(mig.backup()), "backup zip made before migrating: "
                     + (mig == null ? null : mig.backup()));
+            // the admin (singleplayer owner) is told in chat, once; the stored notice is then gone
+            check(SYSTEM_CHAT.stream().anyMatch(c -> c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+                    && t.getKey().equals("quest_clusters.migrate.notice.title")), "migration notice shown in chat on login");
+            var folder = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE.getFolder();
+            check(!java.nio.file.Files.exists(folder.resolve("quest_clusters").resolve("migration_notice.snbt")),
+                    "migration notice cleared after it was shown");
             check(cluster() != null, "cluster synced to client on login");
             screen = ClientQuestFile.openGui();
             screen.open(ch, false);
@@ -768,6 +776,13 @@ public final class DevSelfTest {
     }
 
     private static boolean creatingWorld;
+
+    @SubscribeEvent
+    public static void systemChat(net.neoforged.neoforge.client.event.ClientChatReceivedEvent.System event) {
+        if (PROP != null) {
+            SYSTEM_CHAT.add(event.getMessage());
+        }
+    }
     private static volatile long frames;
 
     @SubscribeEvent
@@ -1001,6 +1016,47 @@ public final class DevSelfTest {
         log(label + ": quest buttons " + quests + " (hidden " + hidden + "), boxes shown " + boxesShown + ", frames shown " + framesShown);
         check(boxesShown == (collapsed ? 1 : 0) && framesShown == (collapsed ? 0 : 1), label + ": box/frame visibility");
         check(hidden == (collapsed ? cluster().members().size() : 0), label + ": hidden member count");
+    }
+
+    /**
+     * Steps checking a module's "Config" button in the mods list: the screen exists, every given translation key
+     * resolves, it opens, and Escape returns to the screen it was opened from.
+     */
+    public static List<IntSupplier> configScreenSteps(String modId, String shotName, java.util.function.Supplier<List<String>> keys) {
+        net.minecraft.client.gui.screens.Screen[] parent = new net.minecraft.client.gui.screens.Screen[1];
+        return List.of(
+                () -> {
+                    var container = net.neoforged.fml.ModList.get().getModContainerById(modId).orElse(null);
+                    var factory = container == null ? null
+                            : container.getCustomExtension(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class).orElse(null);
+                    check(factory != null, modId + ": config button in the mods list");
+                    List<String> missing = keys.get().stream().filter(k -> !net.minecraft.client.resources.language.I18n.exists(k)).toList();
+                    check(missing.isEmpty(), modId + ": config labels translated" + (missing.isEmpty() ? "" : ", missing " + missing));
+                    if (factory != null) {
+                        parent[0] = new net.minecraft.client.gui.screens.Screen(net.minecraft.network.chat.Component.literal("parent")) {
+                        };
+                        Minecraft.getInstance().setScreen(factory.createScreen(container, parent[0]));
+                    }
+                    return 20;
+                },
+                () -> {
+                    shot(shotName);
+                    return 2;
+                },
+                () -> {
+                    var mc = Minecraft.getInstance();
+                    if (mc.screen != null) {
+                        mc.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE, 0, 0);
+                    }
+                    return 5;
+                },
+                () -> {
+                    var mc = Minecraft.getInstance();
+                    check(parent[0] != null && mc.screen == parent[0], modId + ": closing the config screen returns to the mods list"
+                            + " (now " + (mc.screen == null ? "none" : mc.screen.getClass().getSimpleName()) + ")");
+                    mc.setScreen(null);
+                    return 5;
+                });
     }
 
     public static void moduleShot(String name) {

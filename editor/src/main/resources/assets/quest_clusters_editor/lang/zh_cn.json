@@ -157,5 +157,10 @@
   "quest_clusters_editor.cleanup.done": "已删除 %s 张未使用的粘贴图片，释放 %s。",
   "quest_clusters_editor.cleanup.failed": "清理已中止，没有删除任何文件：%s",
   "quest_clusters_editor.insert.video": "视频",
-  "ftbquests.quest.node_video": "节点视频"
+  "ftbquests.quest.node_video": "节点视频",
+  "quest_clusters_editor.configuration.title": "任务集编辑增强（客户端）",
+  "quest_clusters_editor.configuration.render_kill_task_entity_models": "击杀任务显示实体模型",
+  "quest_clusters_editor.configuration.render_kill_task_entity_models.tooltip": "击杀任务（以及只有一个击杀任务的任务）显示实体模型，而不是刷怪蛋",
+  "quest_clusters_editor.configuration.open_advancement_tasks": "点击进度任务打开进度界面",
+  "quest_clusters_editor.configuration.open_advancement_tasks.tooltip": "左键点击进度任务时打开进度界面"
 }

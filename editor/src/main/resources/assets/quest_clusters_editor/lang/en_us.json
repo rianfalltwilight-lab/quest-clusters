@@ -157,5 +157,10 @@
   "quest_clusters_editor.cleanup.done": "Deleted %s unused pasted images and released %s.",
   "quest_clusters_editor.cleanup.failed": "Cleanup stopped, nothing was deleted: %s",
   "quest_clusters_editor.insert.video": "Video",
-  "ftbquests.quest.node_video": "Node Video"
+  "ftbquests.quest.node_video": "Node Video",
+  "quest_clusters_editor.configuration.title": "Quest Clusters Editor (client)",
+  "quest_clusters_editor.configuration.render_kill_task_entity_models": "Entity models for kill tasks",
+  "quest_clusters_editor.configuration.render_kill_task_entity_models.tooltip": "Show the entity's model instead of its spawn egg on kill tasks, and on quests whose only task is a kill task",
+  "quest_clusters_editor.configuration.open_advancement_tasks": "Open advancements on click",
+  "quest_clusters_editor.configuration.open_advancement_tasks.tooltip": "Left-clicking an advancement task opens the advancements screen"
 }
