@@ -11,5 +11,6 @@
 		{ id: "0000000000000A20", x: 0.0d, y: 0.0d, title: "Recipe quest", tasks: [{ id: "0000000000000E20", type: "item", item: "minecraft:iron_ingot", count: 3L }, { id: "0000000000000E21", type: "fluid", fluid: { id: "minecraft:water", amount: 1000L } }], rewards: [{ id: "0000000000000B20", type: "item", item: "minecraft:diamond", count: 2 }, { id: "0000000000000B21", type: "random", table_id: 3888L }] }
 		{ id: "0000000000000A21", x: 2.0d, y: 0.0d, title: "Hidden from recipe viewers", disable_recipe_mod: true, tasks: [{ id: "0000000000000E22", type: "item", item: "minecraft:gold_ingot" }], rewards: [{ id: "0000000000000B22", type: "item", item: "minecraft:emerald" }] }
 		{ id: "0000000000000A22", x: 0.0d, y: 2.0d, title: "Locked recipe", dependencies: ["0000000000000A20"], tasks: [{ id: "0000000000000E23", type: "item", item: "minecraft:copper_ingot" }], rewards: [{ id: "0000000000000B23", type: "item", item: "minecraft:lapis_lazuli" }] }
+		{ id: "0000000000000A23", x: 2.0d, y: 2.0d, title: "Stage quest", tasks: [{ id: "0000000000000E24", type: "gamestage", stage: "qc_stage" }] }
 	]
 }

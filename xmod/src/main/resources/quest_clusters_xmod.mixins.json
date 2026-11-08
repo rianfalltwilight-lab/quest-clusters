@@ -4,10 +4,12 @@
   "package": "com.questclusters.xmod.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "xmod.XModDocsMixin",
     "xmod.XModQuestsKubeJSMixin",
     "xmod.XModQuestsSetupMixin"
   ],
   "client": [
+    "xmod.XModJadeMixin",
     "xmod.XModJeiMixin",
     "xmod.XModReiMixin"
   ],

@@ -36,6 +36,8 @@ public final class QuestClustersXMod {
     }
 
     private static void setup() {
+        com.questclusters.xmod.stages.Stages.setup();
+        com.questclusters.xmod.docs.DocsMods.register();
         if (loaded("ftbfiltersystem")) {
             com.questclusters.xmod.filtering.FfsFilterAdapter.register();
         }

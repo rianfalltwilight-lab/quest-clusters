@@ -66,6 +66,13 @@ dependencies {
         localRuntime("dev.latvian.mods:kubejs-neoforge:${rootProject.kubejs_version}") { transitive = false }
         localRuntime("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
     }
+    if (project.hasProperty('withJade')) {
+        localRuntime("maven.modrinth:jade:${rootProject.jade_version}") { transitive = false }
+    }
+    if (project.hasProperty('withDocs')) { // GuideME and Patchouli, for the "show docs" targets
+        localRuntime("maven.modrinth:guideme:${rootProject.guideme_version}") { transitive = false }
+        localRuntime("maven.modrinth:patchouli:1.21.1-93-neoforge") { transitive = false }
+    }
     if (project.hasProperty('withRei')) { // REI instead of JEI (xmod's REI plugin)
         localRuntime("me.shedaniel:RoughlyEnoughItems-neoforge:${rootProject.rei_version}") { transitive = false }
         localRuntime("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") { transitive = false }

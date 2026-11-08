@@ -10,5 +10,8 @@ dependencies {
     compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rootProject.rei_version}") { transitive = false }
     compileOnly("me.shedaniel.cloth:basic-math:0.6.1") { transitive = false }
     compileOnly("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") { transitive = false }
+    compileOnly("maven.modrinth:jade:${rootProject.jade_version}") { transitive = false }
+    compileOnly("maven.modrinth:guideme:${rootProject.guideme_version}") { transitive = false }
+    compileOnly("vazkii.patchouli:Patchouli:${rootProject.patchouli_version}:api") { transitive = false }
     compileOnly("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
 }

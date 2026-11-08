@@ -1,4 +1,8 @@
 {
   "quest_clusters_xmod.recipe.more": "+%s more (cycling)",
-  "quest_clusters_xmod.recipe.open": "Click to open the quest"
+  "quest_clusters_xmod.recipe.open": "Click to open the quest",
+  "quest_clusters_xmod.jade.quest": "Opens with quest: %s",
+  "quest_clusters_xmod.jade.stage": "Opens with stage: %s",
+  "quest_clusters_xmod.jade.open": "Open for you",
+  "quest_clusters_xmod.jade.closed": "Closed for you"
 }

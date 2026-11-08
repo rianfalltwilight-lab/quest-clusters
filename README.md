@@ -6,7 +6,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 - FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
 - 客户端和服务端都需要安装
 
-## 当前进度：阶段 0–2、4、A、B、C、D、E、F、G1、G2
+## 当前进度：阶段 0–2、4、A、B、C、D、E、F、G（G1–G3）
 
 ## 模块（阶段 C 起为多模块仓库）
 
@@ -16,7 +16,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 | `visuals/` | `quest_clusters_visuals` | 任务书视觉增强，替代 Certain Questing Additions（见下）；声明与之不兼容；纯客户端 | 已发布 |
 | `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（阶段 E 全部完成） |
 | `filters/` | `quest_clusters_filters` | FTB 筛选系统的额外筛选，替代 Smart Filter Extras（见下）；声明与之不兼容 | 已发布 |
-| `xmod/` | `quest_clusters_xmod` | FTB XMod Compat 的 FTB Quests 部分（见下）；与 XMod 共存时接管这部分 | 已发布（G1：筛选器、KubeJS；G2：JEI/REI；Jade 等在 G3） |
+| `xmod/` | `quest_clusters_xmod` | FTB XMod Compat 的 FTB Quests 部分（见下）；与 XMod 共存时接管这部分 | 已发布（G1：筛选器、KubeJS；G2：JEI/REI；G3：Jade、文档、阶段） |
 | `bundle/` | `quest_clusters_bundle` | 把所有已发布模块嵌套进一个 jar（jar-in-jar） | 已发布 |
 
 发布页提供每个已发布模块的单独 jar，以及包含全部已发布模块的 `quest_clusters_bundle-*.jar`；装单独模块或 bundle 二选一。
@@ -121,7 +121,16 @@ E4（本版）：脚本、视频、粘贴图片。
   - 书签：JEI 书签；REI 收藏（XMod 的 REI 部分不支持）。装了 Too Many Recipe Viewers 时不提供 JEI 书签（与 XMod 相同）。
   - 分类 ID 仍是 `ftbquests:quest` / `ftbquests:loot_crate`，JEI/REI 里隐藏分类等设置不受影响；背景图用 FTB 任务自带的贴图。
   - 与 XMod 共存时，XMod 的配方查看器入口、它的 JEI 插件和 REI 插件都被关掉（XMod 的设置入口整体由本模块接管）。
-- 开发测试：`-PdevModules=xmod -PwithKubejs -PwithXmod -PwithJei`，或用 `-PwithRei` 换成 REI。测试任务书里的 `recipe_test` 章节和 `qc_test_crate` 战利品箱专供这部分检查。
+- **Jade**（G3）：伪装成别的方块的任务屏障 / 阶段屏障，在不能编辑任务的玩家眼里名称、图标、所属模组都显示为伪装方块；编辑模式下显示真实方块，并额外显示由哪个任务 / 阶段打开、对自己是否已打开（XMod 不显示这些）。Jade 配置里的开关 ID 仍是 `ftbquests:barrier`。
+- **文档链接**（G3）：FTB 任务图片点击动作“显示文档”（`<模组>,<书>[,<页>[#锚点]]`）支持 GuideME 和 Patchouli。
+  - GuideME：会记住打开前的界面，关掉后回到任务书。
+  - Patchouli：锚点是条目内的页码（为空或不是数字时打开第一页，XMod 此时什么都不做）；不写条目时打开整本书（XMod 会传空条目）；关掉后回到任务书。
+- **阶段**（G3）：
+  - 没装 XMod 时由本模块选择 FTB 库的阶段实现：装了 KubeJS 用 KubeJS 阶段，否则装了 Game Stages 用 Game Stages，否则保持 FTB 库默认（实体标签）。装了 XMod 时仍按 XMod 的配置选择。
+  - 通过 FTB 库改变阶段（阶段奖励、命令等）以及 Game Stages 自己的阶段事件，会立即重新检查阶段任务；其他途径（例如 KubeJS 脚本直接改阶段）仍按 FTB 任务的每秒检查。XMod 21.1.14 里这部分（Game Stages 事件刷新）是注释掉的。
+  - Game Stages 官方没有 1.21.1 版本；非官方移植 “Game Stages Reborn” 保留了模组 ID 和 API，本模块通过反射调用它，不把任何移植版作为构建依赖。**这条路径尚未实际运行测试**（找不到可下载的构建）。
+- 与 XMod 共存时，XMod 的 Jade 屏障设置、GuideME 和 Patchouli 注册也被关掉；XMod 的阶段实现选择属于它的通用部分，保持不变。
+- 开发测试：`-PdevModules=xmod -PwithKubejs -PwithXmod -PwithJei`，或用 `-PwithRei` 换成 REI。测试任务书里的 `recipe_test` 章节（含阶段任务）和 `qc_test_crate` 战利品箱专供这部分检查；`-PwithJade`、`-PwithDocs`（GuideME + Patchouli）加载 G3 相关模组。
   - 已知未解决：开发环境下 REI 里的流体格子显示为深色方块（JEI 显示正常，REI 自己查水的用途也能找到该任务），尚未确认是否为 REI 本身的问题。（带 KubeJS 时自动放入 `core/devtest/kubejs` 的测试脚本）。
 
 ### 迁移框架（`core/.../migration`）
@@ -211,7 +220,9 @@ QuestClusters.dissolve(clusterId)
 | 默认全部已发布模块（visuals + editor + filters，含 JEI） | — | 185 项通过 |
 | 同上但不装 FTB 筛选系统 | — | 全部通过（filters 自动停用） |
 | xmod + KubeJS + FTB XMod Compat 21.1.14 + JEI（接管测试） | KubeJS 2101.7.2，JEI 19.70.0.469 | 214 项全部通过：事件只触发一次、只有一个筛选适配器、只有本模块的两个 FTB 任务分类和配方查看器入口 |
-| 默认全部已发布模块（含 xmod 配方检查） | — | 203 项通过 |
+| 默认全部已发布模块（含 xmod 配方和阶段检查） | — | 206 项通过 |
+| xmod + KubeJS + Jade + GuideME + Patchouli（不装 XMod） | Jade 15.10.6，GuideME 21.1.22，Patchouli 1.21.1-93 | 全部通过：选用 KubeJS 阶段，加阶段后阶段任务立即完成，Jade 伪装 / 编辑视图正确 |
+| 再加 FTB XMod Compat 21.1.14 + JEI | 同上 | 222 项全部通过：文档目标各只注册一次（本模块的），Jade 无重复提供者 |
 | REI（不装 JEI），带和不带 FTB XMod Compat | REI 16.0.799 | 全部通过 |
 | visuals + Quest Enhance（不带 editor，`-PskipModules=editor`） | 3.12 | 105 项通过 |
 
