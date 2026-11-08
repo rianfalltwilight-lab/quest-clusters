@@ -97,6 +97,41 @@ public final class ServerEditor implements QuestBookHooks.Listener {
         }
     }
 
+    /** Actions with a history label (anything else is shown as a generic edit). */
+    private static final java.util.Set<String> ACTIONS = java.util.Set.of("chapter_background", "sidebar_background",
+            "quest_background", "view_background", "prerequisites", "decorative_line", "hidden_line", "scroll_paging",
+            "box_select");
+
+    /** A change requested by an editor in game: checked, then applied as one undoable step. */
+    public static void handleEdit(ServerPlayer player, String action, CompoundTag data) {
+        var file = ServerQuestFile.getInstance().orElse(null);
+        if (file == null || file.isLoading()) return;
+        if (!dev.ftb.mods.ftbquests.integration.PermissionsHelper.canPlayerEdit(player)) {
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable("quest_clusters_editor.error.no_permission")
+                    .withStyle(net.minecraft.ChatFormatting.RED), false);
+            return;
+        }
+        com.questclusters.editor.data.EditorPatch patch = com.questclusters.editor.data.EditorPatch.read(data);
+        if (patch == null || patch.isEmpty()) {
+            QuestClustersEditor.LOGGER.warn("Rejected malformed editor change from {}", player.getGameProfile().getName());
+            return;
+        }
+        // only objects that exist, of the right kind
+        patch.chapters.keySet().removeIf(id -> !(file.getBase(id) instanceof Chapter));
+        patch.quests.keySet().removeIf(id -> !(file.getBase(id) instanceof Quest));
+        patch.images.keySet().removeIf(id -> !(file.getBase(id) instanceof ChapterImage));
+        patch.chapters.forEach((id, c) -> c.prerequisites.removeIf(q -> !(file.getBase(q) instanceof Quest quest) || quest.getChapter().id == id));
+        if (patch.isEmpty()) return;
+        String a = ACTIONS.contains(action) ? action : "edit";
+        file.getHistoryStack().addAndApply(file, new EditorChangeEvent(patch, patch.snapshot(book), a));
+    }
+
+    static void applyRaw(ServerQuestFile file, com.questclusters.editor.data.EditorPatch patch) {
+        patch.applyTo(book);
+        prune(file, book);
+        changed(file);
+    }
+
     static void send(ServerPlayer p) {
         if (syncCache == null) {
             syncCache = ExtrasNbt.writeAll(book);

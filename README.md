@@ -6,7 +6,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 - FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
 - 客户端和服务端都需要安装
 
-## 当前进度：阶段 0–2、4、A、B、C、D、E1
+## 当前进度：阶段 0–2、4、A、B、C、D、E1、E2
 
 ## 模块（阶段 C 起为多模块仓库）
 
@@ -14,7 +14,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 |---|---|---|---|
 | `core/` | `quest_clusters` | 任务集、评分/结算页/排行榜、章节搜索、迁移框架（下文全部功能） | 已发布 |
 | `visuals/` | `quest_clusters_visuals` | 任务书视觉增强，替代 Certain Questing Additions（见下）；声明与之不兼容；纯客户端 | 已发布 |
-| `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（E1：显示与导入；编辑界面在 E2） |
+| `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（E1 显示与导入、E2 编辑界面） |
 | `filters/` | `quest_clusters_filters` | 阶段 F：FTB Filter System 的额外筛选 | 占位，未发布 |
 | `xmod/` | `quest_clusters_xmod` | 阶段 G：FTB XMod Compat 的 FTB Quests 部分（接管，不声明不兼容） | 占位，未发布 |
 | `bundle/` | `quest_clusters_bundle` | 把所有已发布模块嵌套进一个 jar（jar-in-jar） | 已发布 |
@@ -48,6 +48,16 @@ E1（本版）：读取并显示 Quest Enhance 任务书里的全部数据，在
 1.20 时代任务书里存在旧 `click` 字段中的画布文字和辅助点（FTB Quests 2101 读不出来，会变成普通图片），导入时一并恢复。
 请在**同一次重启**里完成“删 Quest Enhance + 装本模块”：如果中间先不带本模块启动过、FTB Quests 又保存了章节，旧字段就没了，需要从 FTB Quests 的备份里恢复后再启动。
 用真实任务书（21 章、547 条装饰线、697 个任务框背景、93 个辅助点）测试过，导入和显示与 Quest Enhance 一致。
+
+E2（本版）：编辑界面（编辑模式下右键）。每次修改都由服务端检查权限，记入 FTB Quests 的撤销历史（Ctrl+Z / Ctrl+Y，修改日志里可见）。
+- **章节**（右键章节栏里的章节）：设置章节背景图；章节前置任务（添加 / 逐个移除 / 清空，只能选其他章节的任务）。
+- **侧栏**：右键章节栏顶部的任务书标题，设置侧栏背景图。
+- **任务**：设置任务框背景图、任务详情背景图；开关“禁用滚轮翻页”；**编辑前置连线**：列出这个任务（或任务链接）的每条前置线，可设为显示 / 隐藏 / 隐藏但悬停时显示。
+- **多选**：全是任务时可批量设置两种背景；选中的都是任务、任务链接或辅助点时可添加 / 移除装饰线（按选中顺序，第一个是中心）；**变换选区**：顺时针 / 逆时针旋转 90°、水平 / 垂直镜像（快捷键 Ctrl+Shift+R、Ctrl+Alt+R、Ctrl+Shift+M、Ctrl+Alt+M）。
+- **画布空白处**：添加画布文字（文字、字体、缩放）、添加辅助点、添加 GIF（列出资源包中 `textures/` 下所有 `.gif`，自带示例 `quest_clusters_editor:textures/gui/example.gif`）；剪贴板里有多选复制的内容时可直接粘贴。
+- **章节图片**：开关“框选时排除”；画布文字可再编辑，GIF 可更换。
+- **多选复制粘贴**：选中多个任务 / 图片按 Ctrl+C，再 Ctrl+V 按相对位置整体粘贴（选区包含完整任务集时，任务集也会一起重建）；复制任务链接时复制它指向的任务。
+- 复制辅助点时自动换新 ID，装饰线不会混淆。GIF 现在会播放动画。
 
 数据位置：`config/ftbquests/quests/quest_clusters/editor/`，`book.snbt`（侧栏背景）加每章一个 `<章节ID>.snbt`
 （章节背景、前置任务、装饰线、隐藏线，以及当前在该章节里的任务和图片的设置）。画布文字和辅助点仍存在章节图片的 `click_action` 里（与 Quest Enhance 相同的格式），卸载本模块后它们只是普通图片。
@@ -136,7 +146,7 @@ QuestClusters.dissolve(clusterId)
 | visuals + Quest Enhance | 同上 | 105 项通过 |
 | 只装 visuals | — | 96 项通过 |
 | 两者同时安装（不含 visuals） | 同上 | 93 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
-| visuals + editor（默认全部已发布模块） | — | 116 项通过 |
+| visuals + editor（默认全部已发布模块） | — | 135 项通过 |
 | visuals + Quest Enhance（不带 editor，`-PskipModules=editor`） | 3.12 | 105 项通过 |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：

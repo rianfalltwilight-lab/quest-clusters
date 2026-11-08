@@ -26,11 +26,26 @@ public final class EditorNetwork {
         }
     }
 
+    /** Editor → server: apply a change (see EditorPatch). */
+    public record Edit(String action, CompoundTag patch) implements CustomPacketPayload {
+        public static final Type<Edit> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(QuestClustersEditor.MOD_ID, "edit"));
+        public static final StreamCodec<ByteBuf, Edit> CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(64), Edit::action, ByteBufCodecs.COMPOUND_TAG, Edit::patch, Edit::new);
+
+        @Override
+        public Type<Edit> type() {
+            return TYPE;
+        }
+    }
+
     private EditorNetwork() {
     }
 
     public static void register(RegisterPayloadHandlersEvent event) {
-        event.registrar(PROTOCOL).playToClient(SyncBook.TYPE, SyncBook.CODEC, (p, ctx) -> ClientEditor.replace(p.data()));
+        var r = event.registrar(PROTOCOL);
+        r.playToClient(SyncBook.TYPE, SyncBook.CODEC, (p, ctx) -> ClientEditor.replace(p.data()));
+        r.playToServer(Edit.TYPE, Edit.CODEC, (p, ctx) -> com.questclusters.editor.server.ServerEditor.handleEdit(
+                (ServerPlayer) ctx.player(), p.action(), p.patch()));
     }
 
     public static void send(ServerPlayer player, CompoundTag data) {

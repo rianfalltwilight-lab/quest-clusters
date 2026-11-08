@@ -39,7 +39,12 @@ public final class CanvasRender {
         int rgb = img.getColor().rgba() & 0xFFFFFF;
         switch (el) {
             case CanvasElement.Text t -> drawText(g, theme, t, w, h, img.isAlignToCorner(), (alpha << 24) | rgb);
-            case CanvasElement.Gif gif -> g.fill(0, 0, w, h, (alpha << 24) | 0x212121);
+            case CanvasElement.Gif gif -> {
+                ResourceLocation rl = ResourceLocation.tryParse(gif.resource());
+                if (rl == null || !com.questclusters.editor.client.GifTextures.draw(g, rl, 0, 0, w, h, (alpha << 24) | rgb)) {
+                    g.fill(0, 0, w, h, (alpha << 24) | 0x212121);
+                }
+            }
             case CanvasElement.Video v -> {
                 if (!img.getImage().isEmpty()) {
                     img.getImage().withColor(img.getColor().withAlpha(alpha)).draw(g, 0, 0, w, h);

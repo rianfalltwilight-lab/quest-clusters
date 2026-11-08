@@ -4,6 +4,7 @@
   "package": "com.questclusters.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "IconPreserveMixin",
     "ServerQuestFileMixin"
   ],
   "client": [

@@ -5,15 +5,21 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "ChapterImageAccessor",
-    "ChapterVisibilityMixin"
+    "ChapterVisibilityMixin",
+    "CopyAnchorMixin"
   ],
   "client": [
     "client.ChapterImageButtonEditorMixin",
+    "client.ChapterImageMenuMixin",
     "client.ChapterPanelEditorMixin",
+    "client.ModpackButtonMenuMixin",
     "client.QuestButtonEditorMixin",
+    "client.QuestButtonMenuMixin",
     "client.QuestPanelEditorMixin",
+    "client.QuestPanelMenuMixin",
     "client.QuestScreenEditorAccessor",
     "client.QuestScreenEditorMixin",
+    "client.QuestScreenMenuMixin",
     "client.ViewQuestPanelEditorMixin"
   ],
   "injectors": {

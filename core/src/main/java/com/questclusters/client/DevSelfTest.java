@@ -92,6 +92,8 @@ public final class DevSelfTest {
                     // progress lives in the world save and survives runs: start every run from a clean chapter
                     srv.getCommands().performPrefixedCommand(srv.createCommandSourceStack().withSuppressedOutput(),
                             "ftbquests change_progress " + sp.getGameProfile().getName() + " reset " + PROP);
+                    // so is edit mode (and a crashed run may leave it on): the steps below expect it off
+                    ServerQuestFile.INSTANCE.getOrCreateTeamData(sp).setPlayerEditMode(sp, false);
                 }
             });
             Chapter ch = ClientQuestFile.INSTANCE.getChapter(QuestCluster.idFromString(PROP));
