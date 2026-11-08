@@ -873,8 +873,9 @@ public final class DevSelfTest {
 
     private static boolean ready() {
         Minecraft mc = Minecraft.getInstance();
+        // the team data starts as a locked "Loading..." placeholder; the quest book refuses to open until it is synced
         return mc.player != null && ClientQuestFile.exists() && ClientQuestFile.INSTANCE.selfTeamData != null
-                && ClientClusters.store().size() > 0;
+                && !ClientQuestFile.INSTANCE.selfTeamData.isLocked() && ClientClusters.store().size() > 0;
     }
 
     private static long chapterId() {
