@@ -131,5 +131,6 @@
   "quest_clusters.migrate.backup": "備份：config/ftbquests/quest_clusters_backups/%s",
   "quest_clusters.migrate.notice.title": "[任務集] 已匯入被移除附屬的資料：",
   "quest_clusters.migrate.notice.failed": "匯入失敗的專案會在下次啟動時重試；下面的備份是匯入前的任務書。錯誤原因見伺服器日誌。",
-  "quest_clusters.migrate.notice.details": "詳情：%s"
+  "quest_clusters.migrate.notice.details": "詳情：%s",
+  "quest_clusters.menu.add_selected_here": "把選取的 %s 個物件加入該任務集"
 }

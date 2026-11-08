@@ -119,6 +119,18 @@ final class EditorDevTest {
                             && img.getClickAction().actionData().startsWith("quest_enhance:text:"), "editor: legacy 'click' canvas text restored");
                     DevSelfTest.moduleCheck(ClientQuestFile.INSTANCE.getChapter(C3).isVisible(ClientQuestFile.INSTANCE.selfTeamData),
                             "editor: locked chapter visible in edit mode");
+                    var lineTex = com.questclusters.editor.client.gui.DecorativeLinesWidget.texture();
+                    DevSelfTest.moduleCheck(lineTex.equals(com.questclusters.editor.client.gui.DecorativeLinesWidget.TEXTURE)
+                            && com.questclusters.client.Textures.size(lineTex) != null,
+                            "editor: decorative lines use a resource-pack texture (" + lineTex + ")");
+                    // backgrounds picked as block-atlas sprite ids draw the sprite, not the missing texture
+                    var icon = ClientEditor.icon("minecraft:block/oak_planks");
+                    var sprite = net.minecraft.client.Minecraft.getInstance().getModelManager()
+                            .getAtlas(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)
+                            .getSprite(net.minecraft.resources.ResourceLocation.withDefaultNamespace("block/oak_planks"));
+                    DevSelfTest.moduleCheck(icon instanceof dev.ftb.mods.ftblibrary.icon.AtlasSpriteIcon
+                            && !sprite.contents().name().equals(net.minecraft.client.renderer.texture.MissingTextureAtlasSprite.getLocation()),
+                            "editor: sprite-id backgrounds resolve to the atlas sprite (" + icon.getClass().getSimpleName() + ")");
                     command("ftbquests change_progress @me reset 00000000000000D6"); // earlier runs completed it
                     editMode(false);
                     return 40;

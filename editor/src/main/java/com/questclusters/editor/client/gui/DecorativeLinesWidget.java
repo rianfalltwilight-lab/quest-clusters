@@ -22,7 +22,9 @@ import dev.ftb.mods.ftbquests.quest.Movable;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.QuestLink;
 import dev.ftb.mods.ftbquests.quest.QuestObject;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.client.renderer.GameRenderer;
 import org.joml.Matrix4f;
 
@@ -37,6 +39,25 @@ import java.util.Map;
  */
 public final class DecorativeLinesWidget extends Widget {
     private static final int START = 0xFF00B4B4, END = 0xFF008787; // (0,180,180) fading to 3/4 brightness
+    /**
+     * The line texture, repeated along the line and tinted with the colours above. Resource packs made for Quest
+     * Enhance replace {@link #QE_TEXTURE}; if none does, ours is used (and can be replaced the same way).
+     */
+    public static final ResourceLocation QE_TEXTURE = ResourceLocation.fromNamespaceAndPath("quest_enhance", "textures/gui/decorative_line.png");
+    public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("quest_clusters_editor", "textures/gui/decorative_line.png");
+    private static ResourceLocation texture;
+
+    /** The texture in use; looked up again after a resource reload. */
+    public static ResourceLocation texture() {
+        if (texture == null) {
+            texture = Minecraft.getInstance().getResourceManager().getResource(QE_TEXTURE).isPresent() ? QE_TEXTURE : TEXTURE;
+        }
+        return texture;
+    }
+
+    public static void resourcesReloaded() {
+        texture = null;
+    }
     private final QuestPanel questPanel;
     private final Map<String, Widget> nodes = new HashMap<>();
     /** For the dev self-test: segments drawn in the last frame. */
@@ -158,17 +179,23 @@ public final class DecorativeLinesWidget extends Widget {
 
     private static void quad(GuiGraphics g, double x1, double y1, double x2, double y2, float half) {
         double len = Math.hypot(x2 - x1, y2 - y1);
-        if (len < 0.5) return;
+        if (len < 0.5 || half <= 0) return;
         float nx = (float) (-(y2 - y1) / len * half), ny = (float) ((x2 - x1) / len * half);
+        ResourceLocation tex = texture();
+        int[] size = com.questclusters.client.Textures.size(tex);
+        // an animated strip (with .mcmeta) shows its first frame; U repeats along the line like Quest Enhance's
+        float v1 = size == null ? 1F : (float) size[2] / size[1];
+        float u1 = (float) (len / half / 2D);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+        RenderSystem.setShaderTexture(0, tex);
         Matrix4f m = g.pose().last().pose();
-        var buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        buf.addVertex(m, (float) x1 + nx, (float) y1 + ny, 0).setColor(START);
-        buf.addVertex(m, (float) x2 + nx, (float) y2 + ny, 0).setColor(END);
-        buf.addVertex(m, (float) x2 - nx, (float) y2 - ny, 0).setColor(END);
-        buf.addVertex(m, (float) x1 - nx, (float) y1 - ny, 0).setColor(START);
+        var buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        buf.addVertex(m, (float) x1 + nx, (float) y1 + ny, 0).setUv(0, 0).setColor(START);
+        buf.addVertex(m, (float) x2 + nx, (float) y2 + ny, 0).setUv(u1, 0).setColor(END);
+        buf.addVertex(m, (float) x2 - nx, (float) y2 - ny, 0).setUv(u1, v1).setColor(END);
+        buf.addVertex(m, (float) x1 - nx, (float) y1 - ny, 0).setUv(0, v1).setColor(START);
         BufferUploader.drawWithShader(buf.buildOrThrow());
     }
 }

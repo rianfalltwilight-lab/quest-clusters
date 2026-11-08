@@ -37,6 +37,7 @@ import java.util.function.IntSupplier;
 @EventBusSubscriber(modid = QuestClusters.MOD_ID, value = Dist.CLIENT)
 public final class DevSelfTest {
     private static final String PROP = System.getProperty("quest_clusters.devtest");
+    private static final long IMAGE_A3 = 0xA3L;
     /** System chat messages seen by this client (for the migration notice check). */
     private static final List<net.minecraft.network.chat.Component> SYSTEM_CHAT = new java.util.concurrent.CopyOnWriteArrayList<>();
     private static final long CLUSTER = 0xF1L, D0 = 0xD0L, D1 = 0xD1L, D3 = 0xD3L;
@@ -568,12 +569,21 @@ public final class DevSelfTest {
         // A2) background image
         STEPS.add(() -> {
             PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style()
-                    .withBackground("minecraft:textures/block/oak_planks.png", com.questclusters.data.ClusterStyle.MODE_TILE, 4, true))));
+                    .withBackground("minecraft:block/oak_planks", com.questclusters.data.ClusterStyle.MODE_TILE, 4, true))));
             return 20;
         });
         STEPS.add(() -> {
-            check(cluster().style().background().equals("minecraft:textures/block/oak_planks.png")
+            check(cluster().style().background().equals("minecraft:block/oak_planks")
                     && cluster().style().backgroundMode() == com.questclusters.data.ClusterStyle.MODE_TILE, "background image saved and synced");
+            // FTB's image picker returns block-atlas textures by sprite id: they must resolve to their file, not the
+            // missing (purple-black) texture
+            var planks = Textures.file("minecraft:block/oak_planks");
+            check(planks.toString().equals("minecraft:textures/block/oak_planks.png") && Textures.size(planks) != null,
+                    "picker sprite id resolves to its texture file: " + planks);
+            check(Textures.file("minecraft:textures/block/oak_planks.png").equals(planks), "full texture paths unchanged");
+            int[] water = Textures.size(Textures.file("minecraft:block/water_still"));
+            check(water != null && water[2] == water[0] && water[1] > water[0], "animated texture: first frame only ("
+                    + (water == null ? null : java.util.Arrays.toString(water)) + ")");
             ClusterViewState.setExpanded(cluster(), false);
             screen.questPanel.scrollTo(cluster().x(), cluster().y() + 1.5); // box above the edit-mode change log
             return 15;
@@ -592,6 +602,34 @@ public final class DevSelfTest {
             shot("qc_13_background_nine_slice");
             ClusterViewState.setExpanded(cluster(), true);
             return 5;
+        });
+        // select an image only, then "Add selected to this cluster" from the cluster's own menu
+        STEPS.add(() -> {
+            var selected = ((com.questclusters.mixin.client.QuestScreenAccessor) screen).quest_clusters$getSelectedObjects();
+            new ArrayList<>(selected).forEach(screen::toggleSelected);
+            var image = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(IMAGE_A3);
+            check(image != null && !cluster().members().contains(IMAGE_A3), "image not a member yet");
+            screen.toggleSelected(image);
+            var item = ClusterEditor.clusterMenu(screen, cluster()).stream()
+                    .filter(i -> i.getTitle().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+                            && t.getKey().equals("quest_clusters.menu.add_selected_here")).findFirst().orElse(null);
+            check(item != null, "cluster menu offers \"add selected to this cluster\" for a selected image");
+            if (item != null) {
+                item.onClicked(null, screen.questPanel, dev.ftb.mods.ftblibrary.ui.input.MouseButton.LEFT);
+            }
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(cluster().members().contains(IMAGE_A3), "selected image joined the cluster");
+            List<Long> members = new ArrayList<>(cluster().members());
+            members.remove(IMAGE_A3);
+            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withMembers(members)));
+            screen.toggleSelected((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(IMAGE_A3));
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(!cluster().members().contains(IMAGE_A3), "image removed again");
+            return 1;
         });
         // A3) chapter search
         STEPS.add(() -> {

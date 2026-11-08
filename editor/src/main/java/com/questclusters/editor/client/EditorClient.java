@@ -9,6 +9,10 @@ public final class EditorClient {
     }
 
     public static void init(net.neoforged.bus.api.IEventBus modBus) {
+        // a resource pack may add or remove a decorative line texture
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent e) -> e.registerReloadListener(
+                (net.minecraft.server.packs.resources.ResourceManagerReloadListener) rm ->
+                        com.questclusters.editor.client.gui.DecorativeLinesWidget.resourcesReloaded()));
         modBus.addListener(com.questclusters.editor.client.paste.ConfigPacks::register);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.RegisterClientCommandsEvent e) -> {
             for (String root : java.util.List.of("qceditor", "questenhance")) {

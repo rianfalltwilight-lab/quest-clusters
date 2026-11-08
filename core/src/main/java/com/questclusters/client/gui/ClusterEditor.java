@@ -116,6 +116,12 @@ public final class ClusterEditor {
         menu.add(new ContextMenuItem(ClusterViewState.isExpanded(c) ? tr("collapse") : tr("expand"), Icons.INFO,
                 b -> ClusterViewState.toggle(c)));
         menu.add(new ContextMenuItem(tr("select_members"), Icons.ADD, b -> selectMembers(screen, c)));
+        // selected quests, links and images of this chapter that are not members yet (images need no quest with them)
+        List<Long> joining = selectedNonMembers(screen, c);
+        if (!joining.isEmpty()) {
+            menu.add(new ContextMenuItem(tr("add_selected_here", joining.size()), ThemeProperties.ADD_ICON.get(),
+                    b -> addToCluster(c, joining)));
+        }
         menu.add(new ContextMenuItem(tr("fit_box"), Icons.SETTINGS, b -> update(fitBoxToMembers(c))));
         // whole-cluster prerequisites, done with FTB Quests' own dependencies on every member quest
         List<Quest> prereqs = selectedPrerequisites(screen, c);
@@ -278,6 +284,29 @@ public final class ClusterEditor {
                 screen.toggleSelected(m);
             }
         }
+    }
+
+    /** Selected objects of the cluster's chapter that are not its members yet. */
+    static List<Long> selectedNonMembers(QuestScreen screen, QuestCluster c) {
+        List<Long> out = new ArrayList<>();
+        for (Movable m : ((QuestScreenAccessor) screen).quest_clusters$getSelectedObjects()) {
+            if (m.getChapter() != null && m.getChapter().id == c.chapterId() && !c.members().contains(m.getMovableID())
+                    && !out.contains(m.getMovableID())) {
+                out.add(m.getMovableID());
+            }
+        }
+        return out;
+    }
+
+    /** Adds objects to a cluster; ones in another cluster of the chapter leave it first (an object has one cluster). */
+    static void addToCluster(QuestCluster c, List<Long> ids) {
+        Set<Long> moving = Set.copyOf(ids);
+        for (QuestCluster other : ClientClusters.store().byChapter(c.chapterId())) {
+            if (other.id() != c.id() && other.members().stream().anyMatch(moving::contains)) {
+                setMembers(other, without(other.members(), moving));
+            }
+        }
+        setMembers(c, with(c.members(), ids));
     }
 
     /** Selected quests outside the cluster (any chapter) are candidate prerequisites. */
