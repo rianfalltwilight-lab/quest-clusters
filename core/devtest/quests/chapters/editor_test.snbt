@@ -15,6 +15,8 @@
 	quest_enhance_hidden_dependency_lines: [{ source: "q:d6", dependency: "q:d5", reveal_on_hover: 1b }]
 	quest_links: [ ]
 	quests: [
+		{ id: "00000000000000D8", x: 0.0d, y: -3.0d, icon: { id: "minecraft:pig_spawn_egg", count: 1, components: { "minecraft:custom_data": { quest_enhance_entity_model: "minecraft:pig" } } }, tasks: [{ id: "00000000000000E8", type: "checkmark" }] }
+		{ id: "00000000000000D4", x: -4.0d, y: -3.0d, tasks: [{ id: "00000000000000E4", type: "kill", entity: "minecraft:zombie", value: 1L }] }
 		{ id: "00000000000000D5", x: -2.0d, y: 0.0d, title: "Editor A", quest_enhance_quest_background: "minecraft:textures/block/gold_block.png", quest_enhance_quest_view_background: "minecraft:textures/block/sculk.png", quest_enhance_disable_scroll_paging: true, tasks: [{ id: "00000000000000E5", type: "checkmark" }] }
 		{ id: "00000000000000D6", x: 2.0d, y: 0.0d, title: "Editor B", dependencies: ["00000000000000D5"], quest_enhance_disable_scroll_paging: false, tasks: [{ id: "00000000000000E6", type: "checkmark" }] }
 	]

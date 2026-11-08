@@ -20,11 +20,17 @@ public final class QuestClustersEditor {
     public static final String MOD_ID = "quest_clusters_editor";
     public static final Logger LOGGER = LoggerFactory.getLogger("Quest Clusters Editor");
 
-    public QuestClustersEditor(IEventBus modBus) {
+    public QuestClustersEditor(IEventBus modBus, net.neoforged.fml.ModContainer container) {
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, EditorConfig.SPEC);
+        modBus.addListener((net.neoforged.fml.event.config.ModConfigEvent.Loading e) -> {
+            if (e.getConfig().getSpec() == EditorConfig.SPEC) EditorConfig.importQuestEnhance();
+        });
         MigrationRegistry.register(new QuestEnhanceMigration());
         QuestBookHooks.register(ServerEditor.INSTANCE);
         LineData.Holder.set(new EditorLineData());
         modBus.addListener(EditorNetwork::register);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+                (net.neoforged.neoforge.event.RegisterCommandsEvent e) -> EditorCommands.register(e.getDispatcher()));
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             com.questclusters.editor.client.EditorClient.init();
         }

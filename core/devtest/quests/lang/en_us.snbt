@@ -1,0 +1,15 @@
+{
+	quest.00000000000000D4.title: "Kill test"
+	quest.00000000000000D5.title: "Editor A"
+	quest.00000000000000D6.title: "Editor B"
+	quest.00000000000000D7.title: "Behind the lock"
+	quest.00000000000000D8.quest_desc: [
+		"Plain description line."
+		"{quest_enhance_table:eNrFUE1PhDAQ_S9zrkkLy4ccPWg8efBkkJAuzEKT0ppS3DUb_rtDZcGTV08z81773pu5wsm6Qfr6E92orIEiZtBYPQ1mDH2PskUHhXcTMpBadWZA46GAhgoxDLw8aqzPqvU9FJyBs-e6R9X19ErkDLQyGy0YHK0jxZpMLOnepZngeZ7dnDZcxCJJuUgoDmq9w4csTvjhnmzx4nc42FLksoQXh5TqcXJGNkv3plC3ULESnh1tyOB1QO2piktAnyzRDB60HP27OW3_IqIrBgO6Dhfl62IRVvg5UGiXZccPSUN0w9dZzNWaffRf-rcC3xX4XxfWeFpiBo31fuk_3TdK0rmavwEb6rKt}"
+		"{quest_enhance_gif:quest_clusters_editor:textures/gui/example.gif width:32 height:32 align:left}"
+		"{\"translate\":\"quest_enhance.player_persistent_data\",\"with\":[\"key:qc.test\",\"i18n:false\"]}"
+		"{\"text\":\"Open Ponder\",\"color\":\"aqua\",\"underlined\":true,\"clickEvent\":{\"action\":\"change_page\",\"value\":\"quest_enhance:ponder/minecraft:stone\"}}"
+	]
+	quest.00000000000000D8.title: "Desc test"
+	quest.00000000000000D9.title: "Milestone"
+}

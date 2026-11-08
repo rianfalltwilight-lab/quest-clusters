@@ -140,6 +140,19 @@ class EditorDataTest {
             }
         }
         System.out.println("legacy book: anchors=" + anchors + " texts=" + texts);
+        int tables = 0;
+        try (Stream<Path> s = Files.walk(dir.resolve("lang"))) {
+            for (Path f : s.filter(Files::isRegularFile).toList()) {
+                var m = java.util.regex.Pattern.compile("\\{quest_enhance_table:([A-Za-z0-9_-]+)\\}").matcher(Files.readString(f));
+                while (m.find()) {
+                    DescriptionTable t = DescriptionTable.decode(m.group(1));
+                    assertNotNull(t, "table decodes");
+                    tables++;
+                    System.out.println("legacy table: " + t.columns + " columns, " + t.rows.size() + " rows, " + t.cellStyles.size() + " styled cells");
+                }
+            }
+        }
+        assertTrue(tables > 0);
         assertTrue(anchors > 0);
     }
 }

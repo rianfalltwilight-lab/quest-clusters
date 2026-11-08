@@ -164,6 +164,9 @@ public final class EditorMenus {
         List<ContextMenuItem> add = new ArrayList<>();
         if (sel.size() >= 2 && sel.stream().allMatch(m -> m instanceof Quest)) {
             List<Long> ids = sel.stream().map(Movable::getMovableID).toList();
+            List<Quest> quests = sel.stream().map(m -> (Quest) m).toList();
+            add.add(item("bulk_edit", Icons.SETTINGS, () -> com.questclusters.editor.client.BulkEdit.edit(screen, quests)));
+            add.add(ContextMenuItem.subMenu(tr("bulk_add_task"), Icons.ADD, com.questclusters.editor.client.BulkEdit.addTaskItems(screen, quests)));
             String first = ClientEditor.book().quest(ids.getFirst()).boxBackground();
             String firstView = ClientEditor.book().quest(ids.getFirst()).viewBackground();
             add.add(item("bulk_quest_background", Icons.ART, () -> EditorActions.pickImage(screen, first,

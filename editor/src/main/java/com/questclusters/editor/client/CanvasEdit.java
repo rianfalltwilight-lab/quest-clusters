@@ -114,7 +114,7 @@ public final class CanvasEdit {
     }
 
     /** Every font in the loaded resource packs (except font/include/), plus the default. */
-    static List<String> fonts() {
+    public static List<String> fonts() {
         TreeSet<String> out = new TreeSet<>();
         out.add(CanvasElement.DEFAULT_FONT);
         Minecraft.getInstance().getResourceManager().listResources("font", rl -> rl.getPath().endsWith(".json")).keySet()

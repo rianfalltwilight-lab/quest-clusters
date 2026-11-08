@@ -6,7 +6,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 - FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
 - 客户端和服务端都需要安装
 
-## 当前进度：阶段 0–2、4、A、B、C、D、E1、E2
+## 当前进度：阶段 0–2、4、A、B、C、D、E1、E2、E3
 
 ## 模块（阶段 C 起为多模块仓库）
 
@@ -14,7 +14,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 |---|---|---|---|
 | `core/` | `quest_clusters` | 任务集、评分/结算页/排行榜、章节搜索、迁移框架（下文全部功能） | 已发布 |
 | `visuals/` | `quest_clusters_visuals` | 任务书视觉增强，替代 Certain Questing Additions（见下）；声明与之不兼容；纯客户端 | 已发布 |
-| `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（E1 显示与导入、E2 编辑界面） |
+| `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（E1 显示与导入、E2 编辑界面、E3 描述组件与模型） |
 | `filters/` | `quest_clusters_filters` | 阶段 F：FTB Filter System 的额外筛选 | 占位，未发布 |
 | `xmod/` | `quest_clusters_xmod` | 阶段 G：FTB XMod Compat 的 FTB Quests 部分（接管，不声明不兼容） | 占位，未发布 |
 | `bundle/` | `quest_clusters_bundle` | 把所有已发布模块嵌套进一个 jar（jar-in-jar） | 已发布 |
@@ -58,6 +58,19 @@ E2（本版）：编辑界面（编辑模式下右键）。每次修改都由服
 - **章节图片**：开关“框选时排除”；画布文字可再编辑，GIF 可更换。
 - **多选复制粘贴**：选中多个任务 / 图片按 Ctrl+C，再 Ctrl+V 按相对位置整体粘贴（选区包含完整任务集时，任务集也会一起重建）；复制任务链接时复制它指向的任务。
 - 复制辅助点时自动换新 ID，装饰线不会混淆。GIF 现在会播放动画。
+
+E3（本版）：任务描述与图标。
+- **描述表格**：`{quest_enhance_table:...}`（与 Quest Enhance 相同的格式，旧任务书里的表格原样显示）在任务详情里画成表格，支持合并单元格、表头、对齐、列宽、颜色、单元格换行。
+  编辑模式下右键表格可编辑或删除；**可视化表格编辑器**：点击单元格输入（Shift+Enter 换行），拖动多选，右键合并 / 拆分、插入删除行列、单元格设置、表格设置，Ctrl+Z / Ctrl+Y 撤销重做。
+- **描述 GIF**：`{quest_enhance_gif:<资源位置> width:.. height:.. align:.. fit:true text:..}`。另外任何以 `.gif` 结尾的图标字符串都会播放动画（章节图片、描述图片等）。
+- **插入组件**：描述编辑器工具栏新增“+”按钮：网页链接、打开指定任务页、打开 Ponder（装了 Ponder 时）、点击复制、开发者命令（带确认）、网络图片、物品图标、物品提示、GIF、悬停文字、自定义字体、本地化文字、按键绑定、玩家持久数据、表格、乱码文字。
+  在任务详情里编辑这些行时会重新打开对应的页面（不认识的行仍交给 FTB Quests 自己的编辑框）。
+- **玩家持久数据占位符**：`{"translate":"quest_enhance.player_persistent_data","with":["key:<键>","i18n:false"]}` 显示该玩家持久数据里的值（服务端 NeoForge 数据，其次 KubeJS 数据）。命令 `/questclusters persistent set <玩家> <键> <值>`（也可用 `/questenhance persistent set ...`，旧脚本不用改）。
+- **任务模型**：任务属性里的“模型”选一个实体，任务按钮、详情标题和完成提示都显示这个实体模型（存法与 Quest Enhance 相同：图标是刷怪蛋并带 `quest_enhance_entity_model`）。击杀任务、以及没有图标且只有一个击杀任务的任务，自动显示被击杀实体的模型。
+- **进度任务**：左键点击进度任务打开原版进度界面并切到对应页。
+- **任务目标“禁用提示”**：完成这个目标而完成整个任务时，任务本身也不弹提示。
+- **批量编辑**：多选任务后“批量编辑任务”：编辑第一个，改动过的属性复制到其余任务；“批量添加任务目标”：给所有选中任务添加同一个目标。
+- 客户端设置 `config/quest_clusters_editor-client.toml`：`render_kill_task_entity_models`、`open_advancement_tasks`（首次启动时从 Quest Enhance 的 `quest_enhance-client.toml` 导入）。
 
 数据位置：`config/ftbquests/quests/quest_clusters/editor/`，`book.snbt`（侧栏背景）加每章一个 `<章节ID>.snbt`
 （章节背景、前置任务、装饰线、隐藏线，以及当前在该章节里的任务和图片的设置）。画布文字和辅助点仍存在章节图片的 `click_action` 里（与 Quest Enhance 相同的格式），卸载本模块后它们只是普通图片。
@@ -146,7 +159,7 @@ QuestClusters.dissolve(clusterId)
 | visuals + Quest Enhance | 同上 | 105 项通过 |
 | 只装 visuals | — | 96 项通过 |
 | 两者同时安装（不含 visuals） | 同上 | 93 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
-| visuals + editor（默认全部已发布模块） | — | 135 项通过 |
+| visuals + editor（默认全部已发布模块） | — | 148 项通过 |
 | visuals + Quest Enhance（不带 editor，`-PskipModules=editor`） | 3.12 | 105 项通过 |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：

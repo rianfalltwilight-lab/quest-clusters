@@ -9,6 +9,7 @@ public final class EditorClient {
     }
 
     public static void init() {
+        com.questclusters.editor.client.desc.DescriptionComponents.register();
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> ClientEditor.clear());
         if (System.getProperty("quest_clusters.devtest") != null) {
             EditorDevTest.register();

@@ -4,22 +4,36 @@
   "package": "com.questclusters.editor.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "AdvancementTaskAccessor",
     "ChapterImageAccessor",
     "ChapterVisibilityMixin",
-    "CopyAnchorMixin"
+    "CopyAnchorMixin",
+    "KillTaskAccessor",
+    "QuestModelConfigMixin",
+    "QuestObjectIconAccessor",
+    "QuestObjectToastAccessor",
+    "TaskToastMixin"
   ],
   "client": [
+    "client.AdvancementTaskClickMixin",
     "client.ChapterImageButtonEditorMixin",
     "client.ChapterImageMenuMixin",
     "client.ChapterPanelEditorMixin",
+    "client.EditorToolbarMixin",
+    "client.IconGifMixin",
     "client.ModpackButtonMenuMixin",
+    "client.MultilineEditorAccessor",
     "client.QuestButtonEditorMixin",
     "client.QuestButtonMenuMixin",
+    "client.QuestDescriptionFieldMixin",
+    "client.QuestIconMixin",
     "client.QuestPanelEditorMixin",
     "client.QuestPanelMenuMixin",
     "client.QuestScreenEditorAccessor",
     "client.QuestScreenEditorMixin",
     "client.QuestScreenMenuMixin",
+    "client.ViewQuestPanelDescMixin",
+    "client.ViewQuestPanelEditLineMixin",
     "client.ViewQuestPanelEditorMixin"
   ],
   "injectors": {

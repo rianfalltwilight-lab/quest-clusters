@@ -38,6 +38,34 @@ public final class EditorNetwork {
         }
     }
 
+    public record PersistentRequest(java.util.List<String> keys) implements CustomPacketPayload {
+        public static final Type<PersistentRequest> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(QuestClustersEditor.MOD_ID, "persistent_request"));
+        public static final StreamCodec<ByteBuf, PersistentRequest> CODEC = ByteBufCodecs.stringUtf8(128)
+                .apply(ByteBufCodecs.list(64)).map(PersistentRequest::new, PersistentRequest::keys);
+
+        @Override
+        public Type<PersistentRequest> type() {
+            return TYPE;
+        }
+    }
+
+    public record PersistentResponse(java.util.List<String> keys, CompoundTag forge, CompoundTag kubejs) implements CustomPacketPayload {
+        public static final Type<PersistentResponse> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(QuestClustersEditor.MOD_ID, "persistent_response"));
+        public static final StreamCodec<ByteBuf, PersistentResponse> CODEC = StreamCodec.composite(
+                ByteBufCodecs.stringUtf8(128).apply(ByteBufCodecs.list(64)), PersistentResponse::keys,
+                ByteBufCodecs.COMPOUND_TAG, PersistentResponse::forge, ByteBufCodecs.COMPOUND_TAG, PersistentResponse::kubejs,
+                PersistentResponse::new);
+
+        @Override
+        public Type<PersistentResponse> type() {
+            return TYPE;
+        }
+    }
+
+    public static void sendPersistent(ServerPlayer p, java.util.List<String> keys, CompoundTag forge, CompoundTag kube) {
+        PacketDistributor.sendToPlayer(p, new PersistentResponse(keys, forge, kube));
+    }
+
     private EditorNetwork() {
     }
 
@@ -46,6 +74,10 @@ public final class EditorNetwork {
         r.playToClient(SyncBook.TYPE, SyncBook.CODEC, (p, ctx) -> ClientEditor.replace(p.data()));
         r.playToServer(Edit.TYPE, Edit.CODEC, (p, ctx) -> com.questclusters.editor.server.ServerEditor.handleEdit(
                 (ServerPlayer) ctx.player(), p.action(), p.patch()));
+        r.playToServer(PersistentRequest.TYPE, PersistentRequest.CODEC,
+                (p, ctx) -> com.questclusters.editor.PersistentData.handleRequest((ServerPlayer) ctx.player(), p.keys()));
+        r.playToClient(PersistentResponse.TYPE, PersistentResponse.CODEC,
+                (p, ctx) -> com.questclusters.editor.client.desc.ClientPersistentData.receive(p.keys(), p.forge(), p.kubejs()));
     }
 
     public static void send(ServerPlayer player, CompoundTag data) {

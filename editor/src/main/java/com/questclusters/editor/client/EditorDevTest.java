@@ -55,6 +55,25 @@ final class EditorDevTest {
     private static final net.minecraft.resources.ResourceLocation GIF =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("quest_clusters_editor", "textures/gui/example.gif");
 
+    private static com.questclusters.editor.data.DescriptionTable tableUnderTest;
+
+    private static void collect(dev.ftb.mods.ftblibrary.ui.Panel p, List<dev.ftb.mods.ftblibrary.ui.Widget> out) {
+        for (var w : p.getWidgets()) {
+            out.add(w);
+            if (w instanceof dev.ftb.mods.ftblibrary.ui.Panel sub) collect(sub, out);
+        }
+    }
+
+    private static String rawText(dev.ftb.mods.ftblibrary.ui.TextField tf) {
+        try {
+            var f = dev.ftb.mods.ftblibrary.ui.TextField.class.getDeclaredField("rawText");
+            f.setAccessible(true);
+            return ((net.minecraft.network.chat.Component) f.get(tf)).getString();
+        } catch (ReflectiveOperationException e) {
+            return "";
+        }
+    }
+
     private static List<String> keys(List<ContextMenuItem> menu) {
         List<String> out = new ArrayList<>();
         for (ContextMenuItem i : menu) {
@@ -240,8 +259,81 @@ final class EditorDevTest {
                     return 30;
                 },
                 () -> {
-                    DevSelfTest.moduleCheck(ClientQuestFile.INSTANCE.getChapter(C2).getQuests().size() == 4, "editor: multi-paste made 2 copies");
+                    DevSelfTest.moduleCheck(ClientQuestFile.INSTANCE.getChapter(C2).getQuests().size() == 6, "editor: multi-paste made 2 copies");
                     DevSelfTest.moduleShot("qc_33_editor_edited");
+                    command("questenhance persistent set @me qc.test Hello placeholder");
+                    return 10;
+                },
+                // ------------------------------------------------------------ E3: descriptions, models
+                () -> {
+                    var file = ClientQuestFile.INSTANCE;
+                    DevSelfTest.moduleCheck(file.getQuest(0xD8L).getIcon() instanceof EntityModelIcon, "editor: quest model shows the entity");
+                    DevSelfTest.moduleCheck(file.getQuest(0xD4L).getIcon() instanceof EntityModelIcon, "editor: quest with one kill task shows its entity");
+                    DevSelfTest.moduleCheck(file.getQuest(0xD4L).getTasks().iterator().next().getIcon() instanceof EntityModelIcon, "editor: kill task shows its entity");
+                    DevSelfTest.moduleCheck(dev.ftb.mods.ftblibrary.icon.Icon.getIcon("quest_clusters_editor:textures/gui/example.gif")
+                            instanceof com.questclusters.editor.client.desc.GifIcon, "editor: .gif icon strings play GIFs");
+                    DevSelfTest.questScreen().open(file.getQuest(0xD8L), false);
+                    return 40;
+                },
+                () -> {
+                    var view = DevSelfTest.questScreen().viewQuestPanel;
+                    List<dev.ftb.mods.ftblibrary.ui.Widget> all = new ArrayList<>();
+                    collect(view, all);
+                    var table = all.stream().filter(w -> w instanceof com.questclusters.editor.client.desc.TableWidget).findFirst();
+                    DevSelfTest.moduleCheck(table.isPresent() && table.get().height > 40, "editor: description table drawn as a grid ("
+                            + table.map(w -> w.height).orElse(0) + " px)");
+                    DevSelfTest.moduleCheck(all.stream().anyMatch(w -> w instanceof dev.ftb.mods.ftbquests.client.gui.ImageComponentWidget iw
+                            && iw.getComponent().getImage() instanceof com.questclusters.editor.client.desc.GifIcon), "editor: description GIF");
+                    DevSelfTest.moduleCheck(all.stream().anyMatch(w -> w instanceof dev.ftb.mods.ftblibrary.ui.TextField tf
+                            && rawText(tf).equals("Hello placeholder")), "editor: persistent-data placeholder shows the value");
+                    DevSelfTest.moduleShot("qc_34_editor_description");
+                    // component pages build the JSON Quest Enhance books use, and re-editing recognises it
+                    var v = new java.util.HashMap<String, Object>();
+                    v.put("text", "Wiki");
+                    v.put("url", "https://example.com");
+                    String link = com.questclusters.editor.client.desc.InsertComponents.build("link", v);
+                    DevSelfTest.moduleCheck(link != null && link.contains("open_url") && link.contains("https://example.com"), "editor: link component JSON " + link);
+                    v.clear();
+                    v.put("key", "key.jump");
+                    String kb = com.questclusters.editor.client.desc.InsertComponents.build("keybind", v);
+                    DevSelfTest.moduleCheck(kb != null && kb.contains("\"keybind\":\"key.jump\""), "editor: key binding component JSON");
+                    DevSelfTest.moduleCheck(com.questclusters.editor.client.desc.InsertComponents.reedit(DevSelfTest.questScreen(), link, x -> {
+                    }) && Minecraft.getInstance().screen != null, "editor: link line reopens its page");
+                    tableUnderTest = ((com.questclusters.editor.client.desc.TableWidget) table.orElseThrow()).table().copy();
+                    return 10;
+                },
+                () -> {
+                    com.questclusters.editor.client.desc.TableEditorScreen.open(tableUnderTest, t -> tableUnderTest = t);
+                    return 10;
+                },
+                () -> {
+                    if (!(com.questclusters.editor.client.desc.TableEditorScreen.last instanceof com.questclusters.editor.client.desc.TableEditorScreen ed)) {
+                        DevSelfTest.moduleCheck(false, "editor: table editor opens");
+                        return 5;
+                    }
+                    ed.testSelect(0, 1, 0, 2);
+                    ed.testMerge();
+                    ed.testType(2, 0, "Edited");
+                    DevSelfTest.moduleCheck(ed.table().mergeAt(0, 2) != null && ed.table().cell(2, 0).equals("Edited"), "editor: table editor merges and types");
+                    ed.testUndo();
+                    DevSelfTest.moduleCheck(ed.table().cell(2, 0).equals("Gold"), "editor: table editor undo");
+                    return 5;
+                },
+                () -> {
+                    DevSelfTest.moduleShot("qc_35_table_editor");
+                    return 5;
+                },
+                () -> {
+                    var qs = ClientQuestFile.openGui();
+                    qs.open(ClientQuestFile.INSTANCE.getChapter(C2), false);
+                    var sel = ((QuestScreenAccessor) qs).quest_clusters$getSelectedObjects();
+                    sel.clear();
+                    sel.add(ClientQuestFile.INSTANCE.getQuest(D5));
+                    sel.add(ClientQuestFile.INSTANCE.getQuest(D6));
+                    List<ContextMenuItem> m = new ArrayList<>();
+                    EditorMenus.selectionItems(m, qs);
+                    DevSelfTest.moduleCheck(keys(m).containsAll(List.of("bulk_edit", "bulk_add_task")), "editor: bulk edit entries");
+                    sel.clear();
                     return 5;
                 }
         ));
