@@ -6,9 +6,18 @@ versionRange = "[${mod_version},)"
 ordering = "AFTER"
 side = "BOTH"
 
+# Optional so the bundle also works without FTB Filter System (the module then does nothing).
 [[dependencies.${module_id}]]
 modId = "ftbfiltersystem"
-type = "required"
+type = "optional"
 versionRange = "[21.1.4,21.2)"
 ordering = "AFTER"
+side = "BOTH"
+
+# Replaces Smart Filter Extras (same filter strings): both together would register the same filters.
+[[dependencies.${module_id}]]
+modId = "smart_filter_extras"
+type = "incompatible"
+reason = "Quest Clusters Filters replaces Smart Filter Extras and reads/writes the same filters. Remove Smart Filter Extras; existing filters keep working."
+versionRange = "*"
 side = "BOTH"

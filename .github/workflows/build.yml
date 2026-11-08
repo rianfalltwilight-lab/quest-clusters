@@ -40,4 +40,5 @@ jobs:
             core/build/libs/*.jar
             visuals/build/libs/*.jar
             editor/build/libs/*.jar
+            filters/build/libs/*.jar
             bundle/build/libs/*.jar

@@ -3,9 +3,12 @@
   "minVersion": "0.8",
   "package": "com.questclusters.filters.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "FilterParserAliasMixin"
+  ],
   "client": [],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "plugin": "com.questclusters.filters.mixin.FiltersMixinPlugin"
 }

@@ -13,7 +13,11 @@ repositories {
     maven { url = 'https://maven.ftb.dev/releases' }
     maven { url = 'https://maven.architectury.dev/' }
     maven { url = 'https://maven.latvian.dev/releases' } // KubeJS (optional integration, compile only)
-    maven { // WATERMeDIA (optional video playback, compile only)
+    maven { // JEI (optional, compile only)
+        url = 'https://maven.blamejared.com'
+        content { includeGroup 'mezz.jei' }
+    }
+    maven { // WATERMeDIA, EMI (optional, compile only)
         url = 'https://api.modrinth.com/maven'
         content { includeGroup 'maven.modrinth' }
     }
