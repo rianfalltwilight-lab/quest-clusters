@@ -92,6 +92,13 @@ def prepareDevtest = tasks.register('prepareDevtest', Sync) {
 // visuals: start without our settings and with Certain Questing Additions' settings, to exercise the import
 def prepareVisualsDevtest = tasks.register('prepareVisualsDevtest') {
     doLast {
+        // fresh run folder (new checkout, CI): without options.txt Minecraft first shows its accessibility
+        // onboarding screen and only then runs quick play, which a headless run never gets past
+        def options = file('run/options.txt')
+        if (!options.exists()) {
+            options.parentFile.mkdirs()
+            options.text = 'onboardAccessibility:false\n'
+        }
         delete 'run/local/quest_clusters_visuals'
         file('run/local/certain_questing_additions').mkdirs()
         file('run/local/certain_questing_additions/client-config.snbt').text = '{\n\tanimations: { quest_hover: true }\n\tappearance: { quest_hover_glow_alpha: 77 }\n}\n'
