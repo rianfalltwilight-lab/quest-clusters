@@ -13,3 +13,11 @@ type = "incompatible"
 reason = "Quest Clusters Editor replaces Quest Enhance. Remove Quest Enhance (keep its config folder); its quest book data is imported automatically on the next start (a backup is made first)."
 versionRange = "*"
 side = "BOTH"
+
+# Video playback (optional). The player is written against WATERMeDIA 3; the old 2.x API is different.
+[[dependencies.${module_id}]]
+modId = "watermedia"
+type = "optional"
+versionRange = "[3.0.0,)"
+ordering = "NONE"
+side = "CLIENT"

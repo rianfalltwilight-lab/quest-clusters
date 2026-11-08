@@ -2,5 +2,8 @@ apply from: rootProject.file('gradle/module.gradle')
 
 dependencies {
     compileOnly project(':core')
+    compileOnly("maven.modrinth:watermedia:${rootProject.watermedia_version}") { transitive = false }
+    compileOnly("dev.latvian.mods:kubejs-neoforge:${rootProject.kubejs_version}") { transitive = false }
+    compileOnly("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
     testImplementation project(':core')
 }

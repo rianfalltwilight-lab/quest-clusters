@@ -56,6 +56,8 @@ final class EditorDevTest {
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("quest_clusters_editor", "textures/gui/example.gif");
 
     private static com.questclusters.editor.data.DescriptionTable tableUnderTest;
+    private static volatile String scriptQuest;
+    private static int imagesBefore;
 
     private static void collect(dev.ftb.mods.ftblibrary.ui.Panel p, List<dev.ftb.mods.ftblibrary.ui.Widget> out) {
         for (var w : p.getWidgets()) {
@@ -334,6 +336,67 @@ final class EditorDevTest {
                     EditorMenus.selectionItems(m, qs);
                     DevSelfTest.moduleCheck(keys(m).containsAll(List.of("bulk_edit", "bulk_add_task")), "editor: bulk edit entries");
                     sel.clear();
+                    // ------------------------------------------------------------ E4: paste, scripts, video
+                    var img = new java.awt.image.BufferedImage(32, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                    for (int x = 0; x < 32; x++) for (int y = 0; y < 16; y++) img.setRGB(x, y, x < 16 ? 0xFFE04040 : 0xFF40A0E0);
+                    com.questclusters.editor.client.paste.ClipboardImage.testOverride = img;
+                    imagesBefore = ClientQuestFile.INSTANCE.getChapter(C2).getImages().size();
+                    DevSelfTest.moduleCheck(com.questclusters.editor.client.paste.PasteActions.pasteOnCanvas(qs, false), "editor: clipboard image pasted");
+                    com.questclusters.editor.client.paste.ClipboardImage.testOverride = null;
+                    var server = Minecraft.getInstance().getSingleplayerServer();
+                    server.execute(() -> {
+                        String q = com.questclusters.editor.compat.kubejs.QuestUtils.createQuest("00000000000000C2", 6, 6, "Script quest");
+                        scriptQuest = q;
+                        com.questclusters.editor.compat.kubejs.QuestUtils.setQuestDescription(q, "Made by a script",
+                                com.questclusters.editor.compat.kubejs.QuestUtils.descriptionTable(List.of(List.of("a", "b"), List.of("1", "2")), true, "center"),
+                                com.questclusters.editor.compat.kubejs.QuestUtils.descriptionVideo("intro/start.mp4", "Watch"));
+                        com.questclusters.editor.compat.kubejs.QuestUtils.createChapterText("00000000000000C2", "Script text", "", 6, 7, 3, 0.5);
+                        com.questclusters.editor.compat.kubejs.QuestUtils.createDecorativeAnchor("00000000000000C2", 7, 6);
+                        com.questclusters.editor.compat.kubejs.QuestUtils.setQuestShape(q, "hexagon");
+                    });
+                    return 30;
+                },
+                () -> {
+                    var file = ClientQuestFile.INSTANCE;
+                    var imgs = file.getChapter(C2).getImages();
+                    var pasted = imgs.stream().filter(i -> i.getImage().toString().startsWith("quest_clusters_editor:textures/pasted/")).findFirst();
+                    DevSelfTest.moduleCheck(imgs.size() >= imagesBefore + 3 && pasted.isPresent(), "editor: pasted image became a chapter image");
+                    pasted.ifPresent(p -> {
+                        var rl = net.minecraft.resources.ResourceLocation.parse(p.getImage().toString());
+                        DevSelfTest.moduleCheck(Minecraft.getInstance().getTextureManager().getTexture(rl, null) != null, "editor: pasted texture shown without reload");
+                    });
+                    // cleanup keeps the used image (only in memory so far) and deletes an unused one
+                    try {
+                        Path dir = FMLPaths.CONFIGDIR.get().resolve("quest_clusters_editor/assets/quest_clusters_editor/textures/pasted");
+                        java.nio.file.Files.write(dir.resolve("clipboard_1.png"), new byte[]{1});
+                        var msg = com.questclusters.editor.client.paste.PastedImages.cleanup().getString();
+                        DevSelfTest.moduleCheck(!java.nio.file.Files.exists(dir.resolve("clipboard_1.png"))
+                                && pasted.isPresent() && java.nio.file.Files.exists(dir.resolve(pasted.get().getImage().toString().substring(
+                                "quest_clusters_editor:textures/pasted/".length()))), "editor: cleanup removes only unused images (" + msg + ")");
+                    } catch (Exception e) {
+                        DevSelfTest.moduleCheck(false, "editor: cleanup " + e);
+                    }
+                    Quest sq = scriptQuest == null ? null : file.getQuest(dev.ftb.mods.ftbquests.quest.QuestObjectBase.parseCodeString(scriptQuest));
+                    DevSelfTest.moduleCheck(sq != null && sq.getTitle().getString().equals("Script quest") && sq.getRawDescription().size() == 3,
+                            "editor: QuestUtils created a quest with title and description");
+                    DevSelfTest.moduleCheck(imgs.stream().anyMatch(i -> CanvasElement.parse(i.getClickAction().actionData()) instanceof CanvasElement.Text t
+                            && t.text().equals("Script text")), "editor: QuestUtils canvas text keeps its payload");
+                    DevSelfTest.moduleCheck(sq != null && sq.getRawDescription().get(2).startsWith("{quest_enhance_video:"), "editor: video description line");
+                    var line = sq == null ? null : sq.getDescription().get(2);
+                    DevSelfTest.moduleCheck(line != null && line.getString().equals("Watch") && line.getStyle().getClickEvent() != null
+                            && line.getStyle().getClickEvent().getValue().startsWith("quest_enhance_video/"), "editor: video link parsed");
+                    var icon = com.questclusters.editor.EntityModels.withVideo(net.minecraft.world.item.ItemStack.EMPTY, "intro/start.mp4");
+                    DevSelfTest.moduleCheck("intro/start.mp4".equals(com.questclusters.editor.EntityModels.videoOf(icon))
+                            && com.questclusters.editor.EntityModels.isVideoPlaceholder(icon)
+                            && com.questclusters.editor.EntityModels.withVideo(icon, "").isEmpty(), "editor: node video stored in the icon");
+                    DevSelfTest.moduleCheck(!com.questclusters.editor.client.video.VideoSupport.available(), "editor: no WATERMeDIA in this run");
+                    com.questclusters.editor.client.video.VideoSupport.open("intro/start.mp4"); // must only print a chat message
+                    var qs = DevSelfTest.questScreen();
+                    qs.questPanel.scrollTo(3, 3);
+                    return 10;
+                },
+                () -> {
+                    DevSelfTest.moduleShot("qc_36_editor_e4");
                     return 5;
                 }
         ));

@@ -17,6 +17,11 @@ public abstract class QuestDescriptionFieldMixin {
         if (e != null && e.getAction() == ClickEvent.Action.CHANGE_PAGE && e.getValue().startsWith(Ponder.PREFIX)) {
             Ponder.open(e.getValue().substring(Ponder.PREFIX.length()));
             cir.setReturnValue(true);
+        } else if (e != null && e.getAction() == ClickEvent.Action.CHANGE_PAGE
+                && e.getValue().startsWith(com.questclusters.editor.data.VideoPaths.CLICK)) {
+            String path = com.questclusters.editor.data.VideoPaths.decode(e.getValue().substring(com.questclusters.editor.data.VideoPaths.CLICK.length()));
+            if (path != null) com.questclusters.editor.client.video.VideoSupport.open(path);
+            cir.setReturnValue(true);
         }
     }
 }

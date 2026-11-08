@@ -6,7 +6,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 - FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
 - 客户端和服务端都需要安装
 
-## 当前进度：阶段 0–2、4、A、B、C、D、E1、E2、E3
+## 当前进度：阶段 0–2、4、A、B、C、D、E（E1–E4）
 
 ## 模块（阶段 C 起为多模块仓库）
 
@@ -14,7 +14,7 @@ FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组
 |---|---|---|---|
 | `core/` | `quest_clusters` | 任务集、评分/结算页/排行榜、章节搜索、迁移框架（下文全部功能） | 已发布 |
 | `visuals/` | `quest_clusters_visuals` | 任务书视觉增强，替代 Certain Questing Additions（见下）；声明与之不兼容；纯客户端 | 已发布 |
-| `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（E1 显示与导入、E2 编辑界面、E3 描述组件与模型） |
+| `editor/` | `quest_clusters_editor` | 任务书编辑增强，替代 Quest Enhance（见下）；声明与之不兼容；客户端和服务端都要装 | 已发布（阶段 E 全部完成） |
 | `filters/` | `quest_clusters_filters` | 阶段 F：FTB Filter System 的额外筛选 | 占位，未发布 |
 | `xmod/` | `quest_clusters_xmod` | 阶段 G：FTB XMod Compat 的 FTB Quests 部分（接管，不声明不兼容） | 占位，未发布 |
 | `bundle/` | `quest_clusters_bundle` | 把所有已发布模块嵌套进一个 jar（jar-in-jar） | 已发布 |
@@ -71,6 +71,17 @@ E3（本版）：任务描述与图标。
 - **任务目标“禁用提示”**：完成这个目标而完成整个任务时，任务本身也不弹提示。
 - **批量编辑**：多选任务后“批量编辑任务”：编辑第一个，改动过的属性复制到其余任务；“批量添加任务目标”：给所有选中任务添加同一个目标。
 - 客户端设置 `config/quest_clusters_editor-client.toml`：`render_kill_task_entity_models`、`open_advancement_tasks`（首次启动时从 Quest Enhance 的 `quest_enhance-client.toml` 导入）。
+
+E4（本版）：脚本、视频、粘贴图片。
+- **KubeJS**：绑定 `QuestUtils`、客户端事件 `QuestEnhanceEvents.click`（点击画布文字时触发），名字和方法与 Quest Enhance 相同，旧脚本不用改。
+  所有修改都走 FTB Quests 自己的修改记录：会保存、同步给所有玩家，编辑模式里可撤销。Quest Enhance 的画布脚本函数在 1.21.1 上会把数据写进旧的 `click` 字段（被 FTB Quests 丢掉），这里已经修正。
+  `descriptionItemIcon` 输出 FTB Quests 自己的物品图标写法（Quest Enhance 那种格式从来显示不出来）。
+- **视频**（需要 WATERMeDIA 3.x，可选）：任务属性“节点视频”（任务按钮右下角出现播放按钮）、画布“视频背景”、描述里的视频链接（插入组件 → 视频）。
+  播放器：进度条、播放 / 暂停 / 重播、倍速、音量、静音、全屏；空格、左右方向键、F、Esc。视频放在 `config/quest_clusters_editor/videos/`（也会读 Quest Enhance 的 `config/quest_enhance/assets/quest_enhance/videos/ftb/`），或资源包的 `<命名空间>:videos/`（写成 `assets/<路径>`）。
+  没装 WATERMeDIA 时点击视频只会提示需要安装。注意：WATERMeDIA 3 改用 FFmpeg，接口与 Quest Enhance 用的 2.x 不同；实际解码播放没有在开发环境里测过。
+- **粘贴剪贴板图片**：画布上 Ctrl+V（或右键“粘贴剪贴板图片”）把图片放成章节图片；描述编辑器里 Ctrl+V 插入图片行。Windows、macOS、Linux（需要 wl-paste 或 xclip）都支持。
+  图片存到 `config/quest_clusters_editor/assets/quest_clusters_editor/textures/pasted/`，作为常开资源包加载，粘贴后立即显示；Quest Enhance 粘贴过的图片（`config/quest_enhance/`）照常显示。
+  图片只在粘贴的那台电脑上：多人游戏请把文件放进资源包发给玩家。`/qceditor cleanup`（或 `/questenhance cleanup`）删除没有任何任务书引用的粘贴图片。
 
 数据位置：`config/ftbquests/quests/quest_clusters/editor/`，`book.snbt`（侧栏背景）加每章一个 `<章节ID>.snbt`
 （章节背景、前置任务、装饰线、隐藏线，以及当前在该章节里的任务和图片的设置）。画布文字和辅助点仍存在章节图片的 `click_action` 里（与 Quest Enhance 相同的格式），卸载本模块后它们只是普通图片。
@@ -159,7 +170,7 @@ QuestClusters.dissolve(clusterId)
 | visuals + Quest Enhance | 同上 | 105 项通过 |
 | 只装 visuals | — | 96 项通过 |
 | 两者同时安装（不含 visuals） | 同上 | 93 项通过（唯一的 ERROR 是测试故意制造循环前置时 FTB Quests 自己的提示） |
-| visuals + editor（默认全部已发布模块） | — | 148 项通过 |
+| visuals + editor（默认全部已发布模块） | — | 158 项通过 |
 | visuals + Quest Enhance（不带 editor，`-PskipModules=editor`） | 3.12 | 105 项通过 |
 
 联动内容（都通过反射读取，对方不在或 API 变化时自动关闭，不会崩溃）：

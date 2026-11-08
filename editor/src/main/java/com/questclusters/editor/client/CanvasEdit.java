@@ -87,6 +87,10 @@ public final class CanvasEdit {
         create(chapter, x, y, 4.0, Math.max(0.25, 4.0 / aspect), "", new CanvasElement.Gif(gif.toString()).encode());
     }
 
+    public static void addVideo(Chapter chapter, double x, double y, String path) {
+        create(chapter, x, y, 4.0, 2.25, "#212121", new CanvasElement.Video(path).encode());
+    }
+
     public static void setPayload(ChapterImage img, String payload) {
         CompoundTag t = new CompoundTag();
         img.writeData(t, ClientQuestFile.INSTANCE.holderLookup());

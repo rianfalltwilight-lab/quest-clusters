@@ -234,6 +234,9 @@ public final class EditorMenus {
         CanvasElement el = CanvasElement.parse(img.getClickAction().actionData());
         if (el instanceof CanvasElement.Text t) {
             add.add(item("canvas_text.edit", Icons.NOTES, () -> CanvasEdit.editText(screen, img, t)));
+        } else if (el instanceof CanvasElement.Video && com.questclusters.editor.client.video.VideoSupport.available()) {
+            List<ContextMenuItem> videos = videoItems(path -> CanvasEdit.setPayload(img, new CanvasElement.Video(path).encode()));
+            if (!videos.isEmpty()) add.add(ContextMenuItem.subMenu(tr("video.change"), Icons.ART, videos));
         } else if (el instanceof CanvasElement.Gif) {
             List<ContextMenuItem> gifs = gifItems(rl -> CanvasEdit.setPayload(img, new CanvasElement.Gif(rl.toString()).encode()));
             if (!gifs.isEmpty()) add.add(ContextMenuItem.subMenu(tr("gif.change"), Icons.ART, gifs));
@@ -259,6 +262,11 @@ public final class EditorMenus {
         List<ContextMenuItem> gifs = gifItems(rl -> CanvasEdit.addGif(ch, qx, qy, rl));
         add.add(gifs.isEmpty() ? new ContextMenuItem(tr("gif.none"), Icons.ART, b -> {
         }).setEnabled(false) : ContextMenuItem.subMenu(tr("gif.add"), Icons.ART, gifs));
+        if (com.questclusters.editor.client.video.VideoSupport.available()) {
+            List<ContextMenuItem> videos = videoItems(path -> CanvasEdit.addVideo(ch, qx, qy, path));
+            if (!videos.isEmpty()) add.add(ContextMenuItem.subMenu(tr("video.add"), Icons.ART, videos));
+        }
+        add.add(item("paste_image", Icons.ART, () -> com.questclusters.editor.client.paste.PasteActions.pasteOnCanvas(screen, false)));
         if (CanvasEdit.hasMultiClipboard()) {
             add.add(new ContextMenuItem(tr("paste_many", CanvasEdit.clipboardSize()), Icons.ADD,
                     b -> CanvasEdit.paste(ch, qx, qy, true)));
@@ -268,6 +276,15 @@ public final class EditorMenus {
         }
         menu.add(ContextMenuItem.SEPARATOR);
         menu.addAll(add);
+    }
+
+    private static List<ContextMenuItem> videoItems(java.util.function.Consumer<String> pick) {
+        List<ContextMenuItem> out = new ArrayList<>();
+        for (String p : com.questclusters.editor.client.video.VideoSupport.list()) {
+            out.add(new ContextMenuItem(Component.literal(p), Icons.ART, b -> pick.accept(p)));
+            if (out.size() >= 64) break;
+        }
+        return out;
     }
 
     private static List<ContextMenuItem> gifItems(java.util.function.Consumer<ResourceLocation> pick) {

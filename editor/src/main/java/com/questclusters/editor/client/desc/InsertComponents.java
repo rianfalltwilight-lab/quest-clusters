@@ -62,6 +62,9 @@ public final class InsertComponents {
         media.add(item("item_icon", back, init, out));
         media.add(item("item_tooltip", back, init, out));
         if (!GifTextures.list().isEmpty()) media.add(item("gif", back, init, out));
+        if (com.questclusters.editor.client.video.VideoSupport.available() && !com.questclusters.editor.client.video.VideoSupport.list().isEmpty()) {
+            media.add(item("video", back, init, out));
+        }
         text.add(item("hover", back, init, out));
         text.add(item("font", back, init, out));
         text.add(item("translate", back, init, out));
@@ -166,6 +169,17 @@ public final class InsertComponents {
                 item(g, v);
                 imageFields(g, v, 18, 18, false);
             }
+            case "video" -> {
+                List<String> videos = com.questclusters.editor.client.video.VideoSupport.list();
+                if (videos.isEmpty()) return;
+                v.putIfAbsent("video", videos.getFirst());
+                if (!videos.contains((String) v.get("video"))) {
+                    videos = new ArrayList<>(videos);
+                    videos.add((String) v.get("video"));
+                }
+                g.addEnum("video", (String) v.get("video"), x -> v.put("video", x), NameMap.of(videos.getFirst(), videos).create());
+                str(g, v, "text", text);
+            }
             case "gif" -> {
                 List<String> gifs = GifTextures.list().stream().map(ResourceLocation::toString).toList();
                 v.putIfAbsent("gif", gifs.getFirst());
@@ -242,6 +256,7 @@ public final class InsertComponents {
             case "image" -> imageMarkup("image:" + ((String) v.get("url")).replace(" ", "%20"), v);
             case "item_icon" -> v.get("item") instanceof ItemStack s && !s.isEmpty() ? imageMarkup("image:" + ItemIcon.getItemIcon(s), v) : null;
             case "gif" -> imageMarkup(DescriptionComponents.GIF_KEY + ":" + v.get("gif"), v);
+            case "video" -> com.questclusters.editor.data.VideoPaths.descriptionLine((String) v.get("video"), (String) v.getOrDefault("text", ""));
             default -> null;
         };
     }
@@ -285,6 +300,15 @@ public final class InsertComponents {
             v.put("align", Align.valueOf(safeAlign(p.getOrDefault("align", "center"))));
             v.put("fit", "true".equals(p.get("fit")));
             v.put("hover", p.getOrDefault("text", "").replace("%20", " "));
+            if (p.containsKey(com.questclusters.editor.data.VideoPaths.KEY)) {
+                String path = com.questclusters.editor.data.VideoPaths.decode(p.get(com.questclusters.editor.data.VideoPaths.KEY));
+                if (path == null) return false;
+                v.put("video", path);
+                String label = com.questclusters.editor.data.VideoPaths.label(p, path);
+                v.put("text", label == null ? "" : label);
+                open("video", back, v, out);
+                return true;
+            }
             if (p.containsKey(DescriptionComponents.GIF_KEY)) {
                 v.put("gif", p.get(DescriptionComponents.GIF_KEY));
                 open("gif", back, v, out);

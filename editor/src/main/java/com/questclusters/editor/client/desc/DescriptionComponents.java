@@ -41,6 +41,17 @@ public final class DescriptionComponents {
             }
             return Component.literal(fallback.toString()).withStyle(Style.EMPTY.withInsertion(TABLE_MARK + payload));
         }
+        if (map.containsKey(com.questclusters.editor.data.VideoPaths.KEY)) {
+            String path = com.questclusters.editor.data.VideoPaths.decode(map.get(com.questclusters.editor.data.VideoPaths.KEY));
+            if (path == null) return Component.translatable("quest_clusters_editor.video.invalid_marker").withStyle(ChatFormatting.RED);
+            String label = com.questclusters.editor.data.VideoPaths.label(map, path);
+            Component text = label != null ? Component.literal(label)
+                    : Component.translatable("quest_clusters_editor.video.play_file", com.questclusters.editor.data.VideoPaths.fileName(path));
+            return text.copy().withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withUnderlined(true)
+                    .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.CHANGE_PAGE,
+                            com.questclusters.editor.data.VideoPaths.CLICK + com.questclusters.editor.data.VideoPaths.encode(path)))
+                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("quest_clusters_editor.video.click_to_play"))));
+        }
         if (map.containsKey(GIF_KEY)) {
             String id = map.get(GIF_KEY);
             ResourceLocation rl = ResourceLocation.tryParse(id);

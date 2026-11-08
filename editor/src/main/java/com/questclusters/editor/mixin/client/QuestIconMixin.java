@@ -30,7 +30,11 @@ public abstract class QuestIconMixin {
         if (self instanceof Quest q) {
             var raw = ((com.questclusters.editor.mixin.QuestObjectIconAccessor) (Object) q).quest_clusters_editor$rawIcon();
             id = EntityModels.modelOf(raw);
-            if (id == null && raw.isEmpty() && EditorConfig.KILL_TASK_MODELS.get()
+            if (id == null && EntityModels.isVideoPlaceholder(raw)) {
+                cir.setReturnValue(Icon.empty());
+                return;
+            }
+            if (id == null && (raw.isEmpty() || EntityModels.isVideoPlaceholder(raw)) && EditorConfig.KILL_TASK_MODELS.get()
                     && q.getTasks().size() == 1 && q.getTasks().iterator().next() instanceof KillTask kt) {
                 id = ((KillTaskAccessor) kt).quest_clusters_editor$entity();
             }

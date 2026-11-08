@@ -38,5 +38,16 @@ public abstract class QuestModelConfigMixin {
                 self.setRawIcon(EntityModels.iconFor(ResourceLocation.parse(v)));
             }
         }, names).setOrder(-125);
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient() && net.neoforged.fml.ModList.get().isLoaded("watermedia")) {
+            List<String> videos = new ArrayList<>();
+            videos.add("");
+            videos.addAll(com.questclusters.editor.client.video.VideoSupport.list());
+            String cur = EntityModels.videoOf(raw);
+            if (cur != null && !videos.contains(cur)) videos.add(cur);
+            config.addEnum("node_video", cur == null ? "" : cur, v -> self.setRawIcon(EntityModels.withVideo(
+                    ((QuestObjectIconAccessor) (Object) self).quest_clusters_editor$rawIcon(), v)),
+                    NameMap.of("", videos).name(x -> x.isEmpty() ? Component.translatable("quest_clusters_editor.model.none") : Component.literal(x)).create())
+                    .setOrder(-124);
+        }
     }
 }
