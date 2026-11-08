@@ -104,14 +104,22 @@ public final class ClusterPayloads {
         }
     }
 
-    /** Move a cluster and all its members by (dx, dy) canvas units, as one undo step. */
-    public record Move(long clusterId, double dx, double dy) implements CustomPacketPayload {
+    /**
+     * Move a cluster by (dx, dy) canvas units, as one undo step: its members, and the box too unless
+     * {@code membersOnly} (frame drag of a cluster whose box has its own position).
+     */
+    public record Move(long clusterId, double dx, double dy, boolean membersOnly) implements CustomPacketPayload {
         public static final Type<Move> TYPE = newType("move");
         public static final StreamCodec<ByteBuf, Move> CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_LONG, Move::clusterId,
                 ByteBufCodecs.DOUBLE, Move::dx,
                 ByteBufCodecs.DOUBLE, Move::dy,
+                ByteBufCodecs.BOOL, Move::membersOnly,
                 Move::new);
+
+        public Move(long clusterId, double dx, double dy) {
+            this(clusterId, dx, dy, false);
+        }
 
         @Override
         public Type<Move> type() {

@@ -39,7 +39,7 @@ public final class ClusterCodecs {
         public ClusterStyle decode(ByteBuf buf) {
             return new ClusterStyle(buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(),
                     ByteBufCodecs.stringUtf8(ClusterStyle.MAX_BACKGROUND_LENGTH).decode(buf),
-                    buf.readByte(), buf.readByte(), buf.readBoolean());
+                    buf.readByte(), buf.readByte(), buf.readBoolean(), buf.readBoolean());
         }
 
         @Override
@@ -52,6 +52,7 @@ public final class ClusterCodecs {
             buf.writeByte(s.backgroundMode());
             buf.writeByte(s.sliceBorder());
             buf.writeBoolean(s.backgroundOnFrame());
+            buf.writeBoolean(s.freeBox());
         }
     };
 

@@ -58,6 +58,7 @@ public final class ClusterNbt {
                 if (st.backgroundMode() == ClusterStyle.MODE_NINE_SLICE) style.putInt("slice_border", st.sliceBorder());
                 if (st.backgroundOnFrame()) style.putBoolean("background_on_frame", true);
             }
+            if (st.freeBox()) style.putBoolean("free_box", true);
             tag.put("style", style);
         }
         return tag;
@@ -135,7 +136,7 @@ public final class ClusterNbt {
         return new ClusterStyle(optColor(t, "title_color"), optColor(t, "subtitle_color"),
                 optColor(t, "border_color"), optColor(t, "frame_color"),
                 t.getString("background"), mode, t.contains("slice_border") ? t.getInt("slice_border") : 4,
-                t.getBoolean("background_on_frame"));
+                t.getBoolean("background_on_frame"), t.getBoolean("free_box"));
     }
 
     private static int optColor(CompoundTag t, String key) {

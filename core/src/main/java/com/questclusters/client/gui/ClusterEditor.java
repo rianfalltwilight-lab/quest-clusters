@@ -193,6 +193,7 @@ public final class ClusterEditor {
                 Color4I.rgba(QuestCluster.DEFAULT_COLOR)).setOrder(o++);
         o = addBackgroundFields(group, e, o);
         group.addBool("default_expanded", c.defaultExpanded(), v -> e[0] = e[0].withDefaultExpanded(v), true).setOrder(o++);
+        group.addBool("free_box", c.style().freeBox(), v -> e[0] = e[0].withStyle(e[0].style().withFreeBox(v)), false).setOrder(o++);
         group.addDouble("width", c.width(), v -> e[0] = e[0].withBoxSize(v, e[0].height()), 3D,
                 QuestCluster.MIN_BOX_SIZE, QuestCluster.MAX_BOX_SIZE).setOrder(o++);
         group.addDouble("height", c.height(), v -> e[0] = e[0].withBoxSize(e[0].width(), v), 1D,
@@ -268,10 +269,19 @@ public final class ClusterEditor {
         PacketDistributor.sendToServer(new ClusterPayloads.Update(c));
     }
 
-    /** Moves the box and every member by (dx, dy) canvas units. Member moves go through FTB Quests (undoable). */
-    static void moveBy(QuestScreen screen, QuestCluster c, double dx, double dy) {
-        if (dx != 0 || dy != 0) {
-            PacketDistributor.sendToServer(new ClusterPayloads.Move(c.id(), dx, dy));
+    /**
+     * A drag of the box ({@code fromBox}) or the expanded frame by (dx, dy) canvas units. Normally box and members
+     * move together; with a free box, the box drag moves only the box and the frame drag only the members.
+     * Member moves go through FTB Quests (undoable).
+     */
+    static void moveBy(QuestScreen screen, QuestCluster c, double dx, double dy, boolean fromBox) {
+        if (dx == 0 && dy == 0) {
+            return;
+        }
+        if (c.style().freeBox() && fromBox) {
+            update(c.withBoxPosition(c.x() + dx, c.y() + dy));
+        } else {
+            PacketDistributor.sendToServer(new ClusterPayloads.Move(c.id(), dx, dy, c.style().freeBox()));
         }
     }
 

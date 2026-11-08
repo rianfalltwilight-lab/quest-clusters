@@ -15,6 +15,17 @@ public final class BookExtras {
     public final Map<Long, QuestExtras> quests = new LinkedHashMap<>();
     /** Chapter image ids excluded from drag-box selection. */
     public final Set<Long> excludedImages = new HashSet<>();
+    /** Decorative line presets, in the order they were made. */
+    public final java.util.List<LinePreset> linePresets = new java.util.ArrayList<>();
+
+    /** The preset with this id, or null (none set, or deleted since). */
+    public LinePreset preset(String id) {
+        if (id == null || id.isEmpty()) return null;
+        for (LinePreset p : linePresets) {
+            if (p.id().equals(id)) return p;
+        }
+        return null;
+    }
 
     public ChapterExtras chapter(long id) {
         ChapterExtras c = chapters.get(id);
@@ -39,7 +50,7 @@ public final class BookExtras {
 
     public boolean isEmpty() {
         return sidebarBackground.isEmpty() && chapters.values().stream().allMatch(ChapterExtras::isEmpty)
-                && quests.isEmpty() && excludedImages.isEmpty();
+                && quests.isEmpty() && excludedImages.isEmpty() && linePresets.isEmpty();
     }
 
     private static final ChapterExtras EMPTY_CHAPTER = new ChapterExtras();

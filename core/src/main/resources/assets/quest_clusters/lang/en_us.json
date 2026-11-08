@@ -132,5 +132,7 @@
   "quest_clusters.migrate.notice.title": "[Quest Clusters] Data from removed addons was imported:",
   "quest_clusters.migrate.notice.failed": "Failed imports are retried on the next start; the backup below has the quest book from before. See the server log for the error.",
   "quest_clusters.migrate.notice.details": "Details: %s",
-  "quest_clusters.menu.add_selected_here": "Add selected to this cluster (%s)"
+  "quest_clusters.menu.add_selected_here": "Add selected to this cluster (%s)",
+  "quest_clusters.free_box": "Box has its own position",
+  "quest_clusters.free_box.tooltip": "Dragging the collapsed box moves only the box; moving the quests (frame drag, FTB Quests' move) leaves the box where it is"
 }

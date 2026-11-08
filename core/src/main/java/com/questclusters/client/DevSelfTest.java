@@ -755,6 +755,40 @@ public final class DevSelfTest {
         STEPS.add(() -> {
             check(Math.abs(cluster().x() - (before[0] + 1)) < 1e-6 && Math.abs(cluster().y() - before[1]) < 1e-6,
                     "box follows when all members are moved with FTB Quests' move: " + before[0] + " -> " + cluster().x());
+            // 4b) "box has its own position": the box and the members move independently
+            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style().withFreeBox(true))));
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(cluster().style().freeBox(), "free box option saved and synced");
+            before = new double[]{cluster().x(), cluster().y(), memberX(cluster().members().get(0))};
+            PacketDistributor.sendToServer(new ClusterPayloads.Move(cluster().id(), 1, 0, true)); // frame drag
+            return 30;
+        });
+        STEPS.add(() -> {
+            check(Math.abs(memberX(cluster().members().get(0)) - (before[2] + 1)) < 1e-6 && Math.abs(cluster().x() - before[0]) < 1e-6,
+                    "free box: moving the members leaves the box (box " + before[0] + " -> " + cluster().x() + ")");
+            var ch = ClientQuestFile.INSTANCE.getChapter(chapterId());
+            for (long m : cluster().members()) {
+                var mv = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(m);
+                dev.architectury.networking.NetworkManager.sendToServer(new dev.ftb.mods.ftbquests.net.MoveMovableMessage(m, ch.id, mv.getX() - 1, mv.getY()));
+            }
+            return 40;
+        });
+        STEPS.add(() -> {
+            check(Math.abs(cluster().x() - before[0]) < 1e-6, "free box: FTB Quests' member move leaves the box too");
+            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withBoxPosition(cluster().x() + 2, cluster().y())));
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(Math.abs(cluster().x() - (before[0] + 2)) < 1e-6 && Math.abs(memberX(cluster().members().get(0)) - before[2]) < 1e-6,
+                    "free box: the box moves alone");
+            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withBoxPosition(before[0], before[1])
+                    .withStyle(cluster().style().withFreeBox(false))));
+            return 20;
+        });
+        STEPS.add(() -> {
+            check(!cluster().style().freeBox() && Math.abs(cluster().x() - before[0]) < 1e-6, "free box option off again");
             // 5) drag an expanded frame by its left edge with the real mouse
             ClusterViewState.setExpanded(cluster(), true);
             double cx = 0, cy = 0;
@@ -908,6 +942,10 @@ public final class DevSelfTest {
     }
 
     // ---------------------------------------------------------------- helpers
+
+    private static double memberX(long id) {
+        return ClientQuestFile.INSTANCE.getBase(id) instanceof dev.ftb.mods.ftbquests.quest.Movable m ? m.getX() : Double.NaN;
+    }
 
     private static boolean ready() {
         Minecraft mc = Minecraft.getInstance();

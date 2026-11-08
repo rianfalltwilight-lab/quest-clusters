@@ -160,7 +160,7 @@ public final class ServerClusters {
                 continue;
             }
             double[] prev = LAST_BOUNDS.put(c.id(), b);
-            if (SKIP_FOLLOW.remove(c.id()) || prev == null) {
+            if (SKIP_FOLLOW.remove(c.id()) || prev == null || c.style().freeBox()) {
                 continue;
             }
             boolean sameShape = Math.abs(b[2] - prev[2]) < 1e-6 && Math.abs(b[3] - prev[3]) < 1e-6;
@@ -238,8 +238,8 @@ public final class ServerClusters {
         });
     }
 
-    /** Moves box and members by (dx, dy) as one undo step. */
-    public static void handleMove(ServerPlayer player, long clusterId, double dx, double dy) {
+    /** Moves the members, and the box unless {@code membersOnly}, by (dx, dy) as one undo step. */
+    public static void handleMove(ServerPlayer player, long clusterId, double dx, double dy, boolean membersOnly) {
         withEditableFile(player, file -> {
             Optional<QuestCluster> current = STORE.get(clusterId);
             if (current.isEmpty() || !Double.isFinite(dx) || !Double.isFinite(dy) || Math.abs(dx) > 10_000 || Math.abs(dy) > 10_000) {
@@ -248,7 +248,7 @@ public final class ServerClusters {
             }
             QuestCluster c = current.get();
             dev.ftb.mods.ftbquests.quest.Chapter chapter = file.getChapter(c.chapterId());
-            QuestCluster moved = c.withBoxPosition(c.x() + dx, c.y() + dy);
+            QuestCluster moved = membersOnly ? c : c.withBoxPosition(c.x() + dx, c.y() + dy);
             Optional<ValidationError> err = ClusterValidator.validate(moved, STORE, new FtbqMemberLookup(file));
             if (err.isPresent() || chapter == null) {
                 reject(player, err.orElse(new ValidationError("no_chapter", QuestCluster.idToString(c.chapterId()))));
@@ -268,8 +268,14 @@ public final class ServerClusters {
                             .create(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
                 }
             }
-            events.add(new ClusterChangeEvent(c, moved));
-            file.getHistoryStack().addAndApply(file, new dev.ftb.mods.ftbquests.quest.history.events.CompositeEditEvent(events));
+            if (!membersOnly) {
+                events.add(new ClusterChangeEvent(c, moved));
+            } else {
+                SKIP_FOLLOW.add(c.id()); // the box stays put even if it would otherwise follow
+            }
+            if (!events.isEmpty()) {
+                file.getHistoryStack().addAndApply(file, new dev.ftb.mods.ftbquests.quest.history.events.CompositeEditEvent(events));
+            }
         });
     }
 

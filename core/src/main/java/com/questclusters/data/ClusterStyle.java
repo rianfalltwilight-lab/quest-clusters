@@ -8,10 +8,12 @@ package com.questclusters.data;
  * @param backgroundMode how the texture fills the box: 0 stretch, 1 tile, 2 nine-slice
  * @param sliceBorder    nine-slice border width in texture pixels
  * @param backgroundOnFrame also draw the texture behind the expanded frame
+ * @param freeBox        the collapsed box keeps its own position: dragging it leaves the members where they are,
+ *                       and moving the members (frame drag, FTB Quests' tools) leaves the box
  */
 public record ClusterStyle(int titleColor, int subtitleColor, int borderColor, int frameColor,
-                           String background, int backgroundMode, int sliceBorder, boolean backgroundOnFrame) {
-    public static final ClusterStyle DEFAULT = new ClusterStyle(0, 0, 0, 0, "", 0, 4, false);
+                           String background, int backgroundMode, int sliceBorder, boolean backgroundOnFrame, boolean freeBox) {
+    public static final ClusterStyle DEFAULT = new ClusterStyle(0, 0, 0, 0, "", 0, 4, false, false);
     public static final int DEFAULT_TITLE = 0xFFFFFFFF;
     public static final int DEFAULT_SUBTITLE = 0xFFBBBBBB;
     public static final int MODE_STRETCH = 0, MODE_TILE = 1, MODE_NINE_SLICE = 2;
@@ -24,7 +26,7 @@ public record ClusterStyle(int titleColor, int subtitleColor, int borderColor, i
     }
 
     public ClusterStyle(int titleColor, int subtitleColor, int borderColor, int frameColor) {
-        this(titleColor, subtitleColor, borderColor, frameColor, "", 0, 4, false);
+        this(titleColor, subtitleColor, borderColor, frameColor, "", 0, 4, false, false);
     }
 
     public int titleOr() {
@@ -44,22 +46,26 @@ public record ClusterStyle(int titleColor, int subtitleColor, int borderColor, i
     }
 
     public ClusterStyle withTitle(int c) {
-        return new ClusterStyle(c, subtitleColor, borderColor, frameColor, background, backgroundMode, sliceBorder, backgroundOnFrame);
+        return new ClusterStyle(c, subtitleColor, borderColor, frameColor, background, backgroundMode, sliceBorder, backgroundOnFrame, freeBox);
     }
 
     public ClusterStyle withSubtitle(int c) {
-        return new ClusterStyle(titleColor, c, borderColor, frameColor, background, backgroundMode, sliceBorder, backgroundOnFrame);
+        return new ClusterStyle(titleColor, c, borderColor, frameColor, background, backgroundMode, sliceBorder, backgroundOnFrame, freeBox);
     }
 
     public ClusterStyle withBorder(int c) {
-        return new ClusterStyle(titleColor, subtitleColor, c, frameColor, background, backgroundMode, sliceBorder, backgroundOnFrame);
+        return new ClusterStyle(titleColor, subtitleColor, c, frameColor, background, backgroundMode, sliceBorder, backgroundOnFrame, freeBox);
     }
 
     public ClusterStyle withFrame(int c) {
-        return new ClusterStyle(titleColor, subtitleColor, borderColor, c, background, backgroundMode, sliceBorder, backgroundOnFrame);
+        return new ClusterStyle(titleColor, subtitleColor, borderColor, c, background, backgroundMode, sliceBorder, backgroundOnFrame, freeBox);
     }
 
     public ClusterStyle withBackground(String texture, int mode, int border, boolean onFrame) {
-        return new ClusterStyle(titleColor, subtitleColor, borderColor, frameColor, texture, mode, border, onFrame);
+        return new ClusterStyle(titleColor, subtitleColor, borderColor, frameColor, texture, mode, border, onFrame, freeBox);
+    }
+
+    public ClusterStyle withFreeBox(boolean free) {
+        return new ClusterStyle(titleColor, subtitleColor, borderColor, frameColor, background, backgroundMode, sliceBorder, backgroundOnFrame, free);
     }
 }

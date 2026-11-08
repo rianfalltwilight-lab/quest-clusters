@@ -162,5 +162,17 @@
   "quest_clusters_editor.configuration.render_kill_task_entity_models": "击杀任务显示实体模型",
   "quest_clusters_editor.configuration.render_kill_task_entity_models.tooltip": "击杀任务（以及只有一个击杀任务的任务）显示实体模型，而不是刷怪蛋",
   "quest_clusters_editor.configuration.open_advancement_tasks": "点击进度任务打开进度界面",
-  "quest_clusters_editor.configuration.open_advancement_tasks.tooltip": "左键点击进度任务时打开进度界面"
+  "quest_clusters_editor.configuration.open_advancement_tasks.tooltip": "左键点击进度任务时打开进度界面",
+  "quest_clusters_editor.line_presets": "装饰线预设",
+  "quest_clusters_editor.line_presets.name": "预设名称",
+  "quest_clusters_editor.line_presets.rename": "重命名",
+  "quest_clusters_editor.line_presets.image": "更换图片",
+  "quest_clusters_editor.menu.line_presets": "装饰线预设…",
+  "quest_clusters_editor.menu.line_presets.builtin": "内置",
+  "quest_clusters_editor.menu.node_lines": "该节点发出的装饰线",
+  "quest_clusters_editor.menu.node_lines.default": "章节默认（%s）",
+  "quest_clusters_editor.chapter.decorative_line_preset": "默认装饰线预设",
+  "quest_clusters_editor.chapter.decorative_line_preset.tooltip": "该章节装饰线的外观；单个节点可在右键菜单里单独选择",
+  "quest_clusters_editor.event.line_presets": "装饰线预设",
+  "quest_clusters_editor.event.line_preset": "装饰线预设"
 }

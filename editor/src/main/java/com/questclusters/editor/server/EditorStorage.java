@@ -85,7 +85,7 @@ public final class EditorStorage {
         Set<String> written = new HashSet<>();
         try {
             Files.createDirectories(dir);
-            if (!b.sidebarBackground.isEmpty()) {
+            if (!b.sidebarBackground.isEmpty() || !b.linePresets.isEmpty()) {
                 SNBT.write(dir.resolve(BOOK_FILE), (SNBTCompoundTag) ExtrasNbt.writeBook(b, SNBTCompoundTag::new));
                 written.add(BOOK_FILE);
             }

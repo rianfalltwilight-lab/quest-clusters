@@ -100,7 +100,7 @@ public final class ServerEditor implements QuestBookHooks.Listener {
     /** Actions with a history label (anything else is shown as a generic edit). */
     private static final java.util.Set<String> ACTIONS = java.util.Set.of("chapter_background", "sidebar_background",
             "quest_background", "view_background", "prerequisites", "decorative_line", "hidden_line", "scroll_paging",
-            "box_select");
+            "box_select", "line_presets", "line_preset");
 
     /** A change requested by an editor in game: checked, then applied as one undoable step. */
     public static void handleEdit(ServerPlayer player, String action, CompoundTag data) {
@@ -165,6 +165,7 @@ public final class ServerEditor implements QuestBookHooks.Listener {
                 }
             }
             changed |= c.hiddenLines.removeIf(h -> !nodes.contains(h.source()) || !nodes.contains(h.dependency()));
+            changed |= c.nodeLinePresets.keySet().removeIf(n -> !nodes.contains(n));
         }
         changed |= b.chapters.values().removeIf(ChapterExtras::isEmpty);
         if (changed) syncCache = null;

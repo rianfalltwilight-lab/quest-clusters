@@ -81,6 +81,11 @@ public final class EditorMenus {
             add.add(new ContextMenuItem(tr("scroll_paging", state(e.disableScrollPaging())), Icons.SETTINGS,
                     b -> EditorActions.editQuests("scroll_paging", List.of(q.id), x -> x.withDisableScrollPaging(!e.disableScrollPaging()))));
         }
+        if ((object instanceof Quest || object instanceof QuestLink) && !screen.isViewingQuest() && ((Movable) object).getChapter() != null) {
+            Movable m = (Movable) object;
+            String node = object instanceof Quest q2 ? NodeKeys.quest(q2.id) : NodeKeys.link(((QuestLink) object).id);
+            add.add(ContextMenuItem.subMenu(tr("node_lines"), Icons.ART, nodeLineItems(screen, m.getChapter().id, node)));
+        }
         if ((object instanceof Quest || object instanceof QuestLink) && !screen.isViewingQuest()) {
             List<ContextMenuItem> lines = hiddenLineItems(screen, (Movable) object);
             if (!lines.isEmpty()) add.add(ContextMenuItem.subMenu(tr("hidden_lines"), Icons.SETTINGS, lines));
@@ -226,6 +231,32 @@ public final class EditorMenus {
         return out;
     }
 
+    /**
+     * "Lines from this node": the preset of the decorative lines that start at {@code node} (Quest Enhance draws a
+     * line from its first node), or the chapter's default; plus a shortcut to the preset list.
+     */
+    public static List<ContextMenuItem> nodeLineItems(QuestScreen screen, long chapterId, String node) {
+        var book = ClientEditor.book();
+        var extras = book.chapter(chapterId);
+        String own = extras.nodeLinePresets.get(node);
+        List<ContextMenuItem> out = new ArrayList<>();
+        Component chapterDefault = book.preset(extras.linePreset) != null ? Component.literal(book.preset(extras.linePreset).name())
+                : tr("line_presets.builtin");
+        out.add(new ContextMenuItem(check(own == null).append(tr("node_lines.default", chapterDefault)), Icons.SETTINGS,
+                b -> EditorActions.editChapter("line_preset", chapterId, c -> c.nodeLinePresets.remove(node))));
+        for (var p : book.linePresets) {
+            out.add(new ContextMenuItem(check(p.id().equals(own)).append(p.name()), Icon.getIcon(p.texture()),
+                    b -> EditorActions.editChapter("line_preset", chapterId, c -> c.nodeLinePresets.put(node, p.id()))));
+        }
+        out.add(ContextMenuItem.SEPARATOR);
+        out.add(item("line_presets", Icons.ART, () -> new LinePresetsScreen(screen).openGui()));
+        return out;
+    }
+
+    private static net.minecraft.network.chat.MutableComponent check(boolean on) {
+        return Component.literal(on ? "✔ " : "   ");
+    }
+
     // ------------------------------------------------------------------ chapter images
 
     public static void imageItems(List<ContextMenuItem> menu, QuestScreen screen, ChapterImage img) {
@@ -240,6 +271,9 @@ public final class EditorMenus {
         } else if (el instanceof CanvasElement.Gif) {
             List<ContextMenuItem> gifs = gifItems(rl -> CanvasEdit.setPayload(img, new CanvasElement.Gif(rl.toString()).encode()));
             if (!gifs.isEmpty()) add.add(ContextMenuItem.subMenu(tr("gif.change"), Icons.ART, gifs));
+        }
+        if (el instanceof CanvasElement.Anchor a && a.nodeKey() != null && img.getChapter() != null) {
+            add.add(ContextMenuItem.subMenu(tr("node_lines"), Icons.ART, nodeLineItems(screen, img.getChapter().id, a.nodeKey())));
         }
         boolean ex = ClientEditor.book().excludedImages.contains(img.id);
         add.add(new ContextMenuItem(tr("box_select", state(ex)), Icons.SETTINGS, b -> EditorActions.setExcluded(List.of(img.id), !ex)));
@@ -259,6 +293,7 @@ public final class EditorMenus {
         List<ContextMenuItem> add = new ArrayList<>();
         add.add(item("canvas_text.add", Icons.NOTES, () -> CanvasEdit.addText(screen, ch, qx, qy)));
         add.add(item("guide_point.add", Icons.ADD, () -> CanvasEdit.addGuidePoint(ch, qx, qy)));
+        add.add(item("line_presets", Icons.ART, () -> new LinePresetsScreen(screen).openGui()));
         List<ContextMenuItem> gifs = gifItems(rl -> CanvasEdit.addGif(ch, qx, qy, rl));
         add.add(gifs.isEmpty() ? new ContextMenuItem(tr("gif.none"), Icons.ART, b -> {
         }).setEnabled(false) : ContextMenuItem.subMenu(tr("gif.add"), Icons.ART, gifs));

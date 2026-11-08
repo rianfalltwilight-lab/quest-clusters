@@ -19,9 +19,11 @@ public final class EditorPatch {
     public final Map<Long, QuestExtras> quests = new LinkedHashMap<>();
     /** Image id → excluded from box selection. */
     public final Map<Long, Boolean> images = new LinkedHashMap<>();
+    /** Null = presets untouched; otherwise the complete new list of decorative line presets. */
+    public List<LinePreset> presets;
 
     public boolean isEmpty() {
-        return sidebar == null && chapters.isEmpty() && quests.isEmpty() && images.isEmpty();
+        return sidebar == null && chapters.isEmpty() && quests.isEmpty() && images.isEmpty() && presets == null;
     }
 
     /** The current values of everything this patch touches. */
@@ -31,6 +33,7 @@ public final class EditorPatch {
         chapters.keySet().forEach(id -> p.chapters.put(id, b.chapter(id).copy()));
         quests.keySet().forEach(id -> p.quests.put(id, b.quest(id)));
         images.keySet().forEach(id -> p.images.put(id, b.excludedImages.contains(id)));
+        if (presets != null) p.presets = List.copyOf(b.linePresets);
         return p;
     }
 
@@ -45,6 +48,10 @@ public final class EditorPatch {
             if (ex) b.excludedImages.add(id);
             else b.excludedImages.remove(id);
         });
+        if (presets != null) {
+            b.linePresets.clear();
+            b.linePresets.addAll(presets);
+        }
     }
 
     // ------------------------------------------------------------------ wire format
@@ -80,6 +87,7 @@ public final class EditorPatch {
             im.add(it);
         });
         t.put("images", im);
+        if (presets != null) t.put("presets", ExtrasNbt.writePresets(presets, CompoundTag::new));
         return t;
     }
 
@@ -106,6 +114,10 @@ public final class EditorPatch {
             for (ChapterExtras.HiddenLine h : c.hiddenLines) {
                 if (h.source().length() > 128 || h.dependency().length() > 128) return null;
             }
+            if (c.linePreset.length() > 32 || c.nodeLinePresets.size() > 4096) return null;
+            for (var e : c.nodeLinePresets.entrySet()) {
+                if (e.getKey().length() > 128 || e.getValue().length() > 32) return null;
+            }
             p.chapters.put(id, c);
         }
         ListTag q = t.getList("quests", Tag.TAG_COMPOUND);
@@ -123,6 +135,11 @@ public final class EditorPatch {
             Long id = NodeKeys.parseHex(im.getCompound(i).getString("id"));
             if (id == null) return null;
             p.images.put(id, im.getCompound(i).getBoolean("excluded"));
+        }
+        if (t.contains("presets", Tag.TAG_LIST)) {
+            ListTag pl = t.getList("presets", Tag.TAG_COMPOUND);
+            if (pl.size() > LinePreset.MAX) return null;
+            p.presets = ExtrasNbt.readPresets(pl);
         }
         return p;
     }

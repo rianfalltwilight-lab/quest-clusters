@@ -118,7 +118,9 @@ public final class DecorativeLinesWidget extends Widget {
             lastDrawn = 0;
             return;
         }
-        List<List<String>> lines = ClientEditor.book().chapter(chapter.id).decorativeLines;
+        var book = ClientEditor.book();
+        var extras = book.chapter(chapter.id);
+        List<List<String>> lines = extras.decorativeLines;
         boolean edit = file.canEdit();
         float half = (float) (qs.getZoom() * 3D / 16D);
         for (List<String> line : lines) {
@@ -152,6 +154,8 @@ public final class DecorativeLinesWidget extends Widget {
                 }
             }
             Widget c = ends[first];
+            // the line's look comes from the node it starts at (its own preset, else the chapter's default)
+            var preset = book.preset(extras.presetFor(line.get(first)));
             for (int i = first + 1; i < ends.length; i++) {
                 Widget o = ends[i];
                 if (o == null || o == c) continue; // both inside the same collapsed cluster
@@ -170,18 +174,22 @@ public final class DecorativeLinesWidget extends Widget {
                     x2 -= ux * cut;
                     y2 -= uy * cut;
                 }
-                quad(g, x1, y1, x2, y2, half);
+                quad(g, x1, y1, x2, y2, half, preset);
                 drawn++;
             }
         }
         lastDrawn = drawn;
     }
 
-    private static void quad(GuiGraphics g, double x1, double y1, double x2, double y2, float half) {
+    /** A preset draws its own image in its own colours; without one, the built-in texture tinted teal. */
+    private static void quad(GuiGraphics g, double x1, double y1, double x2, double y2, float half,
+                             com.questclusters.editor.data.LinePreset preset) {
         double len = Math.hypot(x2 - x1, y2 - y1);
         if (len < 0.5 || half <= 0) return;
         float nx = (float) (-(y2 - y1) / len * half), ny = (float) ((x2 - x1) / len * half);
-        ResourceLocation tex = texture();
+        ResourceLocation presetTex = preset == null ? null : com.questclusters.client.Textures.file(preset.texture());
+        ResourceLocation tex = presetTex != null ? presetTex : texture();
+        int start = presetTex != null ? 0xFFFFFFFF : START, end = presetTex != null ? 0xFFFFFFFF : END;
         int[] size = com.questclusters.client.Textures.size(tex);
         // an animated strip (with .mcmeta) shows its first frame; U repeats along the line like Quest Enhance's
         float v1 = size == null ? 1F : (float) size[2] / size[1];
@@ -192,10 +200,10 @@ public final class DecorativeLinesWidget extends Widget {
         RenderSystem.setShaderTexture(0, tex);
         Matrix4f m = g.pose().last().pose();
         var buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buf.addVertex(m, (float) x1 + nx, (float) y1 + ny, 0).setUv(0, 0).setColor(START);
-        buf.addVertex(m, (float) x2 + nx, (float) y2 + ny, 0).setUv(u1, 0).setColor(END);
-        buf.addVertex(m, (float) x2 - nx, (float) y2 - ny, 0).setUv(u1, v1).setColor(END);
-        buf.addVertex(m, (float) x1 - nx, (float) y1 - ny, 0).setUv(0, v1).setColor(START);
+        buf.addVertex(m, (float) x1 + nx, (float) y1 + ny, 0).setUv(0, 0).setColor(start);
+        buf.addVertex(m, (float) x2 + nx, (float) y2 + ny, 0).setUv(u1, 0).setColor(end);
+        buf.addVertex(m, (float) x2 - nx, (float) y2 - ny, 0).setUv(u1, v1).setColor(end);
+        buf.addVertex(m, (float) x1 - nx, (float) y1 - ny, 0).setUv(0, v1).setColor(start);
         BufferUploader.drawWithShader(buf.buildOrThrow());
     }
 }

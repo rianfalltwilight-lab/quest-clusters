@@ -47,7 +47,7 @@ public final class ClusterNetwork {
         r.playToServer(ClusterPayloads.Paste.TYPE, ClusterPayloads.Paste.CODEC,
                 (p, ctx) -> ServerClusters.handlePaste((ServerPlayer) ctx.player(), p.chapterId(), p.clusters()));
         r.playToServer(ClusterPayloads.Move.TYPE, ClusterPayloads.Move.CODEC,
-                (p, ctx) -> ServerClusters.handleMove((ServerPlayer) ctx.player(), p.clusterId(), p.dx(), p.dy()));
+                (p, ctx) -> ServerClusters.handleMove((ServerPlayer) ctx.player(), p.clusterId(), p.dx(), p.dy(), p.membersOnly()));
         r.playToServer(ClusterPayloads.Dissolve.TYPE, ClusterPayloads.Dissolve.CODEC,
                 (p, ctx) -> ServerClusters.handleDissolve((ServerPlayer) ctx.player(), p.clusterId()));
     }

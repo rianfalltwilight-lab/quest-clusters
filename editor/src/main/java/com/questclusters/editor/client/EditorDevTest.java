@@ -96,6 +96,7 @@ final class EditorDevTest {
     }
 
     static void register() {
+        DevSelfTest.addModuleSteps(presetSteps());
         DevSelfTest.addModuleSteps(DevSelfTest.configScreenSteps("quest_clusters_editor", "qc_37_editor_settings", () -> List.of(
                 "quest_clusters_editor.configuration.title",
                 "quest_clusters_editor.configuration.render_kill_task_entity_models",
@@ -176,6 +177,11 @@ final class EditorDevTest {
                     var qs = DevSelfTest.questScreen();
                     DevSelfTest.moduleCheck(EditorDebug.hiddenPurple > 0, "editor: hidden line drawn purple in edit mode");
                     DevSelfTest.moduleShot("qc_32_editor_edit");
+                    // the entity models must really be drawn (pig pink on D8, zombie green on D4), not just be set
+                    DevSelfTest.moduleCheck(colouredPixels(qs, 0xD8L, true) > 8, "editor: pig model drawn on its quest ("
+                            + colouredPixels(qs, 0xD8L, true) + " px)");
+                    DevSelfTest.moduleCheck(colouredPixels(qs, 0xD4L, false) > 8, "editor: zombie model drawn on its kill quest ("
+                            + colouredPixels(qs, 0xD4L, false) + " px)");
                     var sel = ((QuestScreenAccessor) qs).quest_clusters$getSelectedObjects();
                     sel.clear();
                     var acc = (QuestScreenEditorAccessor) qs;
@@ -416,5 +422,107 @@ final class EditorDevTest {
                     return 5;
                 }
         ));
+    }
+
+    /** Pixels inside a quest's button in the last frame that look pig-pink ({@code pink}) or zombie-green. */
+    static int colouredPixels(dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen qs, long questId, boolean pink) {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        for (var w : qs.questPanel.getWidgets()) {
+            if (w instanceof dev.ftb.mods.ftbquests.client.gui.quests.QuestButton qb
+                    && !(w instanceof dev.ftb.mods.ftbquests.client.gui.quests.QuestLinkButton)
+                    && qb.moveAndDeleteFocus().getMovableID() == questId) {
+                double sx = (double) mc.getWindow().getWidth() / mc.getWindow().getGuiScaledWidth();
+                double sy = (double) mc.getWindow().getHeight() / mc.getWindow().getGuiScaledHeight();
+                // quest buttons are placed in the panel's content space: undo the scroll
+                double gx = qs.questPanel.getX() - qs.questPanel.getScrollX() + w.posX;
+                double gy = qs.questPanel.getY() - qs.questPanel.getScrollY() + w.posY;
+                int x0 = (int) (gx * sx), y0 = (int) (gy * sy);
+                int x1 = (int) ((gx + w.width) * sx), y1 = (int) ((gy + w.height) * sy);
+                try (var img = net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
+                    int n = 0;
+                    for (int y = Math.max(0, y0); y < Math.min(img.getHeight(), y1); y++) {
+                        for (int x = Math.max(0, x0); x < Math.min(img.getWidth(), x1); x++) {
+                            int abgr = img.getPixelRGBA(x, y);
+                            int r = abgr & 0xFF, g = (abgr >> 8) & 0xFF, b = (abgr >> 16) & 0xFF;
+                            if (pink ? r > 170 && r - g > 40 && b > 90 : g - r > 25 && g - b > 15 && g > 70) {
+                                n++;
+                            }
+                        }
+                    }
+                    return n;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private static final com.questclusters.editor.data.LinePreset RED =
+            new com.questclusters.editor.data.LinePreset("qcred", "Red", "minecraft:block/redstone_block");
+    private static final com.questclusters.editor.data.LinePreset BLUE =
+            new com.questclusters.editor.data.LinePreset("qcblue", "Blue", "minecraft:block/lapis_block");
+
+    /** Decorative line presets: chapter default, node override, the node menu, deleting presets. */
+    static List<java.util.function.IntSupplier> presetSteps() {
+        return List.of(
+                () -> {
+                    var qs = DevSelfTest.questScreen();
+                    qs.open(ClientQuestFile.INSTANCE.getChapter(C2), false);
+                    qs.questPanel.scrollTo(0, 0.5);
+                    DevSelfTest.moduleCheck(ClientEditor.book().chapter(C2).decorativeLines.size() == 1, "presets: test chapter has one line");
+                    var p = new com.questclusters.editor.data.EditorPatch();
+                    p.presets = List.of(RED, BLUE);
+                    var c = ClientEditor.book().chapter(C2).copy();
+                    c.linePreset = RED.id();
+                    p.chapters.put(C2, c);
+                    EditorActions.send("line_presets", p);
+                    return 40;
+                },
+                () -> {
+                    var book = ClientEditor.book();
+                    DevSelfTest.moduleCheck(book.linePresets.size() == 2 && RED.id().equals(book.chapter(C2).linePreset),
+                            "presets: saved and synced (" + book.linePresets.size() + ")");
+                    DevSelfTest.moduleCheck(count(px -> px[0] > 140 && px[1] < 60 && px[2] < 60) > 30,
+                            "presets: chapter default draws the line with its image (red)");
+                    String first = book.chapter(C2).decorativeLines.get(0).get(0);
+                    var items = com.questclusters.editor.client.gui.EditorMenus.nodeLineItems(DevSelfTest.questScreen(), C2, first);
+                    DevSelfTest.moduleCheck(items.size() == 2 + 2 + 1, "presets: node menu lists default + presets + manage (" + items.size() + ")");
+                    EditorActions.editChapter("line_preset", C2, x -> x.nodeLinePresets.put(first, BLUE.id()));
+                    return 40;
+                },
+                () -> {
+                    DevSelfTest.moduleShot("qc_38_line_preset_node");
+                    DevSelfTest.moduleCheck(count(px -> px[2] > 120 && px[0] < 80 && px[2] - px[1] > 40) > 30
+                                    && count(px -> px[0] > 140 && px[1] < 60 && px[2] < 60) < 10,
+                            "presets: the node's own preset wins over the chapter default (blue)");
+                    new com.questclusters.editor.client.gui.LinePresetsScreen(DevSelfTest.questScreen()).openGui();
+                    return 20;
+                },
+                () -> {
+                    DevSelfTest.moduleShot("qc_39_line_presets_screen");
+                    EditorActions.send("line_presets", com.questclusters.editor.client.gui.LinePresetsScreen.patch(ClientEditor.book(), List.of()));
+                    EditorActions.reopen(null);
+                    return 40;
+                },
+                () -> {
+                    var c = ClientEditor.book().chapter(C2);
+                    DevSelfTest.moduleCheck(ClientEditor.book().linePresets.isEmpty() && c.linePreset.isEmpty() && c.nodeLinePresets.isEmpty(),
+                            "presets: deleting presets clears the chapter and node references");
+                    return 1;
+                });
+    }
+
+    /** Pixels of the last frame matching {@code test} on {r, g, b}. */
+    static int count(java.util.function.Predicate<int[]> test) {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        try (var img = net.minecraft.client.Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
+            int n = 0;
+            for (int y = 0; y < img.getHeight(); y += 2) {
+                for (int x = 0; x < img.getWidth(); x += 2) {
+                    int abgr = img.getPixelRGBA(x, y);
+                    if (test.test(new int[]{abgr & 0xFF, (abgr >> 8) & 0xFF, (abgr >> 16) & 0xFF})) n++;
+                }
+            }
+            return n;
+        }
     }
 }

@@ -28,11 +28,37 @@ public final class ExtrasNbt {
         CompoundTag t = factory.get();
         t.putInt("version", VERSION);
         if (!b.sidebarBackground.isEmpty()) t.putString("sidebar_background", b.sidebarBackground);
+        if (!b.linePresets.isEmpty()) t.put("line_presets", writePresets(b.linePresets, factory));
         return t;
     }
 
     public static void readBook(CompoundTag t, BookExtras into) {
         into.sidebarBackground = t.getString("sidebar_background");
+        into.linePresets.clear();
+        into.linePresets.addAll(readPresets(t.getList("line_presets", Tag.TAG_COMPOUND)));
+    }
+
+    public static ListTag writePresets(List<LinePreset> presets, Supplier<CompoundTag> factory) {
+        ListTag l = new ListTag();
+        for (LinePreset p : presets) {
+            CompoundTag pt = factory.get();
+            pt.putString("id", p.id());
+            pt.putString("name", p.name());
+            pt.putString("texture", p.texture());
+            l.add(pt);
+        }
+        return l;
+    }
+
+    /** Valid presets only, ids unique, at most {@link LinePreset#MAX}. */
+    public static List<LinePreset> readPresets(ListTag l) {
+        List<LinePreset> out = new ArrayList<>();
+        for (int i = 0; i < l.size() && out.size() < LinePreset.MAX; i++) {
+            CompoundTag pt = l.getCompound(i);
+            LinePreset p = new LinePreset(pt.getString("id"), pt.getString("name"), pt.getString("texture"));
+            if (p.isValid() && out.stream().noneMatch(o -> o.id().equals(p.id()))) out.add(p);
+        }
+        return out;
     }
 
     // ------------------------------------------------------------------ chapter
@@ -62,6 +88,17 @@ public final class ExtrasNbt {
                     l.add(lt);
                 }
                 t.put("decorative_lines", l);
+            }
+            if (!c.linePreset.isEmpty()) t.putString("line_preset", c.linePreset);
+            if (!c.nodeLinePresets.isEmpty()) {
+                ListTag l = new ListTag();
+                c.nodeLinePresets.forEach((node, preset) -> {
+                    CompoundTag nt = factory.get();
+                    nt.putString("node", node);
+                    nt.putString("preset", preset);
+                    l.add(nt);
+                });
+                t.put("node_line_presets", l);
             }
             if (!c.hiddenLines.isEmpty()) {
                 ListTag l = new ListTag();
@@ -117,6 +154,12 @@ public final class ExtrasNbt {
             CompoundTag h = hidden.getCompound(i);
             String s = h.getString("source"), d = h.getString("dependency");
             if (!s.isBlank() && !d.isBlank()) c.hiddenLines.add(new ChapterExtras.HiddenLine(s, d, h.getBoolean("reveal_on_hover")));
+        }
+        c.linePreset = t.getString("line_preset");
+        ListTag nodePresets = t.getList("node_line_presets", Tag.TAG_COMPOUND);
+        for (int i = 0; i < nodePresets.size(); i++) {
+            String node = nodePresets.getCompound(i).getString("node"), preset = nodePresets.getCompound(i).getString("preset");
+            if (!node.isBlank()) c.nodeLinePresets.put(node, preset);
         }
         if (!c.isEmpty()) into.chapters.put(chapterId, c);
         ListTag quests = t.getList("quests", Tag.TAG_COMPOUND);

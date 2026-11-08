@@ -74,7 +74,7 @@ abstract class ClusterWidgetBase extends Widget {
         if (dragging || movedPastThreshold()) {
             dragging = false;
             double[] d = canvasDelta();
-            ClusterEditor.moveBy(ClusterWidgets.screen(questPanel), cluster, d[0], d[1]);
+            ClusterEditor.moveBy(ClusterWidgets.screen(questPanel), cluster, d[0], d[1], this instanceof ClusterBoxWidget);
         } else {
             playClickSound();
             onToggle();

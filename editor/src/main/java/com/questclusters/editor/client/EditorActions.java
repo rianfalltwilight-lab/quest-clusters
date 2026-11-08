@@ -61,12 +61,17 @@ public final class EditorActions {
 
     /** FTB Library's image picker (the one chapter images use); "none" clears. Returns to the quest screen. */
     public static void pickImage(QuestScreen screen, String current, Consumer<String> onPicked) {
+        pickImage(screen, current, onPicked, () -> reopen(screen));
+    }
+
+    /** As above, but {@code back} reopens whatever screen the picker was opened from (before {@code onPicked}). */
+    public static void pickImage(QuestScreen screen, String current, Consumer<String> onPicked, Runnable back) {
         ImageResourceConfig cfg = new ImageResourceConfig();
         cfg.withAllowEmpty(true);
         ResourceLocation rl = current.isEmpty() ? null : ResourceLocation.tryParse(current);
         cfg.setValue(rl == null ? ImageResourceConfig.NONE : rl);
         new SelectImageResourceScreen(cfg, accepted -> {
-            reopen(screen);
+            back.run();
             if (accepted) {
                 ResourceLocation v = cfg.getValue();
                 onPicked.accept(v == null || v.equals(ImageResourceConfig.NONE) ? "" : v.toString());

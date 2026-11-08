@@ -162,5 +162,17 @@
   "quest_clusters_editor.configuration.render_kill_task_entity_models": "擊殺任務顯示實體模型",
   "quest_clusters_editor.configuration.render_kill_task_entity_models.tooltip": "擊殺任務（以及只有一個擊殺任務的任務）顯示實體模型，而不是生怪蛋",
   "quest_clusters_editor.configuration.open_advancement_tasks": "點選進度任務開啟進度介面",
-  "quest_clusters_editor.configuration.open_advancement_tasks.tooltip": "左鍵點選進度任務時開啟進度介面"
+  "quest_clusters_editor.configuration.open_advancement_tasks.tooltip": "左鍵點選進度任務時開啟進度介面",
+  "quest_clusters_editor.line_presets": "裝飾線預設",
+  "quest_clusters_editor.line_presets.name": "預設名稱",
+  "quest_clusters_editor.line_presets.rename": "重新命名",
+  "quest_clusters_editor.line_presets.image": "更換圖片",
+  "quest_clusters_editor.menu.line_presets": "裝飾線預設…",
+  "quest_clusters_editor.menu.line_presets.builtin": "內建",
+  "quest_clusters_editor.menu.node_lines": "該節點發出的裝飾線",
+  "quest_clusters_editor.menu.node_lines.default": "章節預設（%s）",
+  "quest_clusters_editor.chapter.decorative_line_preset": "預設裝飾線樣式",
+  "quest_clusters_editor.chapter.decorative_line_preset.tooltip": "該章節裝飾線的外觀；單一節點可在右鍵選單裡單獨選擇",
+  "quest_clusters_editor.event.line_presets": "裝飾線預設",
+  "quest_clusters_editor.event.line_preset": "裝飾線預設"
 }

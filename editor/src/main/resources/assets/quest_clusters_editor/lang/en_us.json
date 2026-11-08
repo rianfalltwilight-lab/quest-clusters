@@ -162,5 +162,17 @@
   "quest_clusters_editor.configuration.render_kill_task_entity_models": "Entity models for kill tasks",
   "quest_clusters_editor.configuration.render_kill_task_entity_models.tooltip": "Show the entity's model instead of its spawn egg on kill tasks, and on quests whose only task is a kill task",
   "quest_clusters_editor.configuration.open_advancement_tasks": "Open advancements on click",
-  "quest_clusters_editor.configuration.open_advancement_tasks.tooltip": "Left-clicking an advancement task opens the advancements screen"
+  "quest_clusters_editor.configuration.open_advancement_tasks.tooltip": "Left-clicking an advancement task opens the advancements screen",
+  "quest_clusters_editor.line_presets": "Decorative line presets",
+  "quest_clusters_editor.line_presets.name": "Preset name",
+  "quest_clusters_editor.line_presets.rename": "Rename",
+  "quest_clusters_editor.line_presets.image": "Change image",
+  "quest_clusters_editor.menu.line_presets": "Decorative line presets...",
+  "quest_clusters_editor.menu.line_presets.builtin": "Built-in",
+  "quest_clusters_editor.menu.node_lines": "Lines from this node",
+  "quest_clusters_editor.menu.node_lines.default": "Chapter default (%s)",
+  "quest_clusters_editor.chapter.decorative_line_preset": "Default decorative line preset",
+  "quest_clusters_editor.chapter.decorative_line_preset.tooltip": "Look of this chapter's decorative lines; a node can choose its own in its right-click menu",
+  "quest_clusters_editor.event.line_presets": "Decorative line presets",
+  "quest_clusters_editor.event.line_preset": "Decorative line preset"
 }

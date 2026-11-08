@@ -132,5 +132,7 @@
   "quest_clusters.migrate.notice.title": "[任务集] 已导入被移除附属的数据：",
   "quest_clusters.migrate.notice.failed": "导入失败的项目会在下次启动时重试；下面的备份是导入前的任务书。错误原因见服务器日志。",
   "quest_clusters.migrate.notice.details": "详情：%s",
-  "quest_clusters.menu.add_selected_here": "把选中的 %s 个对象加入该任务集"
+  "quest_clusters.menu.add_selected_here": "把选中的 %s 个对象加入该任务集",
+  "quest_clusters.free_box": "文字框独立定位",
+  "quest_clusters.free_box.tooltip": "拖动收起的文字框只移动文字框；移动任务（拖动区域框、FTB Quests 的移动）时文字框留在原处"
 }

@@ -19,6 +19,7 @@
     "client.CanvasElementClickMixin",
     "client.ChapterImageButtonEditorMixin",
     "client.ChapterImageMenuMixin",
+    "client.ChapterLinePresetConfigMixin",
     "client.ChapterPanelEditorMixin",
     "client.DescriptionPasteMixin",
     "client.EditorToolbarMixin",
