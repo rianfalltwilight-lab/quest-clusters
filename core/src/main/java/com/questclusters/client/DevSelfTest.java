@@ -735,6 +735,8 @@ public final class DevSelfTest {
             realMove(dragFrom[0], dragFrom[1]);
             return 3;
         });
+        // FTB widgets take the mouse position from the last drawn frame: the press must not see the old position
+        STEPS.add(waitFrames(2));
         STEPS.add(() -> {
             ClusterFrameWidget f = frame();
             log("frame drag: frame at " + screenX(f) + "," + screenY(f) + " " + f.width + "x" + f.height + ", press at "

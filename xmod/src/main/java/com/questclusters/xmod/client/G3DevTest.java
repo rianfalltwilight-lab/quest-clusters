@@ -68,11 +68,15 @@ final class G3DevTest {
             check(!stageQuestDone(), "stage quest starts incomplete");
             var server = Minecraft.getInstance().getSingleplayerServer();
             var uuid = Minecraft.getInstance().player.getUUID();
-            server.execute(() -> StageHelper.INSTANCE.getProvider().add(server.getPlayerList().getPlayer(uuid), "qc_stage"));
-            return 4;
-        });
-        steps.add(() -> {
-            completedFast = stageQuestDone();
+            server.execute(() -> {
+                var p = server.getPlayerList().getPlayer(uuid);
+                StageHelper.INSTANCE.getProvider().add(p, "qc_stage");
+                // queued right behind the refresh that add() schedules: if that refresh exists, the quest is done
+                // here, independent of FTB Quests' once-a-second stage check and of how fast this client runs
+                server.execute(() -> completedFast = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE.getTeamData(p)
+                        .map(d -> d.isCompleted(dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE.getQuest(STAGE_QUEST)))
+                        .orElse(false));
+            });
             return 30;
         });
         steps.add(() -> {
