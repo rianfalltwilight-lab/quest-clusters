@@ -1,5 +1,6 @@
 package com.questclusters.visuals;
 
+import com.questclusters.platform.ModContext;
 import com.questclusters.visuals.client.VisualsClient;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -18,10 +19,20 @@ public final class QuestClustersVisuals {
     public static final String MOD_ID = "quest_clusters_visuals";
     public static final Logger LOGGER = LoggerFactory.getLogger("Quest Clusters Visuals");
 
+    //? if neoforge {
     public QuestClustersVisuals(IEventBus modBus, net.neoforged.fml.ModContainer container) {
+        this(new ModContext(modBus, container));
+    }
+    //?} else {
+    /*public QuestClustersVisuals() {
+        this(ModContext.current());
+    }
+    *///?}
+
+    private QuestClustersVisuals(ModContext ctx) {
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            VisualsClient.init(modBus);
-            VisualsClient.registerConfigScreen(container);
+            VisualsClient.init(ctx.modBus());
+            ctx.configScreen(VisualsClient::settingsScreen);
         }
     }
 }

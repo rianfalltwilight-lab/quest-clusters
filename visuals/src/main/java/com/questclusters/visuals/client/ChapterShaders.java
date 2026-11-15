@@ -4,9 +4,7 @@ import com.questclusters.platform.Rl;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.questclusters.visuals.QuestClustersVisuals;
 import dev.ftb.mods.ftbquests.quest.Chapter;
@@ -101,7 +99,7 @@ public final class ChapterShaders {
             ResourceLocation c = byChapter.get(normalize(chapter.getCodeString()));
             if (c == null) {
                 // also accept the chapter's file name ("chapters/<name>.snbt")
-                c = chapter.getPath().map(p -> p.getFileName().toString().replace(".snbt", ""))
+                c = com.questclusters.platform.Ftbq.chapterFileName(chapter).map(n -> n.replace(".snbt", ""))
                         .map(n -> byChapter.get(normalize(n))).orElse(null);
             }
             if (c != null) id = c;
@@ -122,7 +120,7 @@ public final class ChapterShaders {
         if (shader == null) return false;
         Minecraft mc = Minecraft.getInstance();
         float time = mc.level == null ? (System.currentTimeMillis() % 3_600_000L) / 1000F
-                : ((mc.level.getGameTime() % 100_000L) + mc.getTimer().getGameTimeDeltaPartialTick(true)) / 20F;
+                : ((mc.level.getGameTime() % 100_000L) + com.questclusters.platform.Mc.partialTick()) / 20F;
         set(shader, "size", w, h);
         set(shader, "scrollOffset", (float) scrollX, (float) scrollY);
         set(shader, "scrollSize", (float) scrollW, (float) scrollH);
@@ -132,12 +130,12 @@ public final class ChapterShaders {
         RenderSystem.setShader(() -> shader);
         RenderSystem.disableBlend();
         var m = g.pose().last().pose();
-        var buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buf.addVertex(m, x, y + h, 0).setUv(0, 1);
-        buf.addVertex(m, x + w, y + h, 0).setUv(1, 1);
-        buf.addVertex(m, x + w, y, 0).setUv(1, 0);
-        buf.addVertex(m, x, y, 0).setUv(0, 0);
-        BufferUploader.drawWithShader(buf.buildOrThrow());
+        com.questclusters.platform.Quads.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+                .vertex(m, x, y + h, 0).uv(0, 1).next()
+                .vertex(m, x + w, y + h, 0).uv(1, 1).next()
+                .vertex(m, x + w, y, 0).uv(1, 0).next()
+                .vertex(m, x, y, 0).uv(0, 0).next()
+                .draw();
         RenderSystem.enableBlend();
         return true;
     }

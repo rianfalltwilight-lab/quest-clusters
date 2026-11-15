@@ -33,14 +33,24 @@ public abstract class TagListFilter extends AbstractSmartFilter {
     }
 
     @Override
+    //? if neoforge {
     public String getStringArg(HolderLookup.Provider registryAccess) {
+    //?} else {
+    /*public String getStringArg() {
+        HolderLookup.Provider registryAccess = Lookups.builtin();
+    *///?}
         return String.join(",", tags.stream().map(ResourceLocation::toString).toList());
     }
 
     @Override
+    //? if neoforge {
     public Component getDisplayArg(HolderLookup.Provider registryAccess) {
+    //?} else {
+    /*public Component getDisplayArg() {
+        HolderLookup.Provider registryAccess = Lookups.builtin();
+    *///?}
         if (tags.isEmpty()) return Component.translatable("quest_clusters_filters.tags.none");
-        String first = "#" + tags.getFirst();
+        String first = "#" + tags.get(0);
         return tags.size() == 1 ? Component.literal(first)
                 : Component.translatable("quest_clusters_filters.tags.more", first, tags.size() - 1);
     }

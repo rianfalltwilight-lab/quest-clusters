@@ -37,8 +37,13 @@ public class FuelScreen extends FilterScreenBase<FuelFilter> {
 
     public FuelScreen(FuelFilter filter, AbstractFilterScreen parent) {
         super(filter, parent, COLS * 18 + 16, 18 + 18 + 12 + 22 + 3 * 18 + 6);
+        //? if neoforge {
         op = filter.comparison().op();
         value = filter.comparison().value();
+        //?} else {
+        /*op = filter.comparison().getOp();
+        value = filter.comparison().getValue();
+        *///?}
         original = filter.comparison().toString();
     }
 

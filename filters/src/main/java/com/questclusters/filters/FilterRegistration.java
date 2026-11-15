@@ -3,6 +3,7 @@ package com.questclusters.filters;
 import com.questclusters.filters.filter.FilterIds;
 import com.questclusters.filters.filter.FuelFilter;
 import com.questclusters.filters.filter.ItemListFilter;
+import com.questclusters.filters.filter.Lookups;
 import com.questclusters.filters.filter.TagListFilter;
 import dev.ftb.mods.ftbfiltersystem.api.FTBFilterSystemAPI;
 import dev.ftb.mods.ftbfiltersystem.api.FTBFilterSystemRegistry;
@@ -17,10 +18,18 @@ public final class FilterRegistration {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static void register(FTBFilterSystemRegistry reg) {
+        //? if neoforge {
         reg.register(FilterIds.ITEMS, ItemListFilter::fromString, ItemListFilter::new);
         reg.register(FilterIds.ITEM_TAGS, TagListFilter.Items::fromString, TagListFilter.Items::new);
         reg.register(FilterIds.BLOCK_TAGS, TagListFilter.Blocks::fromString, TagListFilter.Blocks::new);
         reg.register(FilterIds.FUEL, FuelFilter::fromString, FuelFilter::new);
+        //?} else {
+        /*// FTB Filter System for 1.20.1 passes no registries: parse with the built-in ones
+        reg.register(FilterIds.ITEMS, (p, a) -> ItemListFilter.fromString(p, a, Lookups.builtin()), ItemListFilter::new);
+        reg.register(FilterIds.ITEM_TAGS, (p, a) -> TagListFilter.Items.fromString(p, a, Lookups.builtin()), TagListFilter.Items::new);
+        reg.register(FilterIds.BLOCK_TAGS, (p, a) -> TagListFilter.Blocks.fromString(p, a, Lookups.builtin()), TagListFilter.Blocks::new);
+        reg.register(FilterIds.FUEL, (p, a) -> FuelFilter.fromString(p, a, Lookups.builtin()), FuelFilter::new);
+        *///?}
 
         // FTB Filter System Addons 1.0.0 wrote several items as item(a,b,...), which FTB Filter System cannot read:
         // read those as an item list; a single item(a) stays FTB Filter System's own filter.
@@ -28,9 +37,15 @@ public final class FilterRegistration {
         if (reg instanceof FilterRegistry fr) {
             fr.getDetails(itemId).ifPresentOrElse(details -> {
                 SmartFilter.Factory original = details.factory();
+                //? if neoforge {
                 SmartFilter.Factory<SmartFilter> wrapped = (parent, arg, registries) -> arg.indexOf(',') >= 0
                         ? ItemListFilter.fromString(parent, arg, registries)
                         : (SmartFilter) original.create(parent, arg, registries);
+                //?} else {
+                /*SmartFilter.Factory<SmartFilter> wrapped = (parent, arg) -> arg.indexOf(',') >= 0
+                        ? ItemListFilter.fromString(parent, arg, com.questclusters.filters.filter.Lookups.builtin())
+                        : (SmartFilter) original.create(parent, arg);
+                *///?}
                 reg.register(itemId, wrapped, (SmartFilter.DefaultFactory) details.defaultSupplier());
             }, () -> QuestClustersFilters.LOGGER.warn("FTB Filter System's item filter not found; item(a,b) will not be readable"));
         } else {

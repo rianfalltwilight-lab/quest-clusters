@@ -1,6 +1,9 @@
 package com.questclusters.filters;
 
 import com.questclusters.platform.Rl;
+import com.questclusters.platform.Events;
+import com.questclusters.platform.ModContext;
+import com.questclusters.platform.Net;
 import dev.ftb.mods.ftbfiltersystem.api.event.FilterRegistrationEvent;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -9,9 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,24 +40,34 @@ public final class QuestClustersFilters {
         }
     }
 
-    public QuestClustersFilters(IEventBus modBus) {
+    //? if neoforge {
+    public QuestClustersFilters(IEventBus modBus, net.neoforged.fml.ModContainer container) {
+        this(new ModContext(modBus, container));
+    }
+    //?} else {
+    /*public QuestClustersFilters() {
+        this(ModContext.current());
+    }
+    *///?}
+
+    private QuestClustersFilters(ModContext ctx) {
         if (!net.neoforged.fml.ModList.get().isLoaded("ftbfiltersystem")) {
             LOGGER.info("FTB Filter System is not installed: Quest Clusters Filters stays inactive");
             return;
         }
-        Setup.run(modBus);
+        Setup.run(ctx);
     }
 
     /** Separate class so nothing from FTB Filter System is loaded when it is absent. */
     private static final class Setup {
-        static void run(IEventBus modBus) {
-        FilterRegistrationEvent.REGISTER.register(FilterRegistration::register);
-        modBus.addListener((RegisterPayloadHandlersEvent e) -> e.registrar(PROTOCOL).playToClient(Presence.TYPE, Presence.CODEC, (p, c) -> {
-        }));
-        NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> FilterCommands.register(e.getDispatcher()));
-        if (FMLEnvironment.dist.isClient()) {
-            com.questclusters.filters.client.FiltersClient.init(modBus);
-        }
+        static void run(ModContext ctx) {
+            FilterRegistrationEvent.REGISTER.register(FilterRegistration::register);
+            Net.channel(ctx, PROTOCOL).toClient(Presence.TYPE, Presence.CODEC, p -> {
+            });
+            Events.commands(FilterCommands::register);
+            if (FMLEnvironment.dist.isClient()) {
+                com.questclusters.filters.client.FiltersClient.init(ctx.modBus());
+            }
         }
     }
 }

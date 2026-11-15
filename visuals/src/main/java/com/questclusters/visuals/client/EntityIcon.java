@@ -12,7 +12,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+//? if neoforge {
 import net.minecraft.client.resources.PlayerSkin;
+//?}
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.Component;
@@ -170,6 +172,7 @@ public final class EntityIcon extends Icon {
     }
 
     /** Player model with a skin looked up by name or uuid (asynchronously; default skin until it arrives). */
+    //? if neoforge {
     static final class PreviewPlayer extends RemotePlayer {
         private PlayerSkin skin;
 
@@ -189,4 +192,29 @@ public final class EntityIcon extends Icon {
             return skin != null ? skin : super.getSkin();
         }
     }
+    //?} else {
+    /*static final class PreviewPlayer extends RemotePlayer {
+        private volatile net.minecraft.resources.ResourceLocation skin;
+
+        PreviewPlayer(ClientLevel level, EntityIconSpec spec) {
+            super(level, new GameProfile(spec.uuid() != null ? spec.uuid() : UUID.nameUUIDFromBytes(("preview:" + spec.skin()).getBytes()),
+                    spec.skin().isEmpty() ? "Player" : spec.skin()));
+            if (spec.uuid() == null && spec.skin().isEmpty()) return;
+            CompletableFuture<GameProfile> profile = spec.uuid() != null
+                    ? CompletableFuture.supplyAsync(() -> Minecraft.getInstance().getMinecraftSessionService()
+                    .fillProfileProperties(new GameProfile(spec.uuid(), null), false))
+                    : new CompletableFuture<>();
+            if (spec.uuid() == null) SkullBlockEntity.updateGameprofile(new GameProfile(null, spec.skin()), profile::complete);
+            profile.thenAccept(gp -> Minecraft.getInstance().execute(() -> Minecraft.getInstance().getSkinManager().registerSkins(gp,
+                    (type, rl, tex) -> {
+                        if (type == com.mojang.authlib.minecraft.MinecraftProfileTexture.Type.SKIN) skin = rl;
+                    }, true)));
+        }
+
+        @Override
+        public net.minecraft.resources.ResourceLocation getSkinTextureLocation() {
+            return skin != null ? skin : super.getSkinTextureLocation();
+        }
+    }
+    *///?}
 }

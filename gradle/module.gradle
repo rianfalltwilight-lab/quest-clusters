@@ -49,10 +49,22 @@ stonecutter {
             replace('net.neoforged.neoforge.event.', 'net.minecraftforge.event.')
             replace('net.neoforged.neoforge.server.', 'net.minecraftforge.server.')
             replace('net.neoforged.neoforge.fluids.', 'net.minecraftforge.fluids.')
+            // longer names first: overlapping replacements are not applied to each other's output
+            replace('net.neoforged.neoforge.common.NeoForge', 'net.minecraftforge.common.MinecraftForge')
             replace('net.neoforged.neoforge.common.', 'net.minecraftforge.common.')
             replace('NeoForge.EVENT_BUS', 'MinecraftForge.EVENT_BUS')
-            replace('common.NeoForge;', 'common.MinecraftForge;')
             replace('ModConfigSpec', 'ForgeConfigSpec')
+        }
+        // Minecraft 1.20.2 added horizontal scrolling: mouseScrolled(x, y, dx, dy) is mouseScrolled(x, y, dy) here
+        replacements.regex(true) {
+            replace('public boolean mouseScrolled\\(double (\\w+), double (\\w+), double \\w+, double (\\w+)\\)',
+                    'public boolean mouseScrolled(double $1, double $2, double $3)',
+                    'public boolean mouseScrolled\\(double (\\w+), double (\\w+), double (\\w+)\\)',
+                    'public boolean mouseScrolled(double $1, double $2, double dx, double $3)')
+        }
+        replacements.regex(true) {
+            replace('super\\.mouseScrolled\\((\\w+), (\\w+), \\w+, (\\w+)\\)', 'super.mouseScrolled($1, $2, $3)',
+                    'super\\.mouseScrolled\\((\\w+), (\\w+), (\\w+)\\)', 'super.mouseScrolled($1, $2, 0, $3)')
         }
     }
 }

@@ -41,7 +41,12 @@ public class FuelFilter extends AbstractSmartFilter {
     }
 
     @Override
+    //? if neoforge {
     public String getStringArg(HolderLookup.Provider registryAccess) {
+    //?} else {
+    /*public String getStringArg() {
+        HolderLookup.Provider registryAccess = Lookups.builtin();
+    *///?}
         return comparison.toString();
     }
 

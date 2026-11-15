@@ -51,21 +51,22 @@ public final class VisualsClient {
         Minecraft.getInstance().setScreen(settingsScreen(null));
     }
 
-    /** "Config" button in the mods list: the same screen, returning to the mods list. */
-    public static void registerConfigScreen(net.neoforged.fml.ModContainer container) {
-        container.registerExtensionPoint(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
-                (mod, parent) -> settingsScreen(parent));
-    }
-
     /** Accept saves, Cancel discards; either way the screen goes back to {@code parent} (null: the game). */
-    static net.minecraft.client.gui.screens.Screen settingsScreen(@org.jetbrains.annotations.Nullable net.minecraft.client.gui.screens.Screen parent) {
+    public static net.minecraft.client.gui.screens.Screen settingsScreen(@org.jetbrains.annotations.Nullable net.minecraft.client.gui.screens.Screen parent) {
         ConfigGroup group = new ConfigGroup("quest_clusters_visuals", accepted -> {
             if (accepted) VisualsConfig.save();
+            //? if forge {
+            /*Minecraft.getInstance().tell(() -> Minecraft.getInstance().setScreen(parent));
+            *///?}
         });
         VisualsConfig.CONFIG.createClientConfig(group);
         EditConfigScreen screen = new EditConfigScreen(group);
+        //? if neoforge {
         screen.setPreviousScreen(parent);
         screen.setAutoclose(true).setOpenPrevScreenOnClose(true);
+        //?} else {
+        /*screen.setAutoclose(true);
+        *///?}
         return new dev.ftb.mods.ftblibrary.ui.ScreenWrapper(screen);
     }
 }

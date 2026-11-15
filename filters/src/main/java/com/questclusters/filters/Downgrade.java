@@ -6,14 +6,9 @@ import com.questclusters.filters.filter.TagListFilter;
 import dev.ftb.mods.ftbfiltersystem.api.FTBFilterSystemAPI;
 import dev.ftb.mods.ftbfiltersystem.api.filter.SmartFilter;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.nbt.NbtOps;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Rewrites a filter tree with FTB Filter System's own filters where that keeps the same matches, so the filter
@@ -35,11 +30,11 @@ public final class Downgrade {
         if (filter instanceof TagListFilter.Items tags) {
             report.converted++;
             List<String> parts = tags.tags().stream().map(t -> "item_tag(" + t + ")").toList();
-            return parts.size() == 1 ? parts.getFirst() : "or(" + String.join("", parts) + ")";
+            return parts.size() == 1 ? parts.get(0) : "or(" + String.join("", parts) + ")";
         }
         if (filter instanceof TagListFilter.Blocks || filter instanceof FuelFilter) {
             report.keptNeedsModule++;
-            return filter.asString(registries);
+            return com.questclusters.filters.filter.FfsCompat.asString(filter, registries);
         }
         if (filter instanceof SmartFilter.Compound c) {
             StringBuilder inner = new StringBuilder();
@@ -47,7 +42,7 @@ public final class Downgrade {
             if (c.getParent() == null) return inner.toString(); // the root is just its children
             return FTBFilterSystemAPI.modDefaultedString(c.getId()) + "(" + inner + ")";
         }
-        return filter.asString(registries);
+        return com.questclusters.filters.filter.FfsCompat.asString(filter, registries);
     }
 
     private static String items(ItemListFilter list, HolderLookup.Provider registries, Report report) {
@@ -62,27 +57,17 @@ public final class Downgrade {
                 parts.add("item(" + id + ")");
                 continue;
             }
-            String nbt = componentNbt(e, registries);
+            String nbt = e.data().nativeData(registries);
             if (nbt == null || nbt.indexOf('(') >= 0 || nbt.indexOf(')') >= 0 || nbt.indexOf('\\') >= 0) {
                 // FTB Filter System's component filter cannot store these characters reliably: keep the list as it is
                 report.unconvertibleVariants++;
                 report.keptNeedsModule++;
-                return list.asString(registries);
+                return com.questclusters.filters.filter.FfsCompat.asString(list, registries);
             }
-            parts.add("and(item(" + id + ")component(fuzzy:" + nbt + "))");
+            parts.add("and(item(" + id + ")" + com.questclusters.filters.filter.ItemVariant.NATIVE_DATA_FILTER + "(fuzzy:" + nbt + "))");
         }
         report.converted++;
         if (parts.isEmpty()) return "";
-        return parts.size() == 1 ? parts.getFirst() : "or(" + String.join("", parts) + ")";
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static String componentNbt(ItemListFilter.Entry e, HolderLookup.Provider registries) {
-        DataComponentMap.Builder b = DataComponentMap.builder();
-        for (Map.Entry<DataComponentType<?>, Optional<?>> c : e.components().entrySet()) {
-            if (c.getValue().isPresent()) b.set((DataComponentType) c.getKey(), c.getValue().get());
-        }
-        return DataComponentMap.CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), b.build())
-                .result().map(Object::toString).orElse(null);
+        return parts.size() == 1 ? parts.get(0) : "or(" + String.join("", parts) + ")";
     }
 }

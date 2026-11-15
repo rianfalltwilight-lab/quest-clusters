@@ -35,7 +35,11 @@ public final class FilterCommands {
         Downgrade.Report report = new Downgrade.Report();
         String after;
         try {
+            //? if neoforge {
             after = Downgrade.rewrite(SmartFilterItem.getFilter(held, registries), registries, report);
+            //?} else {
+            /*after = Downgrade.rewrite(SmartFilterItem.getFilter(held), registries, report);
+            *///?}
         } catch (Exception e) {
             ctx.getSource().sendFailure(Component.translatable("quest_clusters_filters.downgrade.invalid", e.getMessage()));
             return 0;

@@ -151,7 +151,7 @@ public class TagListScreen<F extends TagListFilter> extends FilterScreenBase<F> 
         }
         if (typed != null && q.contains(":") && reverse.isEmpty() && filtered.stream().noneMatch(t -> t.id().toString().equals(typed))
                 && allTags.stream().noneMatch(t -> t.id().toString().equals(typed))) {
-            filtered.addFirst(new TagInfo(Rl.parse(typed), 0, List.of(), false));
+            filtered.add(0, new TagInfo(Rl.parse(typed), 0, List.of(), false));
         }
         shown = filtered;
         scroll = Math.max(0, Math.min(scroll, shown.size() - rows));

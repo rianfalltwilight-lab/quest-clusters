@@ -54,6 +54,7 @@ public class FiltersJeiPlugin implements IModPlugin {
         public IGuiProperties apply(T s) {
             if (s.width == 0 || s.height == 0) return null;
             Rect2i b = s.getGuiBounds();
+            //? if neoforge {
             return new IGuiProperties() {
                 @Override
                 public Class<? extends Screen> screenClass() {
@@ -90,6 +91,44 @@ public class FiltersJeiPlugin implements IModPlugin {
                     return s.height;
                 }
             };
+            //?} else {
+            /*return new IGuiProperties() {
+                @Override
+                public Class<? extends Screen> getScreenClass() {
+                    return s.getClass();
+                }
+
+                @Override
+                public int getGuiLeft() {
+                    return b.getX();
+                }
+
+                @Override
+                public int getGuiTop() {
+                    return b.getY();
+                }
+
+                @Override
+                public int getGuiXSize() {
+                    return s.width - 2 * b.getX();
+                }
+
+                @Override
+                public int getGuiYSize() {
+                    return s.height - 2 * b.getY();
+                }
+
+                @Override
+                public int getScreenWidth() {
+                    return s.width;
+                }
+
+                @Override
+                public int getScreenHeight() {
+                    return s.height;
+                }
+            };
+            *///?}
         }
     }
 

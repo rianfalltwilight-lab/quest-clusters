@@ -161,9 +161,9 @@ public class ItemListScreen extends FilterScreenBase<ItemListFilter> implements 
         if (baseLength == 0) {
             SmartFilter root = filter;
             while (root.getParent() != null) root = root.getParent();
-            baseLength = root.asString(reg).length() - filter.asString(reg).length();
+            baseLength = com.questclusters.filters.filter.FfsCompat.asString(root, reg).length() - com.questclusters.filters.filter.FfsCompat.asString(filter, reg).length();
         }
-        return baseLength + new ItemListFilter(null, entries).asString(reg).length();
+        return baseLength + com.questclusters.filters.filter.FfsCompat.asString(new ItemListFilter(null, entries), reg).length();
     }
 
     /** Adds an entry; false (with a hint) if the list is full or the filter would get too long. */

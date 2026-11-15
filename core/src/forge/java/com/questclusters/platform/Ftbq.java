@@ -84,4 +84,9 @@ public final class Ftbq {
     public static String clickData(ChapterImage img) {
         return img.getClick();
     }
+
+    /** The chapter's file name, e.g. "getting_started.snbt" (empty before it was saved). */
+    public static Optional<String> chapterFileName(dev.ftb.mods.ftbquests.quest.Chapter chapter) {
+        return chapter.getPath().map(p -> p.substring(p.lastIndexOf('/') + 1));
+    }
 }

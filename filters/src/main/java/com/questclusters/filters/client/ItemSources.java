@@ -2,9 +2,6 @@ package com.questclusters.filters.client;
 
 import com.questclusters.filters.filter.ItemListFilter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.component.DataComponentPatch;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
@@ -16,16 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /** Item lists for the pickers (creative inventory contents or the player's inventory) and searching them. */
 public final class ItemSources {
-    /** Data that changes with use or is stored content: not part of what "kind" of item a stack is. */
-    static final Set<DataComponentType<?>> NOT_VARIANT = Set.of(DataComponents.DAMAGE, DataComponents.REPAIR_COST,
-            DataComponents.CHARGED_PROJECTILES, DataComponents.WRITABLE_BOOK_CONTENT, DataComponents.CONTAINER,
-            DataComponents.BUNDLE_CONTENTS, DataComponents.BLOCK_ENTITY_DATA, DataComponents.BEES,
-            DataComponents.CONTAINER_LOOT, DataComponents.DEBUG_STICK_STATE);
-
     /** A picker entry: a display stack and the filter entry text it stands for. */
     public record Choice(ItemStack stack, String text, String searchName, String searchId) {
     }
@@ -40,25 +30,11 @@ public final class ItemSources {
         all = allVariants = null;
     }
 
-    public static DataComponentPatch variantPatch(ItemStack stack) {
-        DataComponentPatch.Builder b = DataComponentPatch.builder();
-        for (Map.Entry<DataComponentType<?>, java.util.Optional<?>> e : stack.getComponentsPatch().entrySet()) {
-            if (NOT_VARIANT.contains(e.getKey()) || e.getValue().isEmpty()) continue;
-            set(b, e.getKey(), e.getValue().get());
-        }
-        return b.build();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> void set(DataComponentPatch.Builder b, DataComponentType<T> type, Object v) {
-        b.set(type, (T) v);
-    }
-
     static Choice choice(ItemStack stack, boolean variant) {
         var mc = Minecraft.getInstance();
         var reg = mc.level.registryAccess();
         Item item = stack.getItem();
-        String text = variant ? ItemListFilter.textOf(item, variantPatch(stack), reg) : BuiltInRegistries.ITEM.getKey(item).toString();
+        String text = variant ? ItemListFilter.textOf(item, com.questclusters.filters.filter.ItemVariant.of(stack), reg) : BuiltInRegistries.ITEM.getKey(item).toString();
         ItemStack shown = variant ? stack.copyWithCount(1) : new ItemStack(item);
         return new Choice(shown, text, shown.getHoverName().getString().toLowerCase(Locale.ROOT), text.toLowerCase(Locale.ROOT));
     }

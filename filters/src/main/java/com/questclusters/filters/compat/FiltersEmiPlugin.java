@@ -32,7 +32,7 @@ public class FiltersEmiPlugin implements EmiPlugin {
 
     private static <T extends Screen & GhostDropReceiver> boolean drop(T screen, dev.emi.emi.api.stack.EmiIngredient ing, int x, int y) {
         if (ing.getEmiStacks().isEmpty() || !screen.getGhostDropRegion().contains(x, y)) return false;
-        var stack = ing.getEmiStacks().getFirst().getItemStack();
+        var stack = ing.getEmiStacks().get(0).getItemStack();
         if (stack.isEmpty()) return false;
         screen.receiveGhostDrop(stack);
         return true;

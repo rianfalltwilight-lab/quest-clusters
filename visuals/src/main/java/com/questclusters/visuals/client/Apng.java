@@ -66,7 +66,7 @@ public final class Apng {
             b.getInt(); // crc
             chunks.add(new Chunk(new String(t, StandardCharsets.ISO_8859_1), d));
         }
-        Chunk ihdr = chunks.isEmpty() ? null : chunks.getFirst();
+        Chunk ihdr = chunks.isEmpty() ? null : chunks.get(0);
         if (ihdr == null || !ihdr.type().equals("IHDR") || ihdr.data().length != 13) return null;
         int width = ByteBuffer.wrap(ihdr.data()).getInt(0), height = ByteBuffer.wrap(ihdr.data()).getInt(4);
         Chunk actl = chunks.stream().filter(c -> c.type().equals("acTL")).findFirst().orElse(null);
