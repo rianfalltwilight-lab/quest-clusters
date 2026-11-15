@@ -12,4 +12,23 @@
 	]
 	quest.00000000000000D8.title: "Desc test"
 	quest.00000000000000D9.title: "Milestone"
+	quest.0000000000000A31.title: "Markup test"
+	quest.0000000000000A31.quest_desc: [
+		"# Heading one"
+		"## Heading two"
+		"---"
+		"> Left bar text"
+		"[!info] Info callout"
+		"[!warn] Warning callout"
+		"[spoiler]Secret text"
+		"`code line`"
+		"[gap=8]"
+		"- first item"
+		"  - nested item"
+		"1. numbered item"
+		"[center]Centred line"
+		"==="
+		"\\# not a heading"
+		"Plain line"
+	]
 }

@@ -99,6 +99,7 @@ final class EditorDevTest {
         DevSelfTest.addModuleSteps(presetSteps());
         DevSelfTest.addModuleSteps(anchorInClusterSteps());
         DevSelfTest.addModuleSteps(animatedLineSteps());
+        DevSelfTest.addModuleSteps(markupSteps());
         DevSelfTest.addModuleSteps(DevSelfTest.configScreenSteps("quest_clusters_editor", "qc_37_editor_settings", () -> List.of(
                 "quest_clusters_editor.configuration.title",
                 "quest_clusters_editor.configuration.render_kill_task_entity_models",
@@ -601,6 +602,8 @@ final class EditorDevTest {
         var flow = new com.questclusters.editor.data.LinePreset("qcflow", "Flow", "minecraft:block/redstone_block", 1.3F);
         var gif = new com.questclusters.editor.data.LinePreset("qcgif", "Gif", "quest_clusters_editor:textures/gui/example.gif");
         float[] sample = new float[2];
+        java.util.Set<Float> seen = new java.util.HashSet<>();
+        int[] polls = {0};
         return List.of(
                 () -> {
                     var qs = DevSelfTest.questScreen();
@@ -615,12 +618,13 @@ final class EditorDevTest {
                     return 20;
                 },
                 () -> {
-                    sample[0] = com.questclusters.editor.client.gui.DecorativeLinesWidget.lastV0;
-                    return 25; // more than one magma frame (8 ticks)
+                    // sample every tick until two different frames were seen (or ~3 s passed): a fixed delay can
+                    // land on the same frame of the cycle on slow machines
+                    seen.add(com.questclusters.editor.client.gui.DecorativeLinesWidget.lastV0);
+                    return seen.size() >= 2 || ++polls[0] > 60 ? 0 : -1;
                 },
                 () -> {
-                    float v = com.questclusters.editor.client.gui.DecorativeLinesWidget.lastV0;
-                    DevSelfTest.moduleCheck(v != sample[0], "animated lines: .mcmeta frames play (" + sample[0] + " -> " + v + ")");
+                    DevSelfTest.moduleCheck(seen.size() >= 2, "animated lines: .mcmeta frames play (" + seen + ")");
                     EditorActions.editChapter("line_preset", C2, x -> x.linePreset = flow.id());
                     return 10;
                 },
@@ -639,6 +643,74 @@ final class EditorDevTest {
                     DevSelfTest.moduleCheck(tex != null && tex.getPath().startsWith("dynamic_gif/"), "animated lines: GIF presets draw the GIF's frames (" + tex + ")");
                     DevSelfTest.moduleShot("qc_40_line_gif");
                     EditorActions.send("line_presets", com.questclusters.editor.client.gui.LinePresetsScreen.patch(ClientEditor.book(), List.of()));
+                    return 20;
+                });
+    }
+
+    /** MQA-style description markup on the "Markup test" quest: layout, spoiler click, Shift+O. */
+    static List<java.util.function.IntSupplier> markupSteps() {
+        long quest = 0xA31L;
+        return List.of(
+                () -> {
+                    var q = ClientQuestFile.INSTANCE.getQuest(quest);
+                    DevSelfTest.moduleCheck(q != null, "markup: test quest exists");
+                    if (q != null) DevSelfTest.questScreen().open(q, false);
+                    return 40;
+                },
+                () -> {
+                    int marked = 0;
+                    var kinds = new java.util.ArrayList<String>();
+                    for (int i = 0; i < 16; i++) {
+                        var f = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, i);
+                        var info = com.questclusters.editor.client.desc.LineRender.info(f);
+                        if (info != null && !info.markup().isPlain()) marked++;
+                        kinds.add(info == null ? "?" : info.markup().kind() + (info.markup().isPlain() ? "" : "*"));
+                    }
+                    DevSelfTest.moduleCheck(marked == 14, "markup: 14 of 16 lines marked up (" + marked + ") " + kinds);
+                    var heading = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, 0);
+                    DevSelfTest.moduleCheck(heading != null && heading.scale == 2F && heading.component != null, "markup: # heading drawn at 2x");
+                    var bar = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, 3);
+                    DevSelfTest.moduleCheck(bar != null && bar.getPosX() == com.questclusters.editor.client.desc.LineRender.BAR_PAD,
+                            "markup: > bar line indented (" + (bar == null ? null : bar.getPosX()) + ")");
+                    var gap = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, 8);
+                    DevSelfTest.moduleCheck(gap != null && gap.height == 8, "markup: [gap=8] is 8 px high");
+                    DevSelfTest.moduleShot("qc_41_markup");
+                    var spoiler = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, 6);
+                    DevSelfTest.moduleCheck(spoiler != null && !com.questclusters.editor.client.desc.LineRender.revealed(
+                            com.questclusters.editor.client.desc.LineRender.info(spoiler)), "markup: spoiler starts covered");
+                    if (spoiler != null) {
+                        DevSelfTest.realMove(spoiler.getX() + 2, spoiler.getY() + 2);
+                    }
+                    return 5;
+                },
+                DevSelfTest.waitFrames(3), // FTB updates hovering when it draws
+                () -> {
+                    var spoiler = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, 6);
+                    if (spoiler != null) spoiler.mousePressed(dev.ftb.mods.ftblibrary.ui.input.MouseButton.LEFT);
+                    DevSelfTest.moduleCheck(spoiler != null && com.questclusters.editor.client.desc.LineRender.revealed(
+                            com.questclusters.editor.client.desc.LineRender.info(spoiler)), "markup: clicking the spoiler shows it");
+                    editMode(true);
+                    return 20;
+                },
+                () -> {
+                    var line = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, 3);
+                    if (line != null) DevSelfTest.realMove(line.getX() + 2, line.getY() + 2);
+                    return 5;
+                },
+                DevSelfTest.waitFrames(3),
+                () -> {
+                    DevSelfTest.questScreen().keyPressed(new dev.ftb.mods.ftblibrary.ui.input.Key(
+                            org.lwjgl.glfw.GLFW.GLFW_KEY_O, 0, org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT));
+                    return 20;
+                },
+                () -> {
+                    var raw = ClientQuestFile.INSTANCE.getQuest(quest).getRawDescription();
+                    DevSelfTest.moduleCheck(raw.size() > 3 && raw.get(3).equals("[center]> Left bar text"),
+                            "markup: Shift+O over a line centres it (" + (raw.size() > 3 ? raw.get(3) : "?") + ")");
+                    if (raw.size() > 3) {
+                        com.questclusters.editor.client.desc.DescriptionLines.set(ClientQuestFile.INSTANCE.getQuest(quest), DevSelfTest.questScreen().viewQuestPanel, 3, "> Left bar text");
+                    }
+                    editMode(false);
                     return 20;
                 });
     }

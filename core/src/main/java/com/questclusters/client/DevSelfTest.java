@@ -1012,7 +1012,8 @@ public final class DevSelfTest {
     }
 
     /** Mouse move through Minecraft's own input path (GUI coordinates in). */
-    private static void realMove(double gx, double gy) {
+    /** Moves the real mouse to GUI coordinates (for module self-tests too). */
+    public static void realMove(double gx, double gy) {
         Minecraft mc = Minecraft.getInstance();
         var w = mc.getWindow();
         double sx = (double) w.getScreenWidth() / w.getGuiScaledWidth();

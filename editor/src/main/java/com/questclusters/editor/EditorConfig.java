@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 /** Client options ({@code config/quest_clusters_editor-client.toml}); same keys as Quest Enhance's client config. */
 public final class EditorConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue KILL_TASK_MODELS, OPEN_ADVANCEMENTS, IMPORTED;
+    public static final ModConfigSpec.BooleanValue KILL_TASK_MODELS, OPEN_ADVANCEMENTS, MARKUP, CENTER_ALL, IMPORTED;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -19,6 +19,9 @@ public final class EditorConfig {
                 .define("render_kill_task_entity_models", true);
         OPEN_ADVANCEMENTS = b.comment("Left-clicking an advancement task opens the advancements screen")
                 .define("open_advancement_tasks", true);
+        MARKUP = b.comment("Description line markup (dividers, side bars, spoilers, code, gaps, headings, callouts, lists, centring)")
+                .define("description_markup", true);
+        CENTER_ALL = b.comment("Centre every description line").define("center_all_description_text", false);
         IMPORTED = b.comment("Set once Quest Enhance's client options were copied (internal)").define("imported_quest_enhance", false);
         SPEC = b.build();
     }

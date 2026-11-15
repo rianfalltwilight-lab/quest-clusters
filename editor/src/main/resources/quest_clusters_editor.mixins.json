@@ -20,7 +20,9 @@
     "client.ChapterImageButtonEditorMixin",
     "client.ChapterImageMenuMixin",
     "client.ChapterLinePresetConfigMixin",
+    "client.CenterLineKeyMixin",
     "client.ChapterPanelEditorMixin",
+    "client.DescriptionLineDrawMixin",
     "client.DescriptionPasteMixin",
     "client.EditorToolbarMixin",
     "client.IconGifMixin",
@@ -38,6 +40,7 @@
     "client.QuestScreenEditorMixin",
     "client.QuestScreenMenuMixin",
     "client.QuestScreenPasteMixin",
+    "client.SpoilerClickMixin",
     "client.ViewQuestPanelDescMixin",
     "client.ViewQuestPanelEditLineMixin",
     "client.ViewQuestPanelEditorMixin"

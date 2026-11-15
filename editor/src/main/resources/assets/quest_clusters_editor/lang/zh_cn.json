@@ -178,5 +178,10 @@
   "quest_clusters_editor.line_presets.gif": "使用 GIF",
   "quest_clusters_editor.line_presets.scroll": "流动速度：%s",
   "quest_clusters_editor.line_presets.scroll.title": "每秒沿线移动几格（-20 到 20，0 为不动）",
-  "quest_clusters_editor.line_presets.gif.none": "资源包里没有 .gif"
+  "quest_clusters_editor.line_presets.gif.none": "资源包里没有 .gif",
+  "quest_clusters_editor.spoiler": "剧透：点击显示",
+  "quest_clusters_editor.configuration.description_markup": "描述文本标记",
+  "quest_clusters_editor.configuration.description_markup.tooltip": "分隔线（--- ===）、侧边条（> <）、[spoiler] 剧透、代码（`）、[gap=N] 间距、标题（# ## ###）、提示框（[!info] [!tip] [!warn] [!danger]）、列表（- 和 1.）、[center] 居中；以 \\\\ 开头的行按原样显示",
+  "quest_clusters_editor.configuration.center_all_description_text": "描述全部居中",
+  "quest_clusters_editor.configuration.center_all_description_text.tooltip": "所有描述行都居中；单独一行：编辑模式下鼠标指向该行按 Shift+O"
 }
