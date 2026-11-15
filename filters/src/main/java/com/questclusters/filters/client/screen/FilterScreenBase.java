@@ -75,14 +75,16 @@ abstract class FilterScreenBase<T extends SmartFilter> extends AbstractFilterCon
     @Override
     public void onClose() {
         if (!saving && !confirmed && changed()) {
-            minecraft.setScreen(new ConfirmScreen(discard -> {
+            // the callback as a local: some Java 17 compilers reject a lambda given to an anonymous class's constructor
+            it.unimi.dsi.fastutil.booleans.BooleanConsumer answer = discard -> {
                 if (discard) {
                     confirmed = true;
                     onClose();
                 } else {
                     minecraft.setScreen(this);
                 }
-            }, tr("unsaved.title"), tr("unsaved.message"), tr("unsaved.discard"), tr("unsaved.keep")) {
+            };
+            minecraft.setScreen(new ConfirmScreen(answer, tr("unsaved.title"), tr("unsaved.message"), tr("unsaved.discard"), tr("unsaved.keep")) {
                 @Override
                 public boolean keyPressed(int key, int scan, int mods) {
                     if (key == GLFW.GLFW_KEY_ESCAPE) {
