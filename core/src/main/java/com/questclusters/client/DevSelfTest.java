@@ -39,6 +39,13 @@ import java.util.function.IntSupplier;
  */
 @EventBusSubscriber(modid = QuestClusters.MOD_ID, value = Dist.CLIENT)
 public final class DevSelfTest {
+    /** Running on Minecraft 1.20.1 (Forge). */
+    //? if neoforge {
+    public static final boolean LEGACY = false;
+    //?} else {
+    /*public static final boolean LEGACY = true;
+    *///?}
+
     private static final String PROP = System.getProperty("quest_clusters.devtest");
     private static final long IMAGE_A3 = 0xA3L;
     /** System chat messages seen by this client (for the migration notice check). */
@@ -605,7 +612,7 @@ public final class DevSelfTest {
         STEPS.add(() -> {
             shot("qc_12_background_tile");
             Net.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style()
-                    .withBackground("minecraft:textures/gui/sprites/widget/button.png", com.questclusters.data.ClusterStyle.MODE_NINE_SLICE, 3, true))));
+                    .withBackground((LEGACY ? "minecraft:textures/block/stone.png" : "minecraft:textures/gui/sprites/widget/button.png"), com.questclusters.data.ClusterStyle.MODE_NINE_SLICE, 3, true))));
             return 20;
         });
         STEPS.add(() -> {
@@ -769,7 +776,10 @@ public final class DevSelfTest {
                 return 10;
             });
             STEPS.add(() -> {
-                check(Minecraft.getInstance().screen == null, (key == 256 ? "Esc" : "E") + " then closes the quest book (screen now "
+                // 1.20.1: vanilla opens the pause menu for an Esc that closed the last screen
+                boolean closed = Minecraft.getInstance().screen == null || (LEGACY && key == 256
+                        && Minecraft.getInstance().screen instanceof net.minecraft.client.gui.screens.PauseScreen);
+                check(closed, (key == 256 ? "Esc" : "E") + " then closes the quest book (screen now "
                         + Minecraft.getInstance().screen + ")");
                 return 5;
             });

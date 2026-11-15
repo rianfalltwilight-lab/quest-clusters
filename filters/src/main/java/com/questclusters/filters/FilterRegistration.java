@@ -31,8 +31,18 @@ public final class FilterRegistration {
         reg.register(FilterIds.FUEL, (p, a) -> FuelFilter.fromString(p, a, Lookups.builtin()), FuelFilter::new);
         *///?}
 
-        // FTB Filter System Addons 1.0.0 wrote several items as item(a,b,...), which FTB Filter System cannot read:
-        // read those as an item list; a single item(a) stays FTB Filter System's own filter.
+        wrapItemFilter(reg, false);
+    }
+
+    private static boolean wrapped;
+
+    /**
+     * FTB Filter System Addons 1.0.0 wrote several items as item(a,b,...), which FTB Filter System cannot read: read
+     * those as an item list; a single item(a) stays FTB Filter System's own filter. FTB Filter System registers its
+     * own filters in the same event, so if it has not yet, this runs again once loading is complete.
+     */
+    public static void wrapItemFilter(FTBFilterSystemRegistry reg, boolean last) {
+        if (wrapped) return;
         ResourceLocation itemId = FTBFilterSystemAPI.rl("item");
         if (reg instanceof FilterRegistry fr) {
             fr.getDetails(itemId).ifPresentOrElse(details -> {
@@ -46,8 +56,23 @@ public final class FilterRegistration {
                         ? ItemListFilter.fromString(parent, arg, com.questclusters.filters.filter.Lookups.builtin())
                         : (SmartFilter) original.create(parent, arg);
                 *///?}
-                reg.register(itemId, wrapped, (SmartFilter.DefaultFactory) details.defaultSupplier());
-            }, () -> QuestClustersFilters.LOGGER.warn("FTB Filter System's item filter not found; item(a,b) will not be readable"));
+                try {
+                    reg.register(itemId, wrapped, (SmartFilter.DefaultFactory) details.defaultSupplier());
+                } catch (IllegalStateException frozen) {
+                    // already frozen (FTB Filter System registered its own filters after ours): swap the entry itself
+                    try {
+                        var field = FilterRegistry.class.getDeclaredField("filterMap");
+                        field.setAccessible(true);
+                        ((java.util.Map) field.get(fr)).put(itemId, new FilterRegistry.FilterDetails(itemId, wrapped, details.defaultSupplier()));
+                    } catch (ReflectiveOperationException | RuntimeException e) {
+                        QuestClustersFilters.LOGGER.warn("Could not extend FTB Filter System's item filter; item(a,b) will not be readable", e);
+                        return;
+                    }
+                }
+                FilterRegistration.wrapped = true;
+            }, () -> {
+                if (last) QuestClustersFilters.LOGGER.warn("FTB Filter System's item filter not found; item(a,b) will not be readable");
+            });
         } else {
             QuestClustersFilters.LOGGER.warn("Unexpected FTB Filter System registry {}; item(a,b) will not be readable", reg.getClass());
         }

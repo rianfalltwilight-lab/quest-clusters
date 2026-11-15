@@ -62,6 +62,8 @@ public final class QuestClustersFilters {
     private static final class Setup {
         static void run(ModContext ctx) {
             FilterRegistrationEvent.REGISTER.register(FilterRegistration::register);
+            ctx.modBus().addListener((net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent e) -> e.enqueueWork(() ->
+                    FilterRegistration.wrapItemFilter(dev.ftb.mods.ftbfiltersystem.api.FTBFilterSystemAPI.api().getRegistry(), true)));
             Net.channel(ctx, PROTOCOL).toClient(Presence.TYPE, Presence.CODEC, p -> {
             });
             Events.commands(FilterCommands::register);

@@ -27,8 +27,12 @@ public abstract class ViewQuestPanelDescMixin {
     @Shadow
     private Quest quest;
 
+    @org.spongepowered.asm.mixin.Unique
+    private final java.util.Set<Integer> quest_clusters_editor$placed = new java.util.HashSet<>();
+
     @Inject(method = "addDescriptionText", at = @At("HEAD"))
     private void quest_clusters_editor$requestValues(boolean canEdit, Component subtitle, CallbackInfo ci) {
+        quest_clusters_editor$placed.clear();
         if (quest == null) return;
         Set<String> keys = new HashSet<>();
         quest.getDescription().forEach(c -> DescriptionComponents.collectKeys(c, keys));
@@ -46,14 +50,17 @@ public abstract class ViewQuestPanelDescMixin {
         Component shown = ClientPersistentData.substitute(text);
         if (payload == null && quest != null && com.questclusters.editor.EditorConfig.MARKUP.get()) {
             var markup = com.questclusters.editor.client.desc.LineMarkup.parse(shown, com.questclusters.editor.EditorConfig.CENTER_ALL.get());
+            // the line number: the same object, or (FTB Quests 1.20.1 rebuilds the list on every call) the first
+            // equal line not yet placed
             int line = -1;
             var desc = quest.getDescription();
-            for (int i = 0; i < desc.size(); i++) {
-                if (desc.get(i) == text) {
-                    line = i;
-                    break;
-                }
+            for (int i = 0; i < desc.size() && line < 0; i++) {
+                if (desc.get(i) == text) line = i;
             }
+            for (int i = 0; i < desc.size() && line < 0; i++) {
+                if (!quest_clusters_editor$placed.contains(i) && desc.get(i).equals(text)) line = i;
+            }
+            if (line >= 0) quest_clusters_editor$placed.add(line);
             com.questclusters.editor.client.desc.LineRender.register(field, quest.id, line, markup);
             if (!markup.isPlain()) {
                 var theme = field.getGui().getTheme();

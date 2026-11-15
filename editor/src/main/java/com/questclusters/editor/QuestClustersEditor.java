@@ -47,6 +47,9 @@ public final class QuestClustersEditor {
         com.questclusters.platform.Events.commands(EditorCommands::register);
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             com.questclusters.editor.client.EditorClient.init(modBus);
+            //? if forge {
+            /*ctx.configScreen(com.questclusters.editor.client.EditorClient::settingsScreen);
+            *///?}
         }
     }
 }

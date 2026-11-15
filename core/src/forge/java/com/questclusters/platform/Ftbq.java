@@ -127,7 +127,7 @@ public final class Ftbq {
 
     /** 1.20.1: images are part of their chapter; adding one sends the chapter. No settings screen opens. */
     public static void createImage(ChapterImage img, boolean openEditor) {
-        img.getChapter().getImages().add(img);
+        img.getChapter().addImage(img);
         sendEdit(img.getChapter());
     }
 

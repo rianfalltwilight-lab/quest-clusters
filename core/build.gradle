@@ -92,7 +92,52 @@ def prepareDevtest = tasks.register('prepareDevtest', Sync) {
     into runDir('config/ftbquests/quests')
     // the game writes into this folder during the run; Gradle would otherwise think it is still up to date
     outputs.upToDateWhen { false }
+    // FTB Quests for 1.20.1 has no language files: write the fixture's titles and descriptions into the chapters
+    if (legacy) doLast { inlineLangFile(destinationDir) }
 }
+
+/** lang/en_us.snbt (FTB Quests 2101) to inline title / description fields (FTB Quests 2001). */
+def inlineLangFile(File quests) {
+    def lang = new File(quests, 'lang/en_us.snbt')
+    if (!lang.exists()) return
+    Map<String, Map<String, String>> byId = [:]
+    String key = null
+    List<String> list = null
+    lang.eachLine { String raw ->
+        def line = raw.trim()
+        if (list != null) {
+            if (line == ']') {
+                def (id, field) = key.split('\\.')[1, 2]
+                byId.computeIfAbsent(id) { [:] }[field] = '[' + list.join(', ') + ']'
+                list = null
+            } else if (line) {
+                list << line
+            }
+            return
+        }
+        def m = line =~ /^(\w+\.[0-9A-F]+\.\w+): (.*)$/
+        if (!m) return
+        key = m[0][1]
+        def value = m[0][2]
+        if (value == '[') {
+            list = []
+        } else {
+            def (id, field) = key.split('\\.')[1, 2]
+            byId.computeIfAbsent(id) { [:] }[field] = value
+        }
+    }
+    def names = [title: 'title', quest_subtitle: 'subtitle', quest_desc: 'description']
+    new File(quests, 'chapters').eachFileMatch(~/.*\.snbt/) { File f ->
+        def text = f.getText('UTF-8')
+        byId.each { id, fields ->
+            def extra = fields.collect { k, v -> "${names[k] ?: k}: $v" }.join(', ')
+            text = text.replace("id: \"$id\"", "id: \"$id\", $extra")
+        }
+        f.setText(text, 'UTF-8')
+    }
+    lang.delete()
+}
+
 // visuals: start without our settings and with Certain Questing Additions' settings, to exercise the import
 def prepareVisualsDevtest = tasks.register('prepareVisualsDevtest') {
     doLast {
