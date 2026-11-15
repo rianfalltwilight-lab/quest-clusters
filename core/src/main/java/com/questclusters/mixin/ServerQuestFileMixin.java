@@ -42,6 +42,7 @@ public abstract class ServerQuestFileMixin {
         ClusterNetwork.sendFullSync(event.getPlayer());
         com.questclusters.server.ServerScoring.sendTo(event.getPlayer());
         com.questclusters.server.ServerLimits.sendTo(event.getPlayer());
+        com.questclusters.server.PersonalProgress.sendTo(event.getPlayer());
         com.questclusters.api.QuestBookHooks.fireLogin(event.getPlayer());
     }
 

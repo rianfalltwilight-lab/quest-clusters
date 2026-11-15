@@ -22,6 +22,7 @@ import java.util.List;
  * /questclusters leaderboard           top 10 in chat
  * /questclusters limits show &lt;player&gt;            claim counts of a player and their team (op)
  * /questclusters limits reset &lt;players&gt; [reward] forget them, so limited rewards can be claimed again (op)
+ * /questclusters personal reset &lt;players&gt;        personal quests start over for them (op)
  */
 public final class ClusterCommands {
     private ClusterCommands() {
@@ -46,6 +47,10 @@ public final class ClusterCommands {
                                         .executes(ctx -> limitsReset(ctx.getSource(), EntityArgument.getPlayers(ctx, "players"),
                                                 com.questclusters.data.QuestCluster.idFromString(
                                                         com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "reward"))))))))
+                .then(Commands.literal("personal")
+                        .requires(s -> s.hasPermission(2))
+                        .then(Commands.literal("reset").then(Commands.argument("players", EntityArgument.players())
+                                .executes(ctx -> personalReset(ctx.getSource(), EntityArgument.getPlayers(ctx, "players"))))))
                 .then(Commands.literal("migrate")
                         .requires(s -> s.hasPermission(2))
                         .then(Commands.literal("status").executes(ctx -> migrateStatus(ctx.getSource())))
@@ -82,6 +87,14 @@ public final class ClusterCommands {
         for (ServerPlayer p : players) n += ServerLimits.reset(file.getOrCreateTeamData(p).getTeamId(), p.getUUID(), reward);
         int total = n;
         src.sendSuccess(() -> Component.translatable("quest_clusters.limits.reset", total, players.size()), true);
+        return n;
+    }
+
+    private static int personalReset(CommandSourceStack src, Collection<ServerPlayer> players) {
+        int n = 0;
+        for (ServerPlayer p : players) if (PersonalProgress.reset(p)) n++;
+        int total = n;
+        src.sendSuccess(() -> Component.translatable("quest_clusters.personal.reset", total), true);
         return n;
     }
 

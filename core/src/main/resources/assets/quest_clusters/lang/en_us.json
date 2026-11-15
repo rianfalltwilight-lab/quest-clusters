@@ -171,5 +171,9 @@
   "quest_clusters.limits.show.header": "Reward claims of %s (team, player):",
   "quest_clusters.limits.show.line": "  %s",
   "quest_clusters.limits.show.none": "No rewards have claim limits",
-  "quest_clusters.limits.reset": "Forgot %s claim count(s) for %s player(s)"
+  "quest_clusters.limits.reset": "Forgot %s claim count(s) for %s player(s)",
+  "quest_clusters.personal.menu.on": "Make personal quest",
+  "quest_clusters.personal.menu.off": "Make team quest again",
+  "quest_clusters.personal.tooltip": "Personal: each team member has their own progress",
+  "quest_clusters.personal.reset": "Personal quests start over for %s player(s)"
 }

@@ -260,6 +260,14 @@ MQA 只有 Forge 1.20.1 版本且不开源，这里按它 CurseForge 页面写�
 - 规则存于 `config/ftbquests/quests/quest_clusters/limits.snbt`（随任务书分发）；领取次数存于存档 `data/quest_clusters_claims.snbt`。
 - 管理命令（需 OP）：`/questclusters limits show <玩家>` 查看该玩家和其队伍的次数；`/questclusters limits reset <玩家> [奖励ID]` 清除次数（不写奖励 ID 时清除全部）。
 
+**个人任务**（编辑模式下右键任务 →「设为个人任务」/「改回团队任务」）：
+- 在队伍里，个人任务每人各记各的进度、完成和奖励领取，不同步给队友；团队任务照常共享。悬停任务显示「个人任务」。
+- 依赖按「谁在做」判断：依赖个人任务的任务，对完成了它的成员解锁。个人任务可重复，完成次数上限也按人计。
+- 结算页按自己的完成情况计分；排行榜按队伍排名，不计个人任务。
+- 原理：FTB Quests 每队只有一份进度，本模组在 FTB 为某个玩家查找队伍数据时（领取、提交、检测物品、击杀等都会先查找）把个人任务的那部分换成该玩家自己的；FTB 保存时先换回队伍原来的，所以 FTB 的存档里没有任何人的个人进度。各人的进度存于存档 `data/quest_clusters_personal.snbt`，FTB 发出的个人任务消息只发给本人。设为个人任务之前队伍已有的进度，每个成员各自继承一份。
+- 已知限制：不经过玩家的进度来源（任务屏幕方块、KubeJS 自定义任务、`/ftbquests change_progress` 命令）作用于该队最近一个有操作的成员。
+- 管理命令（需 OP）：`/questclusters personal reset <玩家>` 让该玩家的个人任务从头开始。
+
 **标题格式**：标题和副标题与 FTB Quests 的任务标题用同一个解析器，支持 `&` 颜色/格式代码（如 `&6金色&l加粗`）、JSON 文本（如 `{"text":"矿石","color":"gold"}`）和 `{some.lang.key}` 翻译。
 
 **动画**：文字框悬停时放大并发光，收起/展开时淡入。装了 CQA 时跟随它的「quest_hover」「quest_hover_glow_alpha」「smooth_animations」设置。

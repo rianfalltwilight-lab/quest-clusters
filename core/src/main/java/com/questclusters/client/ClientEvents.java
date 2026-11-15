@@ -28,6 +28,8 @@ public final class ClientEvents {
         ClusterViewState.onLogout();
         ClientClusters.clear();
         ClientScoring.clear();
+        ClientPersonal.clear();
+        ClientLimits.clear();
         com.questclusters.client.gui.ClusterText.clearCache();
     }
 
@@ -41,7 +43,8 @@ public final class ClientEvents {
         if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
     *///?}
         ClusterClipboard.tick();
-        int rev = ClientClusters.revision() * 31 + ClientScoring.revision();
+        ClientPersonal.tick();
+        int rev = (ClientClusters.revision() * 31 + ClientScoring.revision()) * 31 + ClientPersonal.revision();
         if (rev != seenRevision) {
             seenRevision = rev;
             QuestScreen qs = ClientUtils.getCurrentGuiAs(QuestScreen.class);

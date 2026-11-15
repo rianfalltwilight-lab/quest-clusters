@@ -9,6 +9,7 @@
 	order_index: 0
 	quest_links: [ ]
 	quests: [
+		{ id: "00000000000000DB", x: 9.5d, y: 8.0d, tasks: [{ id: "00000000000000EB", type: "checkmark" }], rewards: [{ id: "00000000000000BC", type: "xp", xp: 5 }] }
 		{ id: "00000000000000DA", x: 8.0d, y: 8.0d, can_repeat: true, tasks: [{ id: "00000000000000EA", type: "checkmark" }], rewards: [{ id: "00000000000000BA", type: "xp", xp: 1 }, { id: "00000000000000BB", type: "xp", xp: 10 }] }
 		{ id: "00000000000000D9", x: 1.0d, y: 4.0d, title: "Milestone", tasks: [{ id: "00000000000000E9", type: "quest_clusters:cluster", cluster: "00000000000000F1" }], rewards: [{ id: "00000000000000B9", type: "xp", xp: 10 }] }
 		{

@@ -38,6 +38,7 @@ public final class ClaimLimits {
 
     // rules
     private final Map<Long, Integer> questMax = new LinkedHashMap<>();
+    private final java.util.Set<Long> personal = new java.util.LinkedHashSet<>();
     private final Map<Long, RewardLimit> rewards = new LinkedHashMap<>();
     // counts
     private final Map<UUID, Map<Long, Integer>> teamClaims = new HashMap<>();
@@ -73,7 +74,21 @@ public final class ClaimLimits {
     }
 
     public boolean hasRules() {
-        return !questMax.isEmpty() || !rewards.isEmpty();
+        return !questMax.isEmpty() || !rewards.isEmpty() || !personal.isEmpty();
+    }
+
+    /** Personal quest: in a team, every member has their own progress, completion and rewards for it. */
+    public boolean isPersonal(long quest) {
+        return personal.contains(quest);
+    }
+
+    public void setPersonal(long quest, boolean on) {
+        if (on) personal.add(quest);
+        else personal.remove(quest);
+    }
+
+    public java.util.Set<Long> personalQuests() {
+        return personal;
     }
 
     /**
@@ -150,6 +165,7 @@ public final class ClaimLimits {
     public void clearRules() {
         questMax.clear();
         rewards.clear();
+        personal.clear();
     }
 
     public void clearCounts() {
@@ -172,6 +188,9 @@ public final class ClaimLimits {
             r.put(QuestCluster.idToString(id), t);
         });
         root.put("rewards", r);
+        net.minecraft.nbt.ListTag p = new net.minecraft.nbt.ListTag();
+        personal.forEach(id -> p.add(net.minecraft.nbt.StringTag.valueOf(QuestCluster.idToString(id))));
+        root.put("personal", p);
         return root;
     }
 
@@ -183,6 +202,11 @@ public final class ClaimLimits {
         for (String k : r.getAllKeys()) {
             CompoundTag t = r.getCompound(k);
             setReward(QuestCluster.idFromString(k), new RewardLimit(t.getInt("team"), t.getInt("player")));
+        }
+        net.minecraft.nbt.ListTag p = root.getList("personal", Tag.TAG_STRING);
+        for (int i = 0; i < p.size(); i++) {
+            long id = QuestCluster.idFromString(p.getString(i));
+            if (id != 0L) personal.add(id);
         }
     }
 

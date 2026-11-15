@@ -26,6 +26,9 @@ public final class LimitsEditor {
         if (object instanceof Quest q) {
             menu.add(new ContextMenuItem(Component.translatable("quest_clusters.limits.menu.quest"), Icons.TIME,
                     b -> openQuest(screen, q)));
+            boolean personal = ClientLimits.limits().isPersonal(q.id);
+            menu.add(new ContextMenuItem(Component.translatable(personal ? "quest_clusters.personal.menu.off" : "quest_clusters.personal.menu.on"),
+                    Icons.PLAYER, b -> Net.sendToServer(new ClusterPayloads.SetPersonal(q.id, !personal))));
         } else if (object instanceof Reward r) {
             menu.add(new ContextMenuItem(Component.translatable("quest_clusters.limits.menu.reward"), Icons.MONEY_BAG,
                     b -> openReward(screen, r)));

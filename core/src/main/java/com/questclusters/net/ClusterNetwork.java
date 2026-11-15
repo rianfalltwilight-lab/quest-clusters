@@ -34,7 +34,11 @@ public final class ClusterNetwork {
         r.toClient(ClusterPayloads.Leaderboard.TYPE, ClusterPayloads.Leaderboard.CODEC,
                 p -> com.questclusters.client.ClientScoring.showLeaderboard(p.rows()));
         r.toClient(ClusterPayloads.LimitsSync.TYPE, ClusterPayloads.LimitsSync.CODEC,
-                p -> com.questclusters.client.ClientLimits.set(p.quests(), p.rewards(), p.teamCounts(), p.playerCounts()));
+                p -> com.questclusters.client.ClientLimits.set(p.quests(), p.rewards(), p.teamCounts(), p.playerCounts(), p.personal()));
+        r.toClient(ClusterPayloads.PersonalSync.TYPE, ClusterPayloads.PersonalSync.CODEC,
+                p -> com.questclusters.client.ClientPersonal.set(p.state()));
+        r.toServer(ClusterPayloads.SetPersonal.TYPE, ClusterPayloads.SetPersonal.CODEC,
+                (p, player) -> com.questclusters.server.ServerLimits.handleSetPersonal(player, p.questId(), p.personal()));
         r.toServer(ClusterPayloads.SetQuestLimit.TYPE, ClusterPayloads.SetQuestLimit.CODEC,
                 (p, player) -> com.questclusters.server.ServerLimits.handleSetQuest(player, p.questId(), p.max()));
         r.toServer(ClusterPayloads.SetRewardLimit.TYPE, ClusterPayloads.SetRewardLimit.CODEC,

@@ -85,6 +85,8 @@ public final class DevSelfTest {
     private static int[] dragFrom;
     private static int waitedForSettlement;
     private static int limitBase, limitXp;
+    private static boolean[] personalResult = new boolean[0];
+    private static boolean personalSaved;
     private static int[] limitResult = new int[0];
 
     private DevSelfTest() {
@@ -526,6 +528,71 @@ public final class DevSelfTest {
             Net.sendToServer(new ClusterPayloads.SetRewardLimit(0xBBL, com.questclusters.data.ClaimLimits.RewardLimit.NONE));
             Net.sendToServer(new ClusterPayloads.SetQuestLimit(0xDAL, 0));
             return 5;
+        });
+        // ---------------------------------------------------------------- personal quests
+        // quest DB is personal: the real player completes it; a second (made-up) member of the team has not
+        STEPS.add(() -> {
+            Net.sendToServer(new ClusterPayloads.SetPersonal(0xDBL, true));
+            return 10;
+        });
+        STEPS.add(() -> {
+            // the world is reused between runs and keeps personal states: start over with the admin command
+            var server = Minecraft.getInstance().getSingleplayerServer();
+            String name = Minecraft.getInstance().player.getGameProfile().getName();
+            server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(),
+                    "questclusters personal reset " + name));
+            return 10;
+        });
+        STEPS.add(() -> {
+            var server = Minecraft.getInstance().getSingleplayerServer();
+            server.execute(() -> {
+                var sp = server.getPlayerList().getPlayers().get(0);
+                var file = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE;
+                var td = file.getOrCreateTeamData(sp); // the player's state is in
+                var quest = file.getQuest(0xDBL);
+                var task = quest.getTasks().iterator().next();
+                td.setProgress(task, 0L);
+                boolean before = td.isCompleted(quest);
+                td.setProgress(task, 1L);
+                boolean mine = td.isCompleted(quest);
+                java.util.UUID other = new java.util.UUID(123L, 456L);
+                com.questclusters.server.PersonalProgress.enterAs(td, other);
+                boolean theirs = td.isCompleted(quest), teamQuestShared = td.isCompleted(file.getQuest(D1));
+                long theirProgress = td.getProgress(task);
+                file.getOrCreateTeamData(sp); // back to the real player
+                boolean mineAgain = td.isCompleted(quest);
+                personalResult = new boolean[]{!before, mine, !theirs, theirProgress == 0, teamQuestShared, mineAgain};
+                // the client gets the made-up member's state from a full FTB Quests sync, and must keep its own
+                com.questclusters.server.PersonalProgress.enterAs(td, other);
+                com.questclusters.platform.Ftbq.syncTeamData(sp, td);
+                file.getOrCreateTeamData(sp);
+            });
+            return 20;
+        });
+        STEPS.add(() -> {
+            boolean[] r = personalResult;
+            check(r.length == 6 && r[0] && r[1], "personal quest completes for the player " + java.util.Arrays.toString(r));
+            check(r.length == 6 && r[2] && r[3], "another member of the team has their own (empty) progress");
+            check(r.length == 6 && r[4], "team quests stay shared while another member's state is in");
+            check(r.length == 6 && r[5], "the player's own state comes back");
+            var cq = ClientQuestFile.INSTANCE.getQuest(0xDBL);
+            check(ClientQuestFile.INSTANCE.selfTeamData.isCompleted(cq), "client keeps its own personal state after a full team sync");
+            List<net.minecraft.network.chat.Component> tips = new ArrayList<>();
+            com.questclusters.client.ClientLimits.questTooltip(cq, tips);
+            check(tips.stream().anyMatch(t -> t.getString().contains("Personal")), "personal quest tooltip " + tips);
+            var server = Minecraft.getInstance().getSingleplayerServer();
+            server.execute(() -> {
+                var file = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE;
+                var td = file.getOrCreateTeamData(server.getPlayerList().getPlayers().get(0));
+                td.serializeNBT(); // FTB Quests saves: the team's own state goes back in first, without anyone's personal one
+                personalSaved = td.isCompleted(file.getQuest(0xDBL));
+            });
+            return 5;
+        });
+        STEPS.add(() -> {
+            check(!personalSaved, "FTB Quests' team file does not get the personal quest's completion");
+            Net.sendToServer(new ClusterPayloads.SetPersonal(0xDBL, false));
+            return 10;
         });
         // ---------------------------------------------------------------- phase B: scoring, settlement page, leaderboard
         STEPS.add(() -> {

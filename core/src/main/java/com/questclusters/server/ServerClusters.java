@@ -69,6 +69,7 @@ public final class ServerClusters {
 
         ServerScoring.load(file);
         ServerLimits.load(file);
+        PersonalProgress.load(file);
         com.questclusters.api.QuestBookHooks.fireLoaded(file);
 
         // /ftbquests reload: players are already online and need the fresh data
@@ -88,16 +89,19 @@ public final class ServerClusters {
         }
         ServerScoring.save(file);
         ServerLimits.save(file);
+        PersonalProgress.save(file);
         com.questclusters.api.QuestBookHooks.fireSaving(file);
     }
 
     public static void onQuestFileDirty() {
         pruneRequested = true;
+        personalRecheck = true; // tasks or rewards may have been added to a personal quest
     }
 
     public static void onUnload() {
         ServerScoring.unload();
         ServerLimits.unload();
+        PersonalProgress.unload();
         com.questclusters.api.QuestBookHooks.fireUnloaded();
         STORE.clear();
         REVIVAL.clear();
@@ -109,11 +113,19 @@ public final class ServerClusters {
 
     /** Server tick: apply pending prunes so clients learn about removed members promptly. */
     private static int tickCounter;
+    private static boolean personalRecheck;
 
     public static void tick() {
         MinecraftServer srv = ServerLifecycleHooks.getCurrentServer();
         if (srv != null) {
             ServerScoring.tick(srv);
+            PersonalProgress.tick();
+            if (personalRecheck) {
+                personalRecheck = false;
+                if (!ServerLimits.limits().personalQuests().isEmpty()) {
+                    Ftbq.server().filter(f -> !f.isLoading()).ifPresent(PersonalProgress::rulesChanged);
+                }
+            }
             Ftbq.server().filter(f -> !f.isLoading()).ifPresent(com.questclusters.api.QuestBookHooks::fireTick);
         }
         if (++tickCounter % 20 == 0) {

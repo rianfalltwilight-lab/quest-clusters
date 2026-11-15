@@ -201,13 +201,15 @@ public final class ClusterPayloads {
 
     /** Limit rules for everyone, plus the receiving player's own team and player claim counts. */
     public record LimitsSync(java.util.Map<Long, Integer> quests, java.util.Map<Long, com.questclusters.data.ClaimLimits.RewardLimit> rewards,
-                             java.util.Map<Long, Integer> teamCounts, java.util.Map<Long, Integer> playerCounts) implements CustomPacketPayload {
+                             java.util.Map<Long, Integer> teamCounts, java.util.Map<Long, Integer> playerCounts,
+                             List<Long> personal) implements CustomPacketPayload {
         public static final Type<LimitsSync> TYPE = newType("limits_sync");
         public static final StreamCodec<ByteBuf, LimitsSync> CODEC = StreamCodec.composite(
                 com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::quests,
                 com.questclusters.data.LimitsCodecs.REWARDS, LimitsSync::rewards,
                 com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::teamCounts,
                 com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::playerCounts,
+                ByteBufCodecs.VAR_LONG.apply(ByteBufCodecs.list(100_000)), LimitsSync::personal,
                 LimitsSync::new);
 
         @Override
@@ -225,6 +227,30 @@ public final class ClusterPayloads {
 
         @Override
         public Type<SetQuestLimit> type() {
+            return TYPE;
+        }
+    }
+
+    /** A personal quest's progress of the receiving player. */
+    public record PersonalSync(net.minecraft.nbt.CompoundTag state) implements CustomPacketPayload {
+        public static final Type<PersonalSync> TYPE = newType("personal_sync");
+        public static final StreamCodec<ByteBuf, PersonalSync> CODEC = ByteBufCodecs.COMPOUND_TAG.map(PersonalSync::new, PersonalSync::state);
+
+        @Override
+        public Type<PersonalSync> type() {
+            return TYPE;
+        }
+    }
+
+    public record SetPersonal(long questId, boolean personal) implements CustomPacketPayload {
+        public static final Type<SetPersonal> TYPE = newType("set_personal");
+        public static final StreamCodec<ByteBuf, SetPersonal> CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_LONG, SetPersonal::questId,
+                ByteBufCodecs.BOOL, SetPersonal::personal,
+                SetPersonal::new);
+
+        @Override
+        public Type<SetPersonal> type() {
             return TYPE;
         }
     }

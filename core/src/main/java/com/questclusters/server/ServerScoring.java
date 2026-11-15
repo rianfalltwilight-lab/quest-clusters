@@ -234,9 +234,14 @@ public final class ServerScoring {
     // ---------------------------------------------------------------- scores and leaderboard
 
     public static ScoreCalc.Progress progress(BaseQuestFile file, TeamData td) {
+        return progress(file, td, false);
+    }
+
+    /** @param teamOnly leave out personal quests (each member has their own; the leaderboard ranks teams) */
+    public static ScoreCalc.Progress progress(BaseQuestFile file, TeamData td, boolean teamOnly) {
         return new ScoreCalc.Progress() {
             public boolean questExists(long id) {
-                return file.getBase(id) instanceof Quest;
+                return file.getBase(id) instanceof Quest && !(teamOnly && PersonalProgress.isPersonalObject(id));
             }
 
             public boolean isCompleted(long id) {
@@ -267,11 +272,12 @@ public final class ServerScoring {
                 }
                 name = team.getName().getString();
             }
+            PersonalProgress.unload(td); // the team's own state, not one member's personal one
             int[] quests = {0};
             file.forAllQuests(q -> {
-                if (td.isCompleted(q)) quests[0]++;
+                if (td.isCompleted(q) && !PersonalProgress.isPersonalObject(q.id)) quests[0]++;
             });
-            int score = ScoreCalc.compute(ENTRIES, progress(file, td)).total();
+            int score = ScoreCalc.compute(ENTRIES, progress(file, td, true)).total();
             if (quests[0] == 0 && score == 0 && !td.getTeamId().equals(viewerTeam)) continue;
             rows.add(new ScoreCalc.Row(name, quests[0], score, td.getTeamId().equals(viewerTeam)));
         }

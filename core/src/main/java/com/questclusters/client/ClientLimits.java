@@ -21,8 +21,11 @@ public final class ClientLimits {
     }
 
     public static void set(Map<Long, Integer> quests, Map<Long, ClaimLimits.RewardLimit> rewards,
-                           Map<Long, Integer> teamCounts, Map<Long, Integer> playerCounts) {
+                           Map<Long, Integer> teamCounts, Map<Long, Integer> playerCounts, List<Long> personal) {
+        boolean personalChanged = !new java.util.HashSet<>(personal).equals(LIMITS.personalQuests());
         LIMITS.clearRules();
+        personal.forEach(id -> LIMITS.setPersonal(id, true));
+        if (personalChanged) ClientPersonal.rulesChanged();
         quests.forEach(LIMITS::setQuestMax);
         rewards.forEach(LIMITS::setReward);
         var td = dev.ftb.mods.ftbquests.client.ClientQuestFile.INSTANCE != null ? dev.ftb.mods.ftbquests.client.ClientQuestFile.INSTANCE.selfTeamData : null;
@@ -54,6 +57,7 @@ public final class ClientLimits {
 
     /** Tooltip line for a quest with a completion limit: rounds done out of the maximum. */
     public static void questTooltip(dev.ftb.mods.ftbquests.quest.Quest quest, List<Component> out) {
+        if (LIMITS.isPersonal(quest.id)) out.add(Component.translatable("quest_clusters.personal.tooltip").withStyle(ChatFormatting.AQUA));
         int max = LIMITS.questMax(quest.id);
         var td = dev.ftb.mods.ftbquests.client.ClientQuestFile.INSTANCE != null ? dev.ftb.mods.ftbquests.client.ClientQuestFile.INSTANCE.selfTeamData : null;
         if (max == 0 || td == null || !quest.canBeRepeated()) return;

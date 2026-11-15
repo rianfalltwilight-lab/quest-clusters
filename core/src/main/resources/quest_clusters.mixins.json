@@ -8,7 +8,11 @@
     "ServerQuestFileMixin",
     "TeamDataLimitsMixin",
     "QuestRepeatLimitMixin",
-    "ChoiceRewardLimitsMixin"
+    "ChoiceRewardLimitsMixin",
+    "TeamDataAccessor",
+    "TeamDataPersonalMixin",
+    "QuestFileLookupMixin",
+    "InventoryDetectMixin"
   ],
   "client": [
     "client.ChapterImageMenuMixin",

@@ -150,4 +150,9 @@ public final class Ftbq {
         Object o = file.getBase(id);
         return o != null ? o : image(file, id);
     }
+
+    /** Sends a player FTB Quests' full data of their team again. */
+    public static void syncTeamData(ServerPlayer player, dev.ftb.mods.ftbquests.quest.TeamData td) {
+        dev.architectury.networking.NetworkManager.sendToPlayer(player, new dev.ftb.mods.ftbquests.net.SyncTeamDataMessage(td));
+    }
 }

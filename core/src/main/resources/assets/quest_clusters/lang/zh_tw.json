@@ -171,5 +171,9 @@
   "quest_clusters.limits.show.header": "%s 的獎勵領取次數（全隊，個人）：",
   "quest_clusters.limits.show.line": "  %s",
   "quest_clusters.limits.show.none": "沒有獎勵設定了領取上限",
-  "quest_clusters.limits.reset": "已清除 %s 條領取紀錄（%s 名玩家）"
+  "quest_clusters.limits.reset": "已清除 %s 條領取紀錄（%s 名玩家）",
+  "quest_clusters.personal.menu.on": "設為個人任務",
+  "quest_clusters.personal.menu.off": "改回團隊任務",
+  "quest_clusters.personal.tooltip": "個人任務：隊伍裡每人各自記進度",
+  "quest_clusters.personal.reset": "已讓 %s 名玩家的個人任務從頭開始"
 }

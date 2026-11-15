@@ -171,5 +171,9 @@
   "quest_clusters.limits.show.header": "%s 的奖励领取次数（全队，个人）：",
   "quest_clusters.limits.show.line": "  %s",
   "quest_clusters.limits.show.none": "没有奖励设置了领取上限",
-  "quest_clusters.limits.reset": "已清除 %s 条领取记录（%s 名玩家）"
+  "quest_clusters.limits.reset": "已清除 %s 条领取记录（%s 名玩家）",
+  "quest_clusters.personal.menu.on": "设为个人任务",
+  "quest_clusters.personal.menu.off": "改回团队任务",
+  "quest_clusters.personal.tooltip": "个人任务：队伍里每人各自记进度",
+  "quest_clusters.personal.reset": "已让 %s 名玩家的个人任务从头开始"
 }

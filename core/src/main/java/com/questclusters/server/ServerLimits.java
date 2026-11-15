@@ -53,6 +53,7 @@ public final class ServerLimits {
         // drop rules of quests and rewards that are gone
         rulesDirty |= LIMITS.questRules().keySet().removeIf(id -> !(file.getBase(id) instanceof Quest));
         rulesDirty |= LIMITS.rewardRules().keySet().removeIf(id -> !(file.getBase(id) instanceof Reward));
+        rulesDirty |= LIMITS.personalQuests().removeIf(id -> !(file.getBase(id) instanceof Quest));
         // counts: only on the first load of this server (a /ftbquests reload must not lose unsaved counts)
         Path c = countsPath();
         if (!countsLoaded) {
@@ -156,6 +157,16 @@ public final class ServerLimits {
         });
     }
 
+    public static void handleSetPersonal(ServerPlayer player, long questId, boolean on) {
+        edit(player, file -> {
+            if (!(file.getBase(questId) instanceof Quest) || LIMITS.isPersonal(questId) == on) return;
+            // teams get their own state back under the old rules before the set changes
+            PersonalProgress.unloadAll(file);
+            LIMITS.setPersonal(questId, on);
+            PersonalProgress.rulesChanged(file);
+        });
+    }
+
     private static void edit(ServerPlayer player, java.util.function.Consumer<ServerQuestFile> action) {
         Ftbq.server().ifPresent(file -> {
             if (!Ftbq.canEdit(player)) {
@@ -187,6 +198,6 @@ public final class ServerLimits {
         Net.sendToPlayer(player, new ClusterPayloads.LimitsSync(new java.util.LinkedHashMap<>(LIMITS.questRules()),
                 new java.util.LinkedHashMap<>(LIMITS.rewardRules()),
                 team == null ? java.util.Map.of() : new java.util.HashMap<>(LIMITS.teamCounts(team)),
-                new java.util.HashMap<>(LIMITS.playerCounts(player.getUUID()))));
+                new java.util.HashMap<>(LIMITS.playerCounts(player.getUUID())), java.util.List.copyOf(LIMITS.personalQuests())));
     }
 }
