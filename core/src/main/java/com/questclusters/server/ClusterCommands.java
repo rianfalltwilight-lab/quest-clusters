@@ -20,6 +20,8 @@ import java.util.List;
  * /questclusters settlement            open your settlement page
  * /questclusters settlement &lt;players&gt;  open it for others (op)
  * /questclusters leaderboard           top 10 in chat
+ * /questclusters limits show &lt;player&gt;            claim counts of a player and their team (op)
+ * /questclusters limits reset &lt;players&gt; [reward] forget them, so limited rewards can be claimed again (op)
  */
 public final class ClusterCommands {
     private ClusterCommands() {
@@ -34,10 +36,53 @@ public final class ClusterCommands {
                                 .executes(ctx -> open(EntityArgument.getPlayers(ctx, "players")))))
                 .then(Commands.literal("leaderboard")
                         .executes(ctx -> leaderboard(ctx.getSource())))
+                .then(Commands.literal("limits")
+                        .requires(s -> s.hasPermission(2))
+                        .then(Commands.literal("show").then(Commands.argument("player", EntityArgument.player())
+                                .executes(ctx -> limitsShow(ctx.getSource(), EntityArgument.getPlayer(ctx, "player")))))
+                        .then(Commands.literal("reset").then(Commands.argument("players", EntityArgument.players())
+                                .executes(ctx -> limitsReset(ctx.getSource(), EntityArgument.getPlayers(ctx, "players"), 0L))
+                                .then(Commands.argument("reward", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                        .executes(ctx -> limitsReset(ctx.getSource(), EntityArgument.getPlayers(ctx, "players"),
+                                                com.questclusters.data.QuestCluster.idFromString(
+                                                        com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "reward"))))))))
                 .then(Commands.literal("migrate")
                         .requires(s -> s.hasPermission(2))
                         .then(Commands.literal("status").executes(ctx -> migrateStatus(ctx.getSource())))
                         .then(Commands.literal("backup").executes(ctx -> migrateBackup(ctx.getSource())))));
+    }
+
+    private static int limitsShow(CommandSourceStack src, ServerPlayer player) {
+        var file = Ftbq.server().orElse(null);
+        if (file == null) return 0;
+        var limits = ServerLimits.limits();
+        java.util.UUID team = file.getOrCreateTeamData(player).getTeamId();
+        src.sendSuccess(() -> Component.translatable("quest_clusters.limits.show.header", player.getDisplayName()).withStyle(ChatFormatting.GOLD), false);
+        int n = 0;
+        for (var e : limits.rewardRules().entrySet()) {
+            long id = e.getKey();
+            var l = e.getValue();
+            Component name = file.getBase(id) instanceof dev.ftb.mods.ftbquests.quest.reward.Reward r
+                    ? Component.empty().append(r.getQuest().getTitle()).append(" / ").append(r.getTitle()) : Component.literal("?");
+            String counts = (l.team() > 0 ? limits.teamClaims(team, id) + "/" + l.team() : "-") + "  "
+                    + (l.player() > 0 ? limits.playerClaims(player.getUUID(), id) + "/" + l.player() : "-");
+            src.sendSuccess(() -> Component.literal(com.questclusters.data.QuestCluster.idToString(id) + "  ").withStyle(ChatFormatting.DARK_GRAY)
+                    .append(name.copy().withStyle(ChatFormatting.WHITE))
+                    .append(Component.translatable("quest_clusters.limits.show.line", counts).withStyle(ChatFormatting.GRAY)), false);
+            n++;
+        }
+        if (n == 0) src.sendSuccess(() -> Component.translatable("quest_clusters.limits.show.none").withStyle(ChatFormatting.GRAY), false);
+        return n;
+    }
+
+    private static int limitsReset(CommandSourceStack src, Collection<ServerPlayer> players, long reward) {
+        var file = Ftbq.server().orElse(null);
+        if (file == null) return 0;
+        int n = 0;
+        for (ServerPlayer p : players) n += ServerLimits.reset(file.getOrCreateTeamData(p).getTeamId(), p.getUUID(), reward);
+        int total = n;
+        src.sendSuccess(() -> Component.translatable("quest_clusters.limits.reset", total, players.size()), true);
+        return n;
     }
 
     private static int migrateStatus(CommandSourceStack src) {

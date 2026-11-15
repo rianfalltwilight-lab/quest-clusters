@@ -48,6 +48,7 @@ public abstract class QuestScreenMixin {
         if (deletionFocus != null) {
             ClusterEditor.addObjectMenuItems(menu, (QuestScreen) (Object) this, deletionFocus);
         }
+        com.questclusters.client.gui.LimitsEditor.addMenuItems(menu, (QuestScreen) (Object) this, object);
     }
 
     /** Box selection must not pick up objects hidden inside collapsed clusters. */

@@ -37,6 +37,16 @@ public abstract class QuestButtonMixin {
     @Final
     protected QuestScreen questScreen;
 
+    /** Repeatable quests with a completion limit: rounds done out of the maximum. */
+    @Inject(method = "addMouseOverText", at = @At("TAIL"))
+    private void quest_clusters$completionLimit(dev.ftb.mods.ftblibrary.util.TooltipList list, CallbackInfo ci) {
+        Quest q = ((QuestButtonAccessor) this).quest_clusters$getQuest();
+        if (q == null) return;
+        List<net.minecraft.network.chat.Component> lines = new java.util.ArrayList<>();
+        com.questclusters.client.ClientLimits.questTooltip(q, lines);
+        lines.forEach(list::add);
+    }
+
     /** Context menu with several objects selected. */
     //? if neoforge {
     @Inject(method = "addMultiSelectionContextMenuItems", at = @At("TAIL"))

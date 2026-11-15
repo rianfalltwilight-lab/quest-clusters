@@ -147,40 +147,58 @@ final class ClusterRender {
         }
         int[] size = com.questclusters.client.Textures.size(rl);
         com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-        com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 1F, 1F, alpha);
         try {
-            if (size == null || mode == com.questclusters.data.ClusterStyle.MODE_STRETCH) {
-                int tw = size == null ? 16 : size[0], th = size == null ? 16 : size[1], fh = size == null ? 16 : size[2];
-                g.blit(rl, x, y, w, h, 0, 0, tw, fh, tw, th);
+            if (size == null) {
+                com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 1F, 1F, alpha);
+                g.blit(rl, x, y, w, h, 0, 0, 16, 16, 16, 16);
                 return;
             }
-            int tw = size[0], th = size[1], fh = size[2];
-            if (mode == com.questclusters.data.ClusterStyle.MODE_TILE) {
-                int sw = Math.max(1, Math.round(tw * scale)), sh = Math.max(1, Math.round(fh * scale));
-                for (int ty = 0; ty < h; ty += sh) {
-                    for (int tx = 0; tx < w; tx += sw) {
-                        int dw = Math.min(sw, w - tx), dh = Math.min(sh, h - ty);
-                        g.blit(rl, x + tx, y + ty, dw, dh, 0, 0, Math.max(1, Math.round(dw / scale)), Math.max(1, Math.round(dh / scale)), tw, th);
-                    }
-                }
-                return;
-            }
-            // nine-slice
-            int b = Math.min(border, Math.min(tw, fh) / 2);
-            int sb = Math.min(Math.round(b * scale), Math.min(w, h) / 2);
-            int[] dx = {x, x + sb, x + w - sb}, dw = {sb, w - 2 * sb, sb};
-            int[] dy = {y, y + sb, y + h - sb}, dh = {sb, h - 2 * sb, sb};
-            int[] u = {0, b, tw - b}, uw = {b, tw - 2 * b, b};
-            int[] v = {0, b, fh - b}, vh = {b, fh - 2 * b, b};
-            for (int r = 0; r < 3; r++) {
-                for (int c = 0; c < 3; c++) {
-                    if (dw[c] > 0 && dh[r] > 0 && uw[c] > 0 && vh[r] > 0) {
-                        g.blit(rl, dx[c], dy[r], dw[c], dh[r], u[c], v[r], uw[c], vh[r], tw, th);
-                    }
-                }
+            // the current frame of an animated texture (any layout), and the next one blended in for "interpolate"
+            var frame = com.questclusters.client.Textures.frame(rl, System.currentTimeMillis());
+            fillFrame(g, rl, mode, border, x, y, w, h, scale, alpha, frame, size);
+            if (frame != null && frame.next() != null && frame.blend() > 0F) {
+                fillFrame(g, rl, mode, border, x, y, w, h, scale, alpha * frame.blend(), frame.next(), size);
             }
         } finally {
             com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        }
+    }
+
+    /** One texture frame (null: the whole texture) filling (x, y, w, h) stretched, tiled or nine-sliced. */
+    private static void fillFrame(GuiGraphics g, net.minecraft.resources.ResourceLocation rl, int mode, int border, int x, int y,
+                                  int w, int h, float scale, float alpha, com.questclusters.client.Textures.Frame frame, int[] size) {
+        com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1F, 1F, 1F, alpha);
+        int tw = size[0], th = size[1];
+        int fu = frame == null ? 0 : Math.round(frame.u0() * tw), fv = frame == null ? 0 : Math.round(frame.v0() * th);
+        int fw = frame == null ? tw : Math.round((frame.u1() - frame.u0()) * tw);
+        int fh = frame == null ? th : Math.round((frame.v1() - frame.v0()) * th);
+        if (mode == com.questclusters.data.ClusterStyle.MODE_STRETCH) {
+            g.blit(rl, x, y, w, h, fu, fv, fw, fh, tw, th);
+            return;
+        }
+        if (mode == com.questclusters.data.ClusterStyle.MODE_TILE) {
+            int sw = Math.max(1, Math.round(fw * scale)), sh = Math.max(1, Math.round(fh * scale));
+            for (int ty = 0; ty < h; ty += sh) {
+                for (int tx = 0; tx < w; tx += sw) {
+                    int dw = Math.min(sw, w - tx), dh = Math.min(sh, h - ty);
+                    g.blit(rl, x + tx, y + ty, dw, dh, fu, fv, Math.max(1, Math.round(dw / scale)), Math.max(1, Math.round(dh / scale)), tw, th);
+                }
+            }
+            return;
+        }
+        // nine-slice
+        int b = Math.min(border, Math.min(fw, fh) / 2);
+        int sb = Math.min(Math.round(b * scale), Math.min(w, h) / 2);
+        int[] dx = {x, x + sb, x + w - sb}, dw = {sb, w - 2 * sb, sb};
+        int[] dy = {y, y + sb, y + h - sb}, dh = {sb, h - 2 * sb, sb};
+        int[] u = {fu, fu + b, fu + fw - b}, uw = {b, fw - 2 * b, b};
+        int[] v = {fv, fv + b, fv + fh - b}, vh = {b, fh - 2 * b, b};
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                if (dw[c] > 0 && dh[r] > 0 && uw[c] > 0 && vh[r] > 0) {
+                    g.blit(rl, dx[c], dy[r], dw[c], dh[r], u[c], v[r], uw[c], vh[r], tw, th);
+                }
+            }
         }
     }
 }

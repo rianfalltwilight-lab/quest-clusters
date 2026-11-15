@@ -38,4 +38,39 @@ class TexturesAnimationTest {
         assertNull(Textures.parseAnimation(json("{}"), 16, 16), "one frame");
         assertNull(Textures.parseAnimation(json("{\"width\": 32}"), 16, 64), "frame wider than the image");
     }
+
+    @Test
+    void horizontalStripAndGrid() {
+        var strip = Textures.parseAnimation(json("{\"frametime\": 2}"), 64, 16);
+        assertNotNull(strip, "a horizontal strip is animated too");
+        assertEquals(4, strip.columns());
+        assertEquals(16, strip.frameWidth());
+        var grid = Textures.parseAnimation(json("{}"), 32, 32 * 2 / 2);
+        assertNull(grid, "a square image is a single frame");
+        var grid2 = Textures.parseAnimation(json("{\"width\": 16, \"height\": 16}"), 32, 32);
+        assertNotNull(grid2);
+        assertEquals(2, grid2.columns());
+        assertEquals(4, grid2.frames().length, "2 x 2 grid, row by row");
+    }
+
+    @Test
+    void oneSideGivenTakesTheOtherFromTheImage() {
+        var tall = Textures.parseAnimation(json("{\"height\": 8}"), 32, 32);
+        assertNotNull(tall);
+        assertEquals(32, tall.frameWidth(), "width defaults to the image width, as in vanilla");
+        assertEquals(4, tall.frames().length);
+        var wide = Textures.parseAnimation(json("{\"width\": 8}"), 32, 32);
+        assertNotNull(wide);
+        assertEquals(32, wide.frameHeight(), "height defaults to the image height, as in vanilla");
+        assertEquals(4, wide.frames().length);
+    }
+
+    @Test
+    void interpolateBlendsTowardsTheNextFrame() {
+        var a = Textures.parseAnimation(json("{\"frametime\": 4, \"interpolate\": true}"), 16, 32);
+        assertNotNull(a);
+        assertTrue(a.interpolate());
+        assertEquals(0, a.entryAt(100));
+        assertEquals(0.5F, a.progress(100), 1e-4, "2 of 4 ticks into frame 0");
+    }
 }

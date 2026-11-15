@@ -73,11 +73,13 @@ public final class ScoringEditor {
         String[] title = {s.title()};
         List<String> intro = new ArrayList<>(s.intro()), outro = new ArrayList<>(s.outro()), ranks = new ArrayList<>(s.rankLines());
         boolean[] flags = {s.showMax(), s.leaderboard()};
+        String[] look = {s.theme(), s.background()};
+        int[] mode = {s.backgroundMode()};
         ConfigGroup g = new ConfigGroup("quest_clusters.settlement", accepted -> {
             screen.openGui();
             if (accepted) {
                 Net.sendToServer(new ClusterPayloads.SetSettlement(new SettlementSettings(title[0], intro, outro,
-                        SettlementSettings.parseRanks(ranks), flags[0], flags[1])));
+                        SettlementSettings.parseRanks(ranks), flags[0], flags[1], look[0], look[1], mode[0])));
             }
         });
         int o = 0;
@@ -87,6 +89,14 @@ public final class ScoringEditor {
         g.addList("ranks", ranks, new StringConfig(), v -> { ranks.clear(); ranks.addAll(v); }, "0=").setOrder(o++);
         g.addBool("show_max", flags[0], v -> flags[0] = v, true).setOrder(o++);
         g.addBool("leaderboard", flags[1], v -> flags[1] = v, true).setOrder(o++);
+        g.addEnum("theme", look[0], v -> look[0] = v, dev.ftb.mods.ftblibrary.config.NameMap.of(SettlementSettings.THEMES.get(0),
+                SettlementSettings.THEMES).name(t -> Component.translatable("quest_clusters.settlement.theme." + t)).create()).setOrder(o++);
+        var bg = net.minecraft.resources.ResourceLocation.tryParse(look[1]);
+        var none = dev.ftb.mods.ftblibrary.config.ImageResourceConfig.NONE;
+        g.add("background", new dev.ftb.mods.ftblibrary.config.ImageResourceConfig(), look[1].isEmpty() || bg == null ? none : bg,
+                v -> look[1] = v == null || v.equals(none) ? "" : v.toString(), none).setOrder(o++);
+        g.addEnum("background_mode", ClusterEditor.BackgroundMode.values()[mode[0]], v -> mode[0] = v.ordinal(),
+                ClusterEditor.BackgroundMode.NAME_MAP).setOrder(o++);
         new EditConfigScreen(g).openGui();
     }
 }

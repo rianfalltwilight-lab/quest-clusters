@@ -244,5 +244,6 @@
   "quest_clusters_editor.check.missing_quest_background": "任務背景遺失：%s",
   "quest_clusters_editor.check.missing_preset_image": "裝飾線預設 %s 的圖片 %s 遺失",
   "quest_clusters_editor.check.missing_cluster_background": "任務集 %s 的背景 %s 遺失",
-  "quest_clusters_editor.check.missing_preset": "章節使用了已刪除的裝飾線預設：%s"
+  "quest_clusters_editor.check.missing_preset": "章節使用了已刪除的裝飾線預設：%s",
+  "quest_clusters_editor.check.bad_animation": "%s 的影格動畫不正常：%s"
 }

@@ -79,4 +79,29 @@ class ScoringTest {
         assertEquals(settings, ScoringNbt.readSettings(tag));
         assertEquals(SettlementSettings.DEFAULT, ScoringNbt.readSettings(new net.minecraft.nbt.CompoundTag()), "missing section = defaults");
     }
+
+    @Test
+    void rankBadgesAndLookRoundTrip() {
+        var ranks = SettlementSettings.parseRanks(List.of("90=&6S|image=ns:textures/s.png", "50=|image=ns:b.png|size=96", "0=C"));
+        assertEquals(new SettlementSettings.Rank(90, "&6S", "ns:textures/s.png", SettlementSettings.DEFAULT_BADGE), ranks.get(0));
+        assertEquals(96, ranks.get(1).size());
+        assertEquals("", ranks.get(1).name());
+        assertEquals(0, ranks.get(2).size(), "no image = no badge size");
+        var s = new SettlementSettings("T", List.of(), List.of(), ranks, true, true, "neon", "ns:bg.png", ClusterStyle.MODE_TILE);
+        assertEquals(ranks, SettlementSettings.parseRanks(s.rankLines()), "editor lines read back the same");
+        assertEquals(s, ScoringNbt.readSettings(ScoringNbt.write(Map.of(), s, net.minecraft.nbt.CompoundTag::new)));
+        assertEquals("credits", new SettlementSettings("T", null, null, null, true, true, "bogus", null, 9).theme(), "unknown theme falls back");
+        assertEquals(ranks.get(1), s.rankOf(60));
+    }
+
+    @Test
+    void imageLines() {
+        var i = SettlementSettings.ImageLine.parse(" {image:ns:textures/a.png width:64 height:32 align:left} ");
+        assertEquals(new SettlementSettings.ImageLine("ns:textures/a.png", 64, 32, SettlementSettings.ImageLine.LEFT), i);
+        assertEquals(new SettlementSettings.ImageLine("ns:a.png", 0, 0, SettlementSettings.ImageLine.CENTER),
+                SettlementSettings.ImageLine.parse("{image:ns:a.png width:x}"));
+        assertNull(SettlementSettings.ImageLine.parse("text {image:ns:a.png}"), "only whole lines are images");
+        assertNull(SettlementSettings.ImageLine.parse("{lang.key}"));
+        assertNull(SettlementSettings.ImageLine.parse("{image:}"));
+    }
 }

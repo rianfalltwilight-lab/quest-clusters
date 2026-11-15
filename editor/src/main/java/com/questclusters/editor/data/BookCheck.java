@@ -61,6 +61,8 @@ public final class BookCheck {
                 String tex = imageTexture(img);
                 if (tex != null && !textureExists.test(tex)) {
                     out.add(issue(Level.ERROR, "missing_image", com.questclusters.platform.Ftbq.id(img), ch.id, tex));
+                } else {
+                    animation(tex, com.questclusters.platform.Ftbq.id(img), ch.id, out);
                 }
             }
         });
@@ -192,12 +194,16 @@ public final class BookCheck {
             for (LinePreset p : book.linePresets) {
                 if (!p.texture().isEmpty() && !textureExists.test(p.texture())) {
                     out.add(issue(Level.ERROR, "missing_preset_image", 0L, 0L, p.name(), p.texture()));
+                } else {
+                    animation(p.texture(), 0L, 0L, out);
                 }
             }
             for (QuestCluster c : QuestClustersAPI.all()) {
                 String bg = c.style().background();
                 if (!bg.isEmpty() && !textureExists.test(bg)) {
                     out.add(issue(Level.ERROR, "missing_cluster_background", 0L, c.chapterId(), c.title(), bg));
+                } else {
+                    animation(bg, 0L, c.chapterId(), out);
                 }
             }
         }
@@ -213,7 +219,21 @@ public final class BookCheck {
     }
 
     private static void texture(Predicate<String> exists, String tex, long object, long chapter, String kind, List<Issue> out) {
-        if (tex != null && !tex.isEmpty() && !exists.test(tex)) out.add(issue(Level.ERROR, kind, object, chapter, tex));
+        if (tex == null || tex.isEmpty()) return;
+        if (!exists.test(tex)) out.add(issue(Level.ERROR, kind, object, chapter, tex));
+        else animation(tex, object, chapter, out);
+    }
+
+    /**
+     * What is wrong with a texture's frame animation (.mcmeta), or null; set on the client, where the resources are.
+     * Without it (a server) animations are not checked.
+     */
+    public static java.util.function.Function<String, String> animationProblem = tex -> null;
+
+    private static void animation(String tex, long object, long chapter, List<Issue> out) {
+        if (tex == null || tex.isEmpty()) return;
+        String problem = animationProblem.apply(tex);
+        if (problem != null) out.add(issue(Level.WARN, "bad_animation", object, chapter, tex, Component.translatable(problem)));
     }
 
     /** The texture a chapter image draws, if it is a plain texture (items, colours and the like have none). */

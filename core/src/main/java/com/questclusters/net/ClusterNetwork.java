@@ -33,6 +33,12 @@ public final class ClusterNetwork {
                 p -> com.questclusters.client.ClientScoring.openSettlement());
         r.toClient(ClusterPayloads.Leaderboard.TYPE, ClusterPayloads.Leaderboard.CODEC,
                 p -> com.questclusters.client.ClientScoring.showLeaderboard(p.rows()));
+        r.toClient(ClusterPayloads.LimitsSync.TYPE, ClusterPayloads.LimitsSync.CODEC,
+                p -> com.questclusters.client.ClientLimits.set(p.quests(), p.rewards(), p.teamCounts(), p.playerCounts()));
+        r.toServer(ClusterPayloads.SetQuestLimit.TYPE, ClusterPayloads.SetQuestLimit.CODEC,
+                (p, player) -> com.questclusters.server.ServerLimits.handleSetQuest(player, p.questId(), p.max()));
+        r.toServer(ClusterPayloads.SetRewardLimit.TYPE, ClusterPayloads.SetRewardLimit.CODEC,
+                (p, player) -> com.questclusters.server.ServerLimits.handleSetReward(player, p.rewardId(), p.limit()));
         r.toServer(ClusterPayloads.SetScore.TYPE, ClusterPayloads.SetScore.CODEC,
                 (p, player) -> com.questclusters.server.ServerScoring.handleSetEntry(player, p.questId(), p.entry()));
         r.toServer(ClusterPayloads.SetSettlement.TYPE, ClusterPayloads.SetSettlement.CODEC,

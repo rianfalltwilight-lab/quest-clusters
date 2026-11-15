@@ -195,40 +195,77 @@ public final class DecorativeLinesWidget extends Widget {
         ResourceLocation tex = presetTex != null ? presetTex : texture();
         int start = presetTex != null ? preset.color() : START, end = presetTex != null ? preset.color() : END;
         long now = System.currentTimeMillis();
-        float v0 = 0F, v1 = 1F;
+        com.questclusters.client.Textures.Frame frame = null;
+        int[] size = null;
         if (tex.getPath().endsWith(".gif")) {
             // GIF: its current frame is uploaded into one texture
             tex = com.questclusters.editor.client.GifTextures.currentFrame(tex);
             if (tex == null) return;
         } else {
-            int[] size = com.questclusters.client.Textures.size(tex);
-            var anim = com.questclusters.client.Textures.animation(tex);
-            if (size != null && anim != null && anim.columns() == 1) {
-                // .mcmeta frame strip: show the frame due now (frames stacked vertically)
-                int f = anim.frameAt(now);
-                v0 = (float) f * anim.frameHeight() / size[1];
-                v1 = (float) (f + 1) * anim.frameHeight() / size[1];
-            } else if (size != null) {
-                v1 = (float) size[2] / size[1]; // other animated layouts: first frame
-            }
+            size = com.questclusters.client.Textures.size(tex);
+            frame = size == null ? null : com.questclusters.client.Textures.frame(tex, now);
         }
-        // U repeats along the line like Quest Enhance's; a preset may make it flow (repeats per second)
+        // a preset may make the pattern flow (repeats per second)
         float flow = preset == null || preset.scroll() == 0F ? 0F
                 : (float) (((now % 1_000_000L) / 1000D * preset.scroll()) % 1D);
-        float u0 = -flow, u1 = u0 + (float) (len / half / 2D);
         lastTexture = tex;
-        lastV0 = v0;
+        lastV0 = frame == null ? 0F : frame.v0();
         lastFlow = flow;
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         RenderSystem.setShaderTexture(0, tex);
         Matrix4f m = g.pose().last().pose();
-        com.questclusters.platform.Quads.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR)
-                .vertex(m, (float) x1 + nx, (float) y1 + ny, 0).uv(u0, v0).color(start).next()
-                .vertex(m, (float) x2 + nx, (float) y2 + ny, 0).uv(u1, v0).color(end).next()
-                .vertex(m, (float) x2 - nx, (float) y2 - ny, 0).uv(u1, v1).color(end).next()
-                .vertex(m, (float) x1 - nx, (float) y1 - ny, 0).uv(u0, v1).color(start).next()
-                .draw();
+        if (frame == null) {
+            // a still texture repeats along the line (texture wrap), like Quest Enhance's
+            float u0 = -flow, u1 = u0 + (float) (len / half / 2D);
+            com.questclusters.platform.Quads.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR)
+                    .vertex(m, (float) x1 + nx, (float) y1 + ny, 0).uv(u0, 0F).color(start).next()
+                    .vertex(m, (float) x2 + nx, (float) y2 + ny, 0).uv(u1, 0F).color(end).next()
+                    .vertex(m, (float) x2 - nx, (float) y2 - ny, 0).uv(u1, 1F).color(end).next()
+                    .vertex(m, (float) x1 - nx, (float) y1 - ny, 0).uv(u0, 1F).color(start).next()
+                    .draw();
+            return;
+        }
+        // an animated texture: one quad per repeat, each showing exactly the current frame (texture wrap would run
+        // into the neighbouring frames of strips and grids), tiles keep the frame's proportions
+        float framePxW = (frame.u1() - frame.u0()) * size[0], framePxH = (frame.v1() - frame.v0()) * size[1];
+        double tile = 2D * half * framePxW / Math.max(1F, framePxH);
+        tiles(m, x1, y1, x2, y2, nx, ny, len, tile, flow, frame, start, end, 1F);
+        if (frame.next() != null && frame.blend() > 0F) {
+            tiles(m, x1, y1, x2, y2, nx, ny, len, tile, flow, frame.next(), start, end, frame.blend());
+        }
+    }
+
+    private static void tiles(Matrix4f m, double x1, double y1, double x2, double y2, float nx, float ny, double len, double tile,
+                              float flow, com.questclusters.client.Textures.Frame f, int start, int end, float alpha) {
+        if (tile < 0.5) return;
+        double dx = (x2 - x1) / len, dy = (y2 - y1) / len;
+        var q = com.questclusters.platform.Quads.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        for (double t = -flow * tile; t < len; t += tile) {
+            double a = Math.max(0D, t), b = Math.min(len, t + tile);
+            if (b <= a) continue;
+            float ua = f.u((float) ((a - t) / tile)), ub = f.u((float) ((b - t) / tile));
+            int ca = fade(lerp(start, end, (float) (a / len)), alpha), cb = fade(lerp(start, end, (float) (b / len)), alpha);
+            float ax = (float) (x1 + dx * a), ay = (float) (y1 + dy * a), bx = (float) (x1 + dx * b), by = (float) (y1 + dy * b);
+            q.vertex(m, ax + nx, ay + ny, 0).uv(ua, f.v0()).color(ca).next()
+                    .vertex(m, bx + nx, by + ny, 0).uv(ub, f.v0()).color(cb).next()
+                    .vertex(m, bx - nx, by - ny, 0).uv(ub, f.v1()).color(cb).next()
+                    .vertex(m, ax - nx, ay - ny, 0).uv(ua, f.v1()).color(ca).next();
+        }
+        q.draw();
+    }
+
+    private static int lerp(int a, int b, float t) {
+        int out = 0;
+        for (int shift = 0; shift <= 24; shift += 8) {
+            int ca = a >>> shift & 0xFF, cb = b >>> shift & 0xFF;
+            out |= Math.round(ca + (cb - ca) * t) << shift;
+        }
+        return out;
+    }
+
+    private static int fade(int argb, float alpha) {
+        return Math.round((argb >>> 24) * alpha) << 24 | argb & 0xFFFFFF;
     }
 }

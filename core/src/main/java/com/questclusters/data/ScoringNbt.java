@@ -37,6 +37,9 @@ public final class ScoringNbt {
         st.put("ranks", strings(s.rankLines()));
         st.putBoolean("show_max", s.showMax());
         st.putBoolean("leaderboard", s.leaderboard());
+        st.putString("theme", s.theme());
+        if (!s.background().isEmpty()) st.putString("background", s.background());
+        if (s.backgroundMode() != 0) st.putInt("background_mode", s.backgroundMode());
         root.put("settlement", st);
         return root;
     }
@@ -61,7 +64,8 @@ public final class ScoringNbt {
         return new SettlementSettings(st.getString("title"), list(st, "intro"), list(st, "outro"),
                 st.contains("ranks") ? SettlementSettings.parseRanks(list(st, "ranks")) : SettlementSettings.DEFAULT.ranks(),
                 !st.contains("show_max") || st.getBoolean("show_max"),
-                !st.contains("leaderboard") || st.getBoolean("leaderboard"));
+                !st.contains("leaderboard") || st.getBoolean("leaderboard"),
+                st.getString("theme"), st.getString("background"), st.getInt("background_mode"));
     }
 
     private static ListTag strings(List<String> l) {

@@ -621,6 +621,7 @@ final class EditorDevTest {
         var magma = new com.questclusters.editor.data.LinePreset("qcmagma", "Magma", "minecraft:block/magma");
         var flow = new com.questclusters.editor.data.LinePreset("qcflow", "Flow", "minecraft:block/redstone_block", 1.3F);
         var gif = new com.questclusters.editor.data.LinePreset("qcgif", "Gif", "quest_clusters_editor:textures/gui/example.gif");
+        var strip = new com.questclusters.editor.data.LinePreset("qcstrip", "Strip", STRIP);
         float[] sample = new float[2];
         java.util.Set<Float> seen = new java.util.HashSet<>();
         int[] polls = {0};
@@ -662,9 +663,58 @@ final class EditorDevTest {
                     var tex = com.questclusters.editor.client.gui.DecorativeLinesWidget.lastTexture;
                     DevSelfTest.moduleCheck(tex != null && tex.getPath().startsWith("dynamic_gif/"), "animated lines: GIF presets draw the GIF's frames (" + tex + ")");
                     DevSelfTest.moduleShot("qc_40_line_gif");
-                    EditorActions.send("line_presets", com.questclusters.editor.client.gui.LinePresetsScreen.patch(ClientEditor.book(), List.of()));
+                    // a horizontal frame strip (4 frames side by side): drawn one frame at a time, as tiles
+                    EditorActions.send("line_presets", com.questclusters.editor.client.gui.LinePresetsScreen.patch(ClientEditor.book(),
+                            List.of(strip.withLook(0xFFFFFFFF, 3F))));
+                    EditorActions.editChapter("line_preset", C2, x -> x.linePreset = strip.id());
                     return 20;
+                },
+                DevSelfTest.waitFrames(3),
+                () -> {
+                    var rl = com.questclusters.platform.Rl.parse(STRIP);
+                    var f0 = com.questclusters.client.Textures.frame(rl, 0L);
+                    var f1 = com.questclusters.client.Textures.frame(rl, 100L);
+                    DevSelfTest.moduleCheck(f0 != null && f1 != null && Math.abs(f0.u1() - f0.u0() - 0.25F) < 1e-4 && f0.v0() == 0F && f0.v1() == 1F
+                            && Math.abs(f1.u0() - 0.25F) < 1e-4, "animated textures: a horizontal strip has 4 frames side by side ("
+                            + (f0 == null ? null : f0.u0() + ".." + f0.u1()) + ", then " + (f1 == null ? null : f1.u0()) + ")");
+                    int colours = stripColoursOnScreen();
+                    DevSelfTest.moduleCheck(colours == 1, "animated lines: a horizontal strip shows one frame at a time (" + colours + " frame colours on screen)");
+                    DevSelfTest.moduleShot("qc_46_line_strip");
+                    var bad = com.questclusters.client.Textures.animationProblem(com.questclusters.platform.Rl.parse("quest_clusters:textures/devtest/bad_frames.png"));
+                    DevSelfTest.moduleCheck("quest_clusters.animation.uneven".equals(bad) && com.questclusters.client.Textures.animationProblem(rl) == null,
+                            "animated textures: book check names an uneven frame size (" + bad + ")");
+                    EditorActions.send("line_presets", com.questclusters.editor.client.gui.LinePresetsScreen.patch(ClientEditor.book(), List.of()));
+                    // the same strip as a chapter image
+                    var t = new net.minecraft.nbt.CompoundTag();
+                    t.putDouble("x", -6);
+                    t.putDouble("y", 6);
+                    t.putDouble("width", 4);
+                    t.putDouble("height", 4);
+                    t.putString("image", STRIP);
+                    com.questclusters.platform.Ftbq.createImage(com.questclusters.platform.Ftbq.newImage(ClientQuestFile.INSTANCE.getChapter(C2), t, null), false);
+                    DevSelfTest.questScreen().questPanel.scrollTo(-6, 6);
+                    return 30;
+                },
+                DevSelfTest.waitFrames(3),
+                () -> {
+                    int colours = stripColoursOnScreen();
+                    DevSelfTest.moduleCheck(colours == 1, "animated images: a chapter image with a frame strip shows one frame (" + colours + " frame colours on screen)");
+                    DevSelfTest.moduleShot("qc_47_image_strip");
+                    return 5;
                 });
+    }
+
+    static final String STRIP = "quest_clusters:textures/devtest/strip_h.png";
+
+    /** How many of strip_h.png's 4 frame colours cover a visible area of the last frame. */
+    static int stripColoursOnScreen() {
+        int[][] cols = {{201, 13, 177}, {13, 201, 177}, {177, 13, 201}, {201, 177, 13}};
+        int n = 0;
+        for (int[] c : cols) {
+            int px = count(p -> Math.abs(p[0] - c[0]) <= 3 && Math.abs(p[1] - c[1]) <= 3 && Math.abs(p[2] - c[2]) <= 3);
+            if (px > 15) n++;
+        }
+        return n;
     }
 
     /** MQA-style description markup on the "Markup test" quest: layout, spoiler click, Shift+O. */

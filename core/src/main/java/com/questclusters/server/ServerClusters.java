@@ -68,6 +68,7 @@ public final class ServerClusters {
         QuestClusters.LOGGER.info("Loaded {} quest cluster(s)", STORE.size());
 
         ServerScoring.load(file);
+        ServerLimits.load(file);
         com.questclusters.api.QuestBookHooks.fireLoaded(file);
 
         // /ftbquests reload: players are already online and need the fresh data
@@ -86,6 +87,7 @@ public final class ServerClusters {
             dirty = false;
         }
         ServerScoring.save(file);
+        ServerLimits.save(file);
         com.questclusters.api.QuestBookHooks.fireSaving(file);
     }
 
@@ -95,6 +97,7 @@ public final class ServerClusters {
 
     public static void onUnload() {
         ServerScoring.unload();
+        ServerLimits.unload();
         com.questclusters.api.QuestBookHooks.fireUnloaded();
         STORE.clear();
         REVIVAL.clear();

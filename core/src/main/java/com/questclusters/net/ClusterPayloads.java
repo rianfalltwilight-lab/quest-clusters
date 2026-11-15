@@ -196,4 +196,49 @@ public final class ClusterPayloads {
             return TYPE;
         }
     }
+
+    // ------------------------------------------------------------------ quest and reward limits
+
+    /** Limit rules for everyone, plus the receiving player's own team and player claim counts. */
+    public record LimitsSync(java.util.Map<Long, Integer> quests, java.util.Map<Long, com.questclusters.data.ClaimLimits.RewardLimit> rewards,
+                             java.util.Map<Long, Integer> teamCounts, java.util.Map<Long, Integer> playerCounts) implements CustomPacketPayload {
+        public static final Type<LimitsSync> TYPE = newType("limits_sync");
+        public static final StreamCodec<ByteBuf, LimitsSync> CODEC = StreamCodec.composite(
+                com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::quests,
+                com.questclusters.data.LimitsCodecs.REWARDS, LimitsSync::rewards,
+                com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::teamCounts,
+                com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::playerCounts,
+                LimitsSync::new);
+
+        @Override
+        public Type<LimitsSync> type() {
+            return TYPE;
+        }
+    }
+
+    public record SetQuestLimit(long questId, int max) implements CustomPacketPayload {
+        public static final Type<SetQuestLimit> TYPE = newType("set_quest_limit");
+        public static final StreamCodec<ByteBuf, SetQuestLimit> CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_LONG, SetQuestLimit::questId,
+                ByteBufCodecs.VAR_INT, SetQuestLimit::max,
+                SetQuestLimit::new);
+
+        @Override
+        public Type<SetQuestLimit> type() {
+            return TYPE;
+        }
+    }
+
+    public record SetRewardLimit(long rewardId, com.questclusters.data.ClaimLimits.RewardLimit limit) implements CustomPacketPayload {
+        public static final Type<SetRewardLimit> TYPE = newType("set_reward_limit");
+        public static final StreamCodec<ByteBuf, SetRewardLimit> CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_LONG, SetRewardLimit::rewardId,
+                com.questclusters.data.LimitsCodecs.REWARD, SetRewardLimit::limit,
+                SetRewardLimit::new);
+
+        @Override
+        public Type<SetRewardLimit> type() {
+            return TYPE;
+        }
+    }
 }

@@ -39,6 +39,10 @@ public final class BookCheckScreen extends AbstractButtonListScreen {
 
     /** Runs the check with the client's resources (so textures are checked too). */
     public static List<BookCheck.Issue> runClient() {
+        BookCheck.animationProblem = tex -> {
+            var rl = Textures.file(tex);
+            return rl == null ? null : Textures.animationProblem(rl);
+        };
         return BookCheck.run(ClientQuestFile.INSTANCE, ClientEditor.book(), BookCheckScreen::textureExists);
     }
 

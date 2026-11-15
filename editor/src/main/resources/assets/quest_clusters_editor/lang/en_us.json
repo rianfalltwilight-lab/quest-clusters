@@ -244,5 +244,6 @@
   "quest_clusters_editor.check.missing_quest_background": "Missing quest background: %s",
   "quest_clusters_editor.check.missing_preset_image": "Line preset %s: image %s missing",
   "quest_clusters_editor.check.missing_cluster_background": "Cluster %s: background %s missing",
-  "quest_clusters_editor.check.missing_preset": "Chapter uses a deleted line preset: %s"
+  "quest_clusters_editor.check.missing_preset": "Chapter uses a deleted line preset: %s",
+  "quest_clusters_editor.check.bad_animation": "Animation of %s does not work: %s"
 }

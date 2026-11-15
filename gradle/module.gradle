@@ -265,3 +265,8 @@ tasks.named('test') {
         outputs.upToDateWhen { false }
     }
 }
+
+// test-only textures used by the in-game self-tests stay out of release jars (dev runs read the resources folder)
+tasks.named('jar') {
+    exclude 'assets/*/textures/devtest/**'
+}

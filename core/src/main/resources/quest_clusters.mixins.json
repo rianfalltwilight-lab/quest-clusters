@@ -5,7 +5,10 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "IconPreserveMixin",
-    "ServerQuestFileMixin"
+    "ServerQuestFileMixin",
+    "TeamDataLimitsMixin",
+    "QuestRepeatLimitMixin",
+    "ChoiceRewardLimitsMixin"
   ],
   "client": [
     "client.ChapterImageMenuMixin",
@@ -22,7 +25,9 @@
     "client.PanelMixin",
     "client.ChapterPanelMixin",
     "client.ChapterPanelAccessor",
-    "client.OtherButtonsPanelTopMixin"
+    "client.OtherButtonsPanelTopMixin",
+    "client.ImageIconFramesMixin",
+    "client.LimitsTooltipMixin"
   ],
   "injectors": {
     "defaultRequire": 1

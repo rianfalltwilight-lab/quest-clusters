@@ -84,6 +84,8 @@ public final class DevSelfTest {
     private static double[] before;
     private static int[] dragFrom;
     private static int waitedForSettlement;
+    private static int limitBase, limitXp;
+    private static int[] limitResult = new int[0];
 
     private DevSelfTest() {
     }
@@ -449,6 +451,82 @@ public final class DevSelfTest {
             check(milestone != null && td.hasUnclaimedRewards(Minecraft.getInstance().player.getUUID(), milestone), "milestone reward is claimable");
             return 5;
         });
+        // ---------------------------------------------------------------- repeat and claim limits
+        // quest DA repeats; reward BA (1 xp) may be claimed twice per team, BB (10 xp) once per player; the quest may run 3 rounds
+        STEPS.add(() -> {
+            var server = Minecraft.getInstance().getSingleplayerServer();
+            String name = Minecraft.getInstance().player.getGameProfile().getName();
+            Net.sendToServer(new ClusterPayloads.SetRewardLimit(0xBAL, new com.questclusters.data.ClaimLimits.RewardLimit(2, 0)));
+            Net.sendToServer(new ClusterPayloads.SetRewardLimit(0xBBL, new com.questclusters.data.ClaimLimits.RewardLimit(0, 1)));
+            server.execute(() -> {
+                var src = server.createCommandSourceStack().withSuppressedOutput();
+                server.getCommands().performPrefixedCommand(src, "questclusters limits reset " + name);
+                server.getCommands().performPrefixedCommand(src, "ftbquests change_progress " + name + " reset 00000000000000DA");
+            });
+            return 10;
+        });
+        STEPS.add(() -> {
+            var server = Minecraft.getInstance().getSingleplayerServer();
+            server.execute(() -> {
+                var sp = server.getPlayerList().getPlayers().get(0);
+                var file = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE;
+                var quest = file.getQuest(0xDAL);
+                limitBase = file.getOrCreateTeamData(sp).getCompletionCount(quest);
+                limitXp = sp.totalExperience;
+            });
+            return 5;
+        });
+        STEPS.add(() -> {
+            Net.sendToServer(new ClusterPayloads.SetQuestLimit(0xDAL, limitBase + 3));
+            return 10;
+        });
+        for (int round = 1; round <= 4; round++) {
+            int r = round;
+            STEPS.add(() -> {
+                var server = Minecraft.getInstance().getSingleplayerServer();
+                String name = Minecraft.getInstance().player.getGameProfile().getName();
+                server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(),
+                        "ftbquests change_progress " + name + " complete 00000000000000DA"));
+                return 5;
+            });
+            STEPS.add(() -> {
+                var server = Minecraft.getInstance().getSingleplayerServer();
+                server.execute(() -> {
+                    var sp = server.getPlayerList().getPlayers().get(0);
+                    var file = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE;
+                    var td = file.getOrCreateTeamData(sp);
+                    var quest = file.getQuest(0xDAL);
+                    for (var reward : quest.getRewards()) td.claimReward(sp, reward, true);
+                    var limits = com.questclusters.server.ServerLimits.limits();
+                    limitResult = new int[]{limits.teamClaims(td.getTeamId(), 0xBAL), limits.playerClaims(sp.getUUID(), 0xBBL),
+                            td.getCompletionCount(quest) - limitBase, td.isCompleted(quest) ? 1 : 0, sp.totalExperience - limitXp};
+                });
+                return 10;
+            });
+            STEPS.add(() -> {
+                int[] x = limitResult;
+                // rounds 1, 2 reset; round 3 is the last (stays completed); round 4 changes nothing
+                int[][] want = {{1, 1, 1, 0, 11}, {2, 1, 2, 0, 12}, {2, 1, 2, 1, 12}, {2, 1, 2, 1, 12}};
+                check(java.util.Arrays.equals(x, want[r - 1]), "limits round " + r + ": team BA, player BB, rounds done, completed, xp gained = "
+                        + java.util.Arrays.toString(x) + " (want " + java.util.Arrays.toString(want[r - 1]) + ")");
+                return 0;
+            });
+        }
+        STEPS.add(() -> {
+            List<net.minecraft.network.chat.Component> tips = new ArrayList<>();
+            com.questclusters.client.ClientLimits.rewardTooltip(0xBAL, tips);
+            com.questclusters.client.ClientLimits.questTooltip(ClientQuestFile.INSTANCE.getQuest(0xDAL), tips);
+            String all = tips.stream().map(net.minecraft.network.chat.Component::getString).toList().toString();
+            check(com.questclusters.client.ClientLimits.usedUp(0xBAL) && all.contains("2 / 2") && all.contains("3 / 3"),
+                    "limits synced to the client: used up, 2 / 2 claims, 3 / 3 completions " + all);
+            check(ClientQuestFile.INSTANCE.selfTeamData.isCompleted(ClientQuestFile.INSTANCE.getQuest(0xDAL)),
+                    "client keeps the last round completed too");
+            // leave the book as it was
+            Net.sendToServer(new ClusterPayloads.SetRewardLimit(0xBAL, com.questclusters.data.ClaimLimits.RewardLimit.NONE));
+            Net.sendToServer(new ClusterPayloads.SetRewardLimit(0xBBL, com.questclusters.data.ClaimLimits.RewardLimit.NONE));
+            Net.sendToServer(new ClusterPayloads.SetQuestLimit(0xDAL, 0));
+            return 5;
+        });
         // ---------------------------------------------------------------- phase B: scoring, settlement page, leaderboard
         STEPS.add(() -> {
             check(com.questclusters.client.ClientScoring.entries().size() == 4, "scoring data synced (" + com.questclusters.client.ClientScoring.entries().size() + ")");
@@ -481,6 +559,39 @@ public final class DevSelfTest {
         STEPS.add(() -> {
             shot("qc_15_settlement");
             Minecraft.getInstance().screen.onClose();
+            return 5;
+        });
+        // every theme, with an image line, a rank badge and (for some) a background image
+        for (String theme : com.questclusters.data.SettlementSettings.THEMES) {
+            STEPS.add(() -> {
+                var base = com.questclusters.client.ClientScoring.settings();
+                String img = "quest_clusters:textures/devtest/strip_h.png";
+                var ranks = new ArrayList<>(base.ranks());
+                ranks.replaceAll(r -> new com.questclusters.data.SettlementSettings.Rank(r.minPercent(), r.name(), img, 48));
+                List<String> intro = new ArrayList<>(base.intro());
+                intro.add("{image:" + img + " width:96 align:center}");
+                String bg = theme.equals("credits") ? "minecraft:textures/block/stone.png" : "";
+                var s = new com.questclusters.data.SettlementSettings(base.title(), intro, base.outro(), ranks, base.showMax(),
+                        base.leaderboard(), theme, bg, com.questclusters.data.ClusterStyle.MODE_TILE);
+                Minecraft.getInstance().setScreen(new com.questclusters.client.gui.SettlementScreen(Minecraft.getInstance().screen, s));
+                if (Minecraft.getInstance().screen instanceof com.questclusters.client.gui.SettlementScreen ss) ss.skipToEnd();
+                return 20;
+            });
+            STEPS.add(() -> {
+                if (Minecraft.getInstance().screen instanceof com.questclusters.client.gui.SettlementScreen ss) {
+                    var lines = ss.plainLines();
+                    check(ss.theme().equals(theme) && lines.contains("[image quest_clusters:textures/devtest/strip_h.png]")
+                                    && lines.contains("S") && lines.stream().anyMatch(l -> l.contains("60") && l.contains("100")),
+                            "settlement theme " + theme + " shows the image line, total and rank: " + lines);
+                    shot("qc_15_settlement_" + theme);
+                    ss.onClose();
+                } else {
+                    check(false, "settlement theme " + theme + " opens");
+                }
+                return 5;
+            });
+        }
+        STEPS.add(() -> {
             Net.sendToServer(new ClusterPayloads.RequestLeaderboard());
             return 20;
         });

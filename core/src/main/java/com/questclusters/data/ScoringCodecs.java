@@ -28,7 +28,9 @@ public final class ScoringCodecs {
         public SettlementSettings decode(ByteBuf buf) {
             String title = TEXT.decode(buf);
             List<String> intro = LINES.decode(buf), outro = LINES.decode(buf), ranks = LINES.decode(buf);
-            return new SettlementSettings(title, intro, outro, SettlementSettings.parseRanks(ranks), buf.readBoolean(), buf.readBoolean());
+            boolean showMax = buf.readBoolean(), leaderboard = buf.readBoolean();
+            return new SettlementSettings(title, intro, outro, SettlementSettings.parseRanks(ranks), showMax, leaderboard,
+                    TEXT.decode(buf), TEXT.decode(buf), buf.readByte());
         }
 
         @Override
@@ -39,6 +41,9 @@ public final class ScoringCodecs {
             LINES.encode(buf, s.rankLines());
             buf.writeBoolean(s.showMax());
             buf.writeBoolean(s.leaderboard());
+            TEXT.encode(buf, s.theme());
+            TEXT.encode(buf, s.background());
+            buf.writeByte(s.backgroundMode());
         }
     };
 

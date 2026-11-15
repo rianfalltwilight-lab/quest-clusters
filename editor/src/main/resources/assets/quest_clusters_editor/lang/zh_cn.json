@@ -244,5 +244,6 @@
   "quest_clusters_editor.check.missing_quest_background": "任务背景缺失：%s",
   "quest_clusters_editor.check.missing_preset_image": "装饰线预设 %s 的图片 %s 缺失",
   "quest_clusters_editor.check.missing_cluster_background": "任务集 %s 的背景 %s 缺失",
-  "quest_clusters_editor.check.missing_preset": "章节使用了已删除的装饰线预设：%s"
+  "quest_clusters_editor.check.missing_preset": "章节使用了已删除的装饰线预设：%s",
+  "quest_clusters_editor.check.bad_animation": "%s 的帧动画不正常：%s"
 }
