@@ -12,6 +12,8 @@
     "QuestModelConfigMixin",
     "QuestObjectIconAccessor",
     "QuestObjectToastAccessor",
+    "ServerQuestFileFlushMixin",
+    "TeamDataAsyncSaveMixin",
     "TaskToastMixin"
   ],
   "client": [
@@ -34,13 +36,16 @@
     "client.QuestButtonVideoMixin",
     "client.QuestDescriptionFieldMixin",
     "client.QuestIconMixin",
+    "client.QuestPanelCullMixin",
     "client.QuestPanelEditorMixin",
     "client.QuestPanelMenuMixin",
     "client.QuestScreenEditorAccessor",
     "client.QuestScreenEditorMixin",
     "client.QuestScreenMenuMixin",
     "client.QuestScreenPasteMixin",
+    "client.QuestVisibilityCacheMixin",
     "client.SpoilerClickMixin",
+    "client.TreeViewButtonMixin",
     "client.ViewQuestPanelDescMixin",
     "client.ViewQuestPanelEditLineMixin",
     "client.ViewQuestPanelEditorMixin"

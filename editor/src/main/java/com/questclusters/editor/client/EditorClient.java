@@ -9,6 +9,8 @@ public final class EditorClient {
     }
 
     public static void init(net.neoforged.bus.api.IEventBus modBus) {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientTickEvent.Pre e) ->
+                com.questclusters.editor.perf.VisibilityCache.clear());
         // a resource pack may add or remove a decorative line texture
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent e) -> e.registerReloadListener(
                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener) rm ->

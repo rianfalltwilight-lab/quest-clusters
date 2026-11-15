@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 /**
  * Search over the quest book for the chapter panel's search box: quest titles, subtitles, descriptions and task
- * names, plus cluster titles. Never reveals what the player can't see: hidden quests and chapters are skipped, and
+ * names, the items and fluids a quest asks for or gives (by name or registry id), plus cluster titles. Never reveals what the player can't see: hidden quests and chapters are skipped, and
  * quests whose details are hidden until startable only match by title. Editors search everything.
  * Pinyin matching (e.g. "shitou" for 石头) is used when Just Enough Characters is installed.
  */
@@ -26,7 +26,7 @@ public final class QuestSearch {
     private static final Pattern FORMAT = Pattern.compile("&[0-9a-fk-orA-FK-OR]");
 
     /** What matched, best first. */
-    public enum Field { TITLE, CLUSTER, SUBTITLE, TASK, DESCRIPTION }
+    public enum Field { TITLE, CLUSTER, SUBTITLE, TASK, ITEM, DESCRIPTION }
 
     public record Result(Quest quest, QuestCluster cluster, Chapter chapter, Field field) {
     }
@@ -96,10 +96,47 @@ public final class QuestSearch {
         for (Task t : quest.getTasks()) {
             if (matches(t.getTitle().getString(), q)) return Field.TASK;
         }
+        if (matchesItems(quest, q)) return Field.ITEM;
         for (String line : quest.getRawDescription()) {
             if (matches(line, q)) return Field.DESCRIPTION;
         }
         return null;
+    }
+
+    /**
+     * Items and fluids of the quest: what item tasks accept (every item of a tag or filter), fluid tasks, item rewards
+     * and the contents of reward tables that don't hide them. Matched by display name or registry id.
+     */
+    private static boolean matchesItems(Quest quest, String q) {
+        for (Task t : quest.getTasks()) {
+            if (t instanceof dev.ftb.mods.ftbquests.quest.task.ItemTask it) {
+                for (net.minecraft.world.item.ItemStack s : it.getValidDisplayItems()) {
+                    if (matchesStack(s, q)) return true;
+                }
+            } else if (t instanceof dev.ftb.mods.ftbquests.quest.task.FluidTask ft) {
+                var id = net.minecraft.core.registries.BuiltInRegistries.FLUID.getKey(ft.getFluid());
+                if (id.toString().contains(q) || matches(ft.getFluid().getFluidType().getDescription().getString(), q)) return true;
+            }
+        }
+        boolean edit = ClientQuestFile.INSTANCE.canEdit();
+        for (var r : quest.getRewards()) {
+            if (r instanceof dev.ftb.mods.ftbquests.quest.reward.ItemReward ir && matchesStack(ir.getItem(), q)) return true;
+            if (r instanceof dev.ftb.mods.ftbquests.quest.reward.RandomReward rr && rr.getTable() != null
+                    && (edit || rr.getTable().shouldShowTooltip())) {
+                for (var wr : rr.getTable().getWeightedRewards()) {
+                    if (wr.getReward() instanceof dev.ftb.mods.ftbquests.quest.reward.ItemReward ir && matchesStack(ir.getItem(), q)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesStack(net.minecraft.world.item.ItemStack s, String q) {
+        if (s == null || s.isEmpty()) return false;
+        return net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(s.getItem()).toString().contains(q)
+                || matches(s.getHoverName().getString(), q);
     }
 
     static String norm(String s) {

@@ -183,5 +183,15 @@
   "quest_clusters_editor.configuration.description_markup": "描述文字標記",
   "quest_clusters_editor.configuration.description_markup.tooltip": "分隔線（--- ===）、側邊條（> <）、[spoiler] 劇透、程式碼（`）、[gap=N] 間距、標題（# ## ###）、提示框（[!info] [!tip] [!warn] [!danger]）、清單（- 和 1.）、[center] 置中；以 \\\\ 開頭的行按原樣顯示",
   "quest_clusters_editor.configuration.center_all_description_text": "描述全部置中",
-  "quest_clusters_editor.configuration.center_all_description_text.tooltip": "所有描述行都置中；單獨一行：編輯模式下滑鼠指向該行按 Shift+O"
+  "quest_clusters_editor.configuration.center_all_description_text.tooltip": "所有描述行都置中；單獨一行：編輯模式下滑鼠指向該行按 Shift+O",
+  "quest_clusters_editor.tree": "任務樹",
+  "quest_clusters_editor.tree.chapter": "本章節",
+  "quest_clusters_editor.tree.all": "全部章節",
+  "quest_clusters_editor.tree.also": "還需要：",
+  "quest_clusters_editor.configuration.quest_visibility_cache": "可見性快取",
+  "quest_clusters_editor.configuration.quest_visibility_cache.tooltip": "把隊伍能看見哪些任務記住一刻（依賴鏈很長時任務書更流暢）",
+  "quest_clusters_editor.configuration.cull_offscreen_dependency_lines": "略過螢幕外的連線",
+  "quest_clusters_editor.configuration.cull_offscreen_dependency_lines.tooltip": "完全在任務面板外的依賴連線不繪製",
+  "quest_clusters_editor.configuration.async_team_save": "背景儲存隊伍進度",
+  "quest_clusters_editor.configuration.async_team_save.tooltip": "FTB Quests 的隊伍進度檔案在背景執行緒寫入；資料先在伺服器執行緒取好，伺服器停止前會等待寫完"
 }

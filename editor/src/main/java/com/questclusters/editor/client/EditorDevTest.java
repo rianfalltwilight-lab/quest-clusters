@@ -100,6 +100,8 @@ final class EditorDevTest {
         DevSelfTest.addModuleSteps(anchorInClusterSteps());
         DevSelfTest.addModuleSteps(animatedLineSteps());
         DevSelfTest.addModuleSteps(markupSteps());
+        DevSelfTest.addModuleSteps(treeSteps());
+        DevSelfTest.addModuleSteps(perfSteps());
         DevSelfTest.addModuleSteps(DevSelfTest.configScreenSteps("quest_clusters_editor", "qc_37_editor_settings", () -> List.of(
                 "quest_clusters_editor.configuration.title",
                 "quest_clusters_editor.configuration.render_kill_task_entity_models",
@@ -684,6 +686,7 @@ final class EditorDevTest {
                     return 5;
                 },
                 DevSelfTest.waitFrames(3), // FTB updates hovering when it draws
+                hoverLine(quest, 6),
                 () -> {
                     var spoiler = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, 6);
                     if (spoiler != null) spoiler.mousePressed(dev.ftb.mods.ftblibrary.ui.input.MouseButton.LEFT);
@@ -698,6 +701,7 @@ final class EditorDevTest {
                     return 5;
                 },
                 DevSelfTest.waitFrames(3),
+                hoverLine(quest, 3),
                 () -> {
                     DevSelfTest.questScreen().keyPressed(new dev.ftb.mods.ftblibrary.ui.input.Key(
                             org.lwjgl.glfw.GLFW.GLFW_KEY_O, 0, org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT));
@@ -713,5 +717,113 @@ final class EditorDevTest {
                     editMode(false);
                     return 20;
                 });
+    }
+
+    /** Quest tree view: dependency nesting, reading order, chapter headings in the all-chapters view. */
+    static List<java.util.function.IntSupplier> treeSteps() {
+        return List.of(
+                () -> {
+                    editMode(true);
+                    var c2 = ClientQuestFile.INSTANCE.getChapter(C2);
+                    var rows = com.questclusters.editor.client.gui.QuestTreeScreen.rows(c2, false);
+                    var ids = rows.stream().map(r -> Long.toHexString(r.quest().id) + "@" + r.depth()).toList();
+                    int d5 = -1, d6 = -1;
+                    for (int i = 0; i < rows.size(); i++) {
+                        if (rows.get(i).quest().id == D5) d5 = i;
+                        if (rows.get(i).quest().id == D6) d6 = i;
+                    }
+                    DevSelfTest.moduleCheck(d5 >= 0 && d6 == d5 + 1 && rows.get(d6).depth() == rows.get(d5).depth() + 1,
+                            "tree: a quest sits under its prerequisite " + ids);
+                    DevSelfTest.moduleCheck(rows.size() >= 2 && rows.get(0).quest().getY() <= rows.get(rows.size() - 1).quest().getY(),
+                            "tree: roots in reading order");
+                    var all = com.questclusters.editor.client.gui.QuestTreeScreen.rows(c2, true);
+                    long headings = all.stream().filter(r -> r.quest() == null).count();
+                    DevSelfTest.moduleCheck(headings >= 3, "tree: all chapters with headings (" + headings + ")");
+                    new com.questclusters.editor.client.gui.QuestTreeScreen(DevSelfTest.questScreen()).openGui();
+                    return 20;
+                },
+                () -> {
+                    DevSelfTest.moduleShot("qc_42_quest_tree");
+                    DevSelfTest.questScreen().openGui();
+                    editMode(false);
+                    return 10;
+                });
+    }
+
+    /** Performance options: visibility cache (same answers), off-screen line culling, background team save. */
+    static List<java.util.function.IntSupplier> perfSteps() {
+        long[] mtime = new long[1];
+        java.nio.file.Path[] teamFile = new java.nio.file.Path[1];
+        return List.of(
+                () -> {
+                    var qs = DevSelfTest.questScreen();
+                    qs.open(ClientQuestFile.INSTANCE.getChapter(C1), false);
+                    return 10;
+                },
+                () -> {
+                    var file = ClientQuestFile.INSTANCE;
+                    DevSelfTest.moduleCheck(com.questclusters.editor.perf.VisibilityCache.size() > 0, "perf: visibility cache in use ("
+                            + com.questclusters.editor.perf.VisibilityCache.size() + ")");
+                    // cached answers equal fresh ones
+                    java.util.Map<Long, Boolean> cached = new java.util.HashMap<>();
+                    file.forAllQuests(q -> cached.put(q.id, q.isVisible(file.selfTeamData)));
+                    com.questclusters.editor.EditorConfig.VISIBILITY_CACHE.set(false);
+                    int[] diff = {0};
+                    file.forAllQuests(q -> {
+                        if (cached.get(q.id) != q.isVisible(file.selfTeamData)) diff[0]++;
+                    });
+                    com.questclusters.editor.EditorConfig.VISIBILITY_CACHE.set(true);
+                    DevSelfTest.moduleCheck(diff[0] == 0, "perf: cached visibility matches uncached (" + diff[0] + " differ)");
+                    com.questclusters.editor.perf.VisibilityCache.culledLines = 0;
+                    DevSelfTest.questScreen().questPanel.scrollTo(500, 500); // far away: every line is off screen
+                    return 10;
+                },
+                () -> {
+                    DevSelfTest.moduleCheck(com.questclusters.editor.perf.VisibilityCache.culledLines > 0,
+                            "perf: off-screen dependency lines skipped (" + com.questclusters.editor.perf.VisibilityCache.culledLines + ")");
+                    DevSelfTest.questScreen().questPanel.scrollTo(0, 0);
+                    var server = net.minecraft.client.Minecraft.getInstance().getSingleplayerServer();
+                    var team = ClientQuestFile.INSTANCE.selfTeamData.getTeamId();
+                    teamFile[0] = server.getWorldPath(dev.ftb.mods.ftbquests.quest.ServerQuestFile.FTBQUESTS_DATA).resolve(team + ".snbt");
+                    mtime[0] = teamFile[0].toFile().lastModified();
+                    String name = net.minecraft.client.Minecraft.getInstance().player.getGameProfile().getName();
+                    server.execute(() -> {
+                        server.getCommands().performPrefixedCommand(server.createCommandSourceStack(),
+                                "ftbquests change_progress " + name + " complete 0000000000000A31");
+                        dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE.saveNow();
+                    });
+                    return 40;
+                },
+                () -> {
+                    DevSelfTest.moduleCheck(com.questclusters.editor.EditorServerConfig.ASYNC_TEAM_SAVE.get(), "perf: background team save on");
+                    var f = teamFile[0].toFile();
+                    boolean written = f.lastModified() > mtime[0];
+                    String text = "";
+                    try {
+                        text = java.nio.file.Files.readString(teamFile[0]);
+                    } catch (java.io.IOException ignored) {
+                    }
+                    DevSelfTest.moduleCheck(written && text.contains("0000000000000A31"), "perf: team progress written in the background ("
+                            + written + ", " + text.length() + " chars)");
+                    var server = net.minecraft.client.Minecraft.getInstance().getSingleplayerServer();
+                    String name = net.minecraft.client.Minecraft.getInstance().player.getGameProfile().getName();
+                    server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(),
+                            "ftbquests change_progress " + name + " reset 0000000000000A31"));
+                    return 10;
+                });
+    }
+
+    /** Keeps the mouse on a description line until FTB reports it hovered (at most ~2 s). */
+    static java.util.function.IntSupplier hoverLine(long quest, int line) {
+        int[] tries = {0};
+        return () -> {
+            var f = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, line);
+            if (f == null || f.isMouseOver() || ++tries[0] > 40) {
+                tries[0] = 0;
+                return 0;
+            }
+            DevSelfTest.realMove(f.getX() + 2, f.getY() + 2);
+            return -1;
+        };
     }
 }

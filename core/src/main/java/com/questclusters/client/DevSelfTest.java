@@ -655,6 +655,18 @@ public final class DevSelfTest {
         });
         // A3) chapter search
         STEPS.add(() -> {
+            // items and fluids inside quests: by registry id, by name, rewards too
+            long recipeQuest = 0xA20L;
+            java.util.function.Function<String, Boolean> byItem = q -> com.questclusters.client.gui.QuestSearch.search(q).stream()
+                    .anyMatch(r -> r.quest() != null && r.quest().id == recipeQuest
+                            && r.field() == com.questclusters.client.gui.QuestSearch.Field.ITEM);
+            check(byItem.apply("minecraft:iron_ingot"), "search finds a quest by the item a task asks for (id)");
+            // task titles already name their item / fluid, so these may match as "task" first: the quest is found
+            java.util.function.Function<String, Boolean> found = q -> com.questclusters.client.gui.QuestSearch.search(q).stream()
+                    .anyMatch(r -> r.quest() != null && r.quest().id == recipeQuest);
+            check(found.apply("iron ingot"), "search finds a quest by the item's name");
+            check(byItem.apply("diamond"), "search finds a quest by its item reward");
+            check(found.apply("minecraft:water"), "search finds a quest by its fluid task (id)");
             var results = com.questclusters.client.gui.QuestSearch.search("milest");
             check(results.stream().anyMatch(r -> r.quest() != null && r.quest().id == 0xD9L), "search finds quest by title: " + results.size());
             var clusterHits = com.questclusters.client.gui.QuestSearch.search("矿石");

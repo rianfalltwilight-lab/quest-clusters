@@ -183,5 +183,15 @@
   "quest_clusters_editor.configuration.description_markup": "Description markup",
   "quest_clusters_editor.configuration.description_markup.tooltip": "Dividers (---, ===), side bars (> <), [spoiler], code (`), [gap=N], headings (# ## ###), callouts ([!info] [!tip] [!warn] [!danger]), lists (- and 1.), [center]; a line starting with \\\\ is shown as written",
   "quest_clusters_editor.configuration.center_all_description_text": "Centre all description text",
-  "quest_clusters_editor.configuration.center_all_description_text.tooltip": "Every description line is centred; one line at a time: Shift+O over the line in edit mode"
+  "quest_clusters_editor.configuration.center_all_description_text.tooltip": "Every description line is centred; one line at a time: Shift+O over the line in edit mode",
+  "quest_clusters_editor.tree": "Quest tree",
+  "quest_clusters_editor.tree.chapter": "This chapter",
+  "quest_clusters_editor.tree.all": "All chapters",
+  "quest_clusters_editor.tree.also": "Also needs:",
+  "quest_clusters_editor.configuration.quest_visibility_cache": "Visibility cache",
+  "quest_clusters_editor.configuration.quest_visibility_cache.tooltip": "Remember for one tick which quests your team can see (faster quest book with long dependency chains)",
+  "quest_clusters_editor.configuration.cull_offscreen_dependency_lines": "Skip off-screen lines",
+  "quest_clusters_editor.configuration.cull_offscreen_dependency_lines.tooltip": "Dependency lines entirely outside the quest panel are not drawn",
+  "quest_clusters_editor.configuration.async_team_save": "Save team progress in the background",
+  "quest_clusters_editor.configuration.async_team_save.tooltip": "FTB Quests' team progress files are written on a background thread; the data is captured first, pending writes finish before the server stops"
 }

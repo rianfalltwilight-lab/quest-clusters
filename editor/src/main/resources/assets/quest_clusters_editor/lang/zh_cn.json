@@ -183,5 +183,15 @@
   "quest_clusters_editor.configuration.description_markup": "描述文本标记",
   "quest_clusters_editor.configuration.description_markup.tooltip": "分隔线（--- ===）、侧边条（> <）、[spoiler] 剧透、代码（`）、[gap=N] 间距、标题（# ## ###）、提示框（[!info] [!tip] [!warn] [!danger]）、列表（- 和 1.）、[center] 居中；以 \\\\ 开头的行按原样显示",
   "quest_clusters_editor.configuration.center_all_description_text": "描述全部居中",
-  "quest_clusters_editor.configuration.center_all_description_text.tooltip": "所有描述行都居中；单独一行：编辑模式下鼠标指向该行按 Shift+O"
+  "quest_clusters_editor.configuration.center_all_description_text.tooltip": "所有描述行都居中；单独一行：编辑模式下鼠标指向该行按 Shift+O",
+  "quest_clusters_editor.tree": "任务树",
+  "quest_clusters_editor.tree.chapter": "本章节",
+  "quest_clusters_editor.tree.all": "全部章节",
+  "quest_clusters_editor.tree.also": "还需要：",
+  "quest_clusters_editor.configuration.quest_visibility_cache": "可见性缓存",
+  "quest_clusters_editor.configuration.quest_visibility_cache.tooltip": "把队伍能看见哪些任务记住一刻（依赖链很长时任务书更流畅）",
+  "quest_clusters_editor.configuration.cull_offscreen_dependency_lines": "跳过屏幕外的连线",
+  "quest_clusters_editor.configuration.cull_offscreen_dependency_lines.tooltip": "完全在任务面板外的依赖连线不绘制",
+  "quest_clusters_editor.configuration.async_team_save": "后台保存队伍进度",
+  "quest_clusters_editor.configuration.async_team_save.tooltip": "FTB Quests 的队伍进度文件在后台线程写入；数据先在服务器线程取好，服务器停止前会等待写完"
 }

@@ -22,6 +22,7 @@ public final class QuestClustersEditor {
 
     public QuestClustersEditor(IEventBus modBus, net.neoforged.fml.ModContainer container) {
         container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, EditorConfig.SPEC);
+        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, EditorServerConfig.SPEC);
         modBus.addListener((net.neoforged.fml.event.config.ModConfigEvent.Loading e) -> {
             if (e.getConfig().getSpec() == EditorConfig.SPEC) EditorConfig.importQuestEnhance();
         });

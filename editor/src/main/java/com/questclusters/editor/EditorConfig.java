@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 /** Client options ({@code config/quest_clusters_editor-client.toml}); same keys as Quest Enhance's client config. */
 public final class EditorConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue KILL_TASK_MODELS, OPEN_ADVANCEMENTS, MARKUP, CENTER_ALL, IMPORTED;
+    public static final ModConfigSpec.BooleanValue KILL_TASK_MODELS, OPEN_ADVANCEMENTS, MARKUP, CENTER_ALL, VISIBILITY_CACHE, CULL_LINES, IMPORTED;
 
     static {
         ModConfigSpec.Builder b = new ModConfigSpec.Builder();
@@ -22,6 +22,8 @@ public final class EditorConfig {
         MARKUP = b.comment("Description line markup (dividers, side bars, spoilers, code, gaps, headings, callouts, lists, centring)")
                 .define("description_markup", true);
         CENTER_ALL = b.comment("Centre every description line").define("center_all_description_text", false);
+        VISIBILITY_CACHE = b.comment("Cache quest visibility for one tick in the quest book (performance)").define("quest_visibility_cache", true);
+        CULL_LINES = b.comment("Skip drawing dependency lines that are entirely off screen (performance)").define("cull_offscreen_dependency_lines", true);
         IMPORTED = b.comment("Set once Quest Enhance's client options were copied (internal)").define("imported_quest_enhance", false);
         SPEC = b.build();
     }

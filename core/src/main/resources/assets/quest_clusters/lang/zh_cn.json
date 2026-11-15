@@ -134,5 +134,6 @@
   "quest_clusters.migrate.notice.details": "详情：%s",
   "quest_clusters.menu.add_selected_here": "把选中的 %s 个对象加入该任务集",
   "quest_clusters.free_box": "文字框独立定位",
-  "quest_clusters.free_box.tooltip": "拖动收起的文字框只移动文字框；移动任务（拖动区域框、FTB Quests 的移动）时文字框留在原处"
+  "quest_clusters.free_box.tooltip": "拖动收起的文字框只移动文字框；移动任务（拖动区域框、FTB Quests 的移动）时文字框留在原处",
+  "quest_clusters.search.field.item": "匹配：物品"
 }
