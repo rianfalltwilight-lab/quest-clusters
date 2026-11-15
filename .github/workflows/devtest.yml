@@ -1,8 +1,8 @@
 name: In-game self-test
 
 # Boots the real client headless (Xvfb + Mesa software OpenGL) and runs the dev self-test (core/client/DevSelfTest)
-# once per mod combination, the same profiles as scripts/devtest-matrix.sh. A run counts as failed unless its log
-# ends with "ALL CHECKS PASSED".
+# once per Minecraft version and mod combination, the same profiles as scripts/devtest-matrix.sh. A run counts as
+# failed unless its log ends with "ALL CHECKS PASSED".
 on:
   push:
     branches: [main]
@@ -23,10 +23,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        mc: ['1.21.1', '1.20.1']
         profile: [default, core-only, no-ffs, addons, xmod-jei, rei]
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
       DEVTEST_TIMEOUT: '1200'
+      MC: ${{ matrix.mc }}
     steps:
       - uses: actions/checkout@v4
 
@@ -42,14 +44,14 @@ jobs:
       - name: Install a virtual display and software OpenGL
         run: sudo apt-get update -q && sudo apt-get install -y -q xvfb libgl1 libgl1-mesa-dri libglx-mesa0
 
-      - name: Self-test (${{ matrix.profile }})
+      - name: Self-test (${{ matrix.mc }} ${{ matrix.profile }})
         run: xvfb-run -a -s "-screen 0 1280x720x24" scripts/devtest-matrix.sh ${{ matrix.profile }}
 
       - name: Upload log and screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: devtest-${{ matrix.profile }}
+          name: devtest-${{ matrix.mc }}-${{ matrix.profile }}
           path: |
             build/devtest-matrix/
             core/run*/screenshots/

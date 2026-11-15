@@ -2,9 +2,23 @@
 
 FTB Quests 附属：在同一章节内把任务、任务链接、章节图片组成「任务集」，收起时显示为一个长方形文字框。
 
-- Minecraft 1.21.1 / NeoForge 21.1.x
-- FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
-- 客户端和服务端都需要安装
+- Minecraft 1.21.1 / NeoForge 21.1.x：FTB Quests `[2101.1.36, 2101.2)`（编译目标 2101.1.38）
+- Minecraft 1.20.1 / Forge 47.2+：FTB Quests `[2001.4.13, 2001.5)`（编译目标 2001.4.22），FTB Library 2001.2、FTB Teams 2001.3
+- 客户端和服务端都需要安装；两个版本的 jar 文件名分别带 `1.21.1-` 和 `1.20.1-`
+
+### 1.20.1 版与 1.21.1 版的区别
+同一份代码构建两个版本，功能相同，下列几处受 1.20.1 版 FTB 系列模组本身的限制：
+- **撤销**：FTB Quests 1.20.1 没有撤销/重做历史，任务集和编辑增强的修改直接生效，不能用 Ctrl+Z 撤回。
+- **章节图片 ID**：FTB Quests 1.20.1 的章节图片没有 ID。本模组给每张图片一个固定 ID（存在图片数据的 `id` 里，格式和 1.21.1 版 FTB Quests 一样），任务集成员、框选排除、辅助点都靠它；任务书在两个版本之间迁移时 ID 保持不变。
+- **画布元素**：Quest Enhance 的画布文字、GIF、视频、辅助点存在图片的 `click` 字段（1.20.1 版 FTB Quests 自己的字段），不做 1.21.1 版那样的迁移。
+- **编辑增强的 KubeJS 编辑接口**（`QuestUtils`）只在 1.21.1 版提供（它通过 FTB Quests 的撤销历史修改任务书）；画布文字点击事件两个版本都有。
+- **文档目标**（GuideME / Patchouli 的“查看文档”）只在 1.21.1 版：FTB Library 1.20.1 版没有文档接口，GuideME 也没有 1.20.1 版本。
+- **Jade 屏障伪装**：FTB Quests 1.20.1 的屏障没有伪装，Jade 只给编辑者显示屏障的开启条件。
+- **JEI 书签**：JEI 15 没有书签接口，任务书里的书签键沿用 FTB Quests 自己的处理。
+- **任务书体检**：1.20.1 版任务书只有一种语言，不检查“缺少翻译”。
+- **编辑增强设置**：模组列表的“设置”按钮打开 FTB Library 风格的设置页（1.21.1 版是 NeoForge 自动生成的设置页）。
+- **筛选模块**：物品列表里的变体按 NBT 写（`minecraft:potion{Potion:"minecraft:healing"}`），对应 1.20.1 的 `/give` 写法；需要 FTB 筛选系统 1.0.2（1.20.1 版）。
+- **注意**：FTB Quests 1.20.1 本身不保存任务的“在配方查看器中禁用”选项，这不是本模组的问题。
 
 ## 当前进度：阶段 0–2、4、A、B、C、D、E、F、G（G1–G3）
 
@@ -314,9 +328,9 @@ QuestClusters.dissolve(clusterId)
 ## 构建
 
 ```
-./gradlew build                     # 编译全部模块 + 单元测试
-./gradlew :core:runClient           # 开发客户端（core + 已发布模块）
-./gradlew :core:runClientDevtest    # 脚本化界面自检：进入 core/run/saves/devtest，截图到 core/run/screenshots/qc_*.png，自动退出
+./gradlew build                     # 编译两个版本的全部模块 + 单元测试
+./gradlew :core:1.21.1:runClient    # 开发客户端（core + 已发布模块）；1.20.1 版用 :core:1.20.1:runClient
+./gradlew :core:1.21.1:runClientDevtest    # 脚本化界面自检：进入 core/run/saves/devtest，截图到 core/run/screenshots/qc_*.png，自动退出
 ./gradlew :core:runClient -PdevModules=xmod   # 额外加载未发布模块（例如检查不兼容声明）
 ./gradlew :core:runClientDevtest -PwithJei -PnoFfs   # 带 JEI 运行；不带 FTB 筛选系统运行
 ./gradlew :core:runClientDevtest -PskipModules=editor   # 不加载某个已发布模块（例如和 Quest Enhance 一起测）
@@ -324,10 +338,18 @@ QuestClusters.dissolve(clusterId)
 ./gradlew :core:runClientTour -PtourBook=<任务书目录>    # 载入这本任务书，逐章截图到 core/run/screenshots/tour_*.png（下次 devtest 会恢复测试任务书）
 scripts/devtest-matrix.sh                 # 依次跑所有模组组合的界面自检，最后输出汇总表
 scripts/devtest-matrix.sh default rei     # 只跑指定组合；--list 列出全部组合
+MC=1.20.1 scripts/devtest-matrix.sh       # 同上，1.20.1 版
 ```
 
+### 多版本（Stonecutter）
+- 每个模块按 Minecraft 版本各构建一次：`:<模块>:1.21.1`（NeoForge）和 `:<模块>:1.20.1`（Forge，ModDevGradle 的 legacy 插件：SRG 重映射、Mixin refmap、MixinExtras 由 core 嵌套）。产物在 `<模块>/versions/<版本>/build/libs/`。
+- 共用代码在 `<模块>/src/main`，按 1.21.1 写；只在一个加载器上存在的整文件放在 `<模块>/src/neoforge`、`<模块>/src/forge`（例如 1.21 网络类型在 1.20.1 的移植、FTB Quests 2001 的差异）。共用文件里的小差异用 `//? if neoforge { ... } else { ... }` 注释块，编译 1.20.1 时由 Stonecutter 切换；包名一一对应的改名（`net.neoforged.*` → `net.minecraftforge.*` 等）在 `gradle/module.gradle` 里统一替换。
+- 加载器 / 版本差异集中在 core 的 `com.questclusters.platform`：`Net`（网络包）、`Events`、`ModContext`、`History`（撤销）、`Ftbq`（FTB Quests 调用）、`Quads`（顶点绘制）、`Stacks`（物品数据）、`Rl`、`Mc`。
+- 版本相关的依赖版本在 `versions/<版本>/gradle.properties`。源代码在 git 里始终是 1.21.1 状态，不要切换 Stonecutter 的活动版本后提交。
+- 1.20.1 的自检用同一本测试任务书：`prepareDevtest` 把 1.21 版的语言文件和字段写法换成 FTB Quests 2001 的内联写法。
+
 `devtest-matrix.sh` 的组合：`default`（已发布模块）、`core-only`、`no-ffs`、`addons`（KubeJS + Jade + GuideME + Patchouli）、`xmod-jei`（FTB XMod Compat 接管测试）、`rei`。
-每个组合的日志在 `build/devtest-matrix/<组合>.log`，汇总在 `build/devtest-matrix/summary.md`。Gradle 在检查失败时也返回 0，所以脚本按日志末尾的 `ALL CHECKS PASSED` 判断；没有这一行（崩溃、超时）也算失败。
+每个组合的日志在 `build/devtest-matrix/<版本>/<组合>.log`，汇总在 `build/devtest-matrix/<版本>/summary.md`。Gradle 在检查失败时也返回 0，所以脚本按日志末尾的 `ALL CHECKS PASSED` 判断；没有这一行（崩溃、超时）也算失败。
 和 Quest Enhance、Certain Questing Additions 一起的组合需要手动放入它们的 jar，不在脚本里。
 本机没有 `devtest` 存档时（例如新克隆的仓库），自检会按原测试世界的设置自动创建一个（生存、和平、不开作弊、固定种子）。
 
@@ -338,7 +360,7 @@ scripts/devtest-matrix.sh default rei     # 只跑指定组合；--list 列出�
   ```
   git tag v0.2.0 && git push origin v0.2.0
   ```
-- 界面自检也在 CI 里跑（`.github/workflows/devtest.yml`）：在虚拟显示器 + 软件 OpenGL 下启动真实客户端，上面六个组合并行各跑一次；日志、截图和崩溃报告作为构建产物上传，汇总表显示在运行页面上。
+- 界面自检也在 CI 里跑（`.github/workflows/devtest.yml`）：在虚拟显示器 + 软件 OpenGL 下启动真实客户端，两个版本 × 上面六个组合并行各跑一次；日志、截图和崩溃报告作为构建产物上传，汇总表显示在运行页面上。
 
 ## 许可证
 
