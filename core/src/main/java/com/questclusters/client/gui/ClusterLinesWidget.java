@@ -219,7 +219,11 @@ public final class ClusterLinesWidget extends Widget {
             complete = !unavailable && td.isCompleted(q);
         }
         Color4I c = complete ? ThemeProperties.DEPENDENCY_LINE_COMPLETED_COLOR.get(chapter)
+                //? if neoforge {
                 : unavailable ? ThemeProperties.DEPENDENCY_LINE_UNAVAILABLE_COLOR.get(chapter)
+                //?} else {
+                /*: unavailable ? ThemeProperties.DEPENDENCY_LINE_UNCOMPLETED_COLOR.get(chapter).withAlpha(120)
+                *///?}
                 : ThemeProperties.DEPENDENCY_LINE_UNCOMPLETED_COLOR.get(chapter);
         return c.rgba();
     }

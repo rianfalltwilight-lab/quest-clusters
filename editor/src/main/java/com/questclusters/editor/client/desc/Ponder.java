@@ -1,5 +1,6 @@
 package com.questclusters.editor.client.desc;
 
+import com.questclusters.platform.Rl;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -32,7 +33,7 @@ public final class Ponder {
             return;
         }
         try {
-            ResourceLocation rl = ResourceLocation.parse(itemId);
+            ResourceLocation rl = Rl.parse(itemId);
             Object screen = Class.forName("net.createmod.ponder.foundation.ui.PonderUI").getMethod("of", ResourceLocation.class).invoke(null, rl);
             mc.setScreen((Screen) screen);
         } catch (Throwable t) {

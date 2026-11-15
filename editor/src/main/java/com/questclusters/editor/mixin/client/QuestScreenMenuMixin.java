@@ -75,8 +75,14 @@ public abstract class QuestScreenMenuMixin {
         }
     }
 
+    //? if neoforge {
     @Inject(method = "pasteSelectedQuest", at = @At("HEAD"), cancellable = true)
     private void quest_clusters_editor$paste(boolean withDeps, Chapter chapter, CallbackInfoReturnable<Boolean> cir) {
+    //?} else {
+    /*@Inject(method = "pasteSelectedQuest", at = @At("HEAD"), cancellable = true)
+    private void quest_clusters_editor$paste(boolean withDeps, CallbackInfoReturnable<Boolean> cir) {
+        Chapter chapter = ((QuestScreenAccessor) this).quest_clusters$getSelectedChapter();
+    *///?}
         if (CanvasEdit.hasMultiClipboard()) {
             var xy = ((QuestScreenAccessor) this).quest_clusters$invokeGetSnappedXY();
             if (CanvasEdit.paste(chapter, xy.getFirst(), xy.getSecond(), withDeps)) {

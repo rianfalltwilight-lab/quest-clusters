@@ -1,5 +1,6 @@
 package com.questclusters.editor.client.paste;
 
+import com.questclusters.platform.Rl;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.questclusters.editor.QuestClustersEditor;
 import net.minecraft.ChatFormatting;
@@ -59,7 +60,7 @@ public final class PastedImages {
         String name = "clipboard_" + System.currentTimeMillis() + ".png";
         Path file = folder().resolve(name);
         ImageIO.write(img, "png", file.toFile());
-        ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(NAMESPACE, PATH + name);
+        ResourceLocation rl = Rl.of(NAMESPACE, PATH + name);
         ensureRegistered(rl);
         return rl;
     }
@@ -130,7 +131,7 @@ public final class PastedImages {
                         Files.delete(f);
                         deleted++;
                         String ns = dir.equals(folder()) ? NAMESPACE + ":" + PATH : "quest_enhance:textures/ftb/";
-                        tm.release(ResourceLocation.parse(ns + n));
+                        tm.release(Rl.parse(ns + n));
                     }
                 }
             } catch (IOException e) {

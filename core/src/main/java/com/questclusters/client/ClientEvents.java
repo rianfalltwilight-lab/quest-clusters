@@ -7,7 +7,9 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+//? if neoforge {
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+//?}
 
 @EventBusSubscriber(modid = QuestClusters.MOD_ID, value = Dist.CLIENT)
 public final class ClientEvents {
@@ -30,8 +32,14 @@ public final class ClientEvents {
     }
 
     /** Rebuild the open quest panel when cluster data arrives from the server. */
+    //? if neoforge {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
+    //?} else {
+    /*@SubscribeEvent
+    public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+    *///?}
         ClusterClipboard.tick();
         int rev = ClientClusters.revision() * 31 + ClientScoring.revision();
         if (rev != seenRevision) {

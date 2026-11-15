@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.questclusters.mixin.forge",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "ChapterImageIdMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

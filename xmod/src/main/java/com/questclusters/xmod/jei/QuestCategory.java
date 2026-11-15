@@ -1,5 +1,6 @@
 package com.questclusters.xmod.jei;
 
+import com.questclusters.platform.Rl;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.questclusters.xmod.recipe.QuestRecipe;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
@@ -32,7 +33,7 @@ import java.util.List;
 /** Tasks in a 3x3 grid on the left, rewards on the right, the quest's title on top (click it to open the quest). */
 final class QuestCategory implements IRecipeCategory<QuestRecipe> {
     /** FTB Quests ships this background for recipe viewers. */
-    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath("ftbquests", "textures/gui/jei/quest.png");
+    private static final ResourceLocation BACKGROUND = Rl.of("ftbquests", "textures/gui/jei/quest.png");
     static final int WIDTH = 144;
     static final int HEIGHT = 74;
     private static final int TITLE_Y = 3;

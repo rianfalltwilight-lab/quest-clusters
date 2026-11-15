@@ -1,5 +1,7 @@
 package com.questclusters.client;
 
+import com.questclusters.platform.Ftbq;
+import com.questclusters.platform.Net;
 import com.questclusters.QuestClusters;
 import com.questclusters.client.gui.ClusterBoxWidget;
 import com.questclusters.client.gui.ClusterEditor;
@@ -20,8 +22,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+//? if neoforge {
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+//?}
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,7 +99,7 @@ public final class DevSelfTest {
                     srv.getCommands().performPrefixedCommand(srv.createCommandSourceStack().withSuppressedOutput(),
                             "ftbquests change_progress " + sp.getGameProfile().getName() + " reset " + PROP);
                     // so is edit mode (and a crashed run may leave it on): the steps below expect it off
-                    ServerQuestFile.INSTANCE.getOrCreateTeamData(sp).setPlayerEditMode(sp, false);
+                    Ftbq.setEditMode(ServerQuestFile.INSTANCE, sp, false);
                 }
             });
             Chapter ch = ClientQuestFile.INSTANCE.getChapter(QuestCluster.idFromString(PROP));
@@ -164,7 +167,7 @@ public final class DevSelfTest {
 
         // ---------------------------------------------------------------- editor
         STEPS.add(() -> {
-            PacketDistributor.sendToServer(new ClusterPayloads.Create(chapterId(), "NoPerm", List.of(D0)));
+            Net.sendToServer(new ClusterPayloads.Create(chapterId(), "NoPerm", List.of(D0)));
             return 20;
         });
         STEPS.add(() -> {
@@ -174,7 +177,7 @@ public final class DevSelfTest {
             server.execute(() -> {
                 ServerPlayer sp = server.getPlayerList().getPlayer(uuid);
                 server.getPlayerList().op(sp.getGameProfile());
-                ServerQuestFile.INSTANCE.getOrCreateTeamData(sp).setPlayerEditMode(sp, true);
+                Ftbq.setEditMode(ServerQuestFile.INSTANCE, sp, true);
             });
             return 40;
         });
@@ -223,13 +226,13 @@ public final class DevSelfTest {
                     "drag moves the box by (2,1): now " + c.x() + "," + c.y());
             double qx = ClientQuestFile.INSTANCE.getQuest(D1).getX();
             check(Math.abs(qx - (before[2] + 2)) < 1e-6, "drag moves member quests too: D1.x " + before[2] + " -> " + qx);
-            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
+            undo();
             return 20;
         });
         STEPS.add(() -> {
             check(Math.abs(cluster().x() - before[0]) < 1e-6 && Math.abs(ClientQuestFile.INSTANCE.getQuest(D1).getX() - before[2]) < 1e-6,
                     "one undo puts box and members back (box " + cluster().x() + ", D1 " + ClientQuestFile.INSTANCE.getQuest(D1).getX() + ")");
-            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.redo());
+            redo();
             return 20;
         });
         STEPS.add(() -> {
@@ -267,7 +270,7 @@ public final class DevSelfTest {
             check(Math.abs(c.x() - (before[0] + 2)) < 1e-6 && Math.abs(c.y() - (before[1] + 1)) < 1e-6,
                     "real mouse drag moves the box by (2,1): " + before[0] + "," + before[1] + " -> " + c.x() + "," + c.y());
             check(Math.abs(ClientQuestFile.INSTANCE.getQuest(D1).getX() - (before[2] + 2)) < 1e-6, "real mouse drag moves members");
-            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
+            undo();
             return 20;
         });
         STEPS.add(() -> {
@@ -283,7 +286,7 @@ public final class DevSelfTest {
             List<ContextMenuItem> objMenu = new ArrayList<>();
             ClusterEditor.addObjectMenuItems(objMenu, screen, ClientQuestFile.INSTANCE.getQuest(D0));
             check(objMenu.size() >= 2, "quest menu gets cluster entries (" + objMenu.size() + ")");
-            PacketDistributor.sendToServer(new ClusterPayloads.Create(chapterId(), "Second", List.of(D0)));
+            Net.sendToServer(new ClusterPayloads.Create(chapterId(), "Second", List.of(D0)));
             return 20;
         });
         STEPS.add(() -> {
@@ -316,20 +319,20 @@ public final class DevSelfTest {
             QuestCluster second = ClientClusters.store().clusterOfMember(D0).orElse(null);
             check(second != null && second.title().equals("Second"), "create cluster in edit mode");
             if (second != null) {
-                PacketDistributor.sendToServer(new ClusterPayloads.Update(second.withMembers(List.of(D0, D3))));
+                Net.sendToServer(new ClusterPayloads.Update(second.withMembers(List.of(D0, D3))));
             }
             return 20;
         });
         STEPS.add(() -> {
             QuestCluster second = ClientClusters.store().clusterOfMember(D3).orElse(null);
             check(second != null && second.members().size() == 2, "add member via update");
-            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withMembers(List.of(D1, D0))));
+            Net.sendToServer(new ClusterPayloads.Update(cluster().withMembers(List.of(D1, D0))));
             return 20;
         });
         STEPS.add(() -> {
             check(!cluster().members().contains(D0), "member already in another cluster is rejected");
             QuestCluster second = ClientClusters.store().clusterOfMember(D3).orElseThrow();
-            PacketDistributor.sendToServer(new ClusterPayloads.Dissolve(second.id()));
+            Net.sendToServer(new ClusterPayloads.Dissolve(second.id()));
             ClusterViewState.setExpanded(cluster(), true);
             return 20;
         });
@@ -362,7 +365,11 @@ public final class DevSelfTest {
             var panelAcc = (com.questclusters.mixin.client.QuestPanelAccessor) screen.questPanel;
             panelAcc.quest_clusters$setQuestX(-3);
             panelAcc.quest_clusters$setQuestY(5);
+            //? if neoforge {
             acc.quest_clusters$invokePaste(false, ClientQuestFile.INSTANCE.getChapter(chapterId()));
+            //?} else {
+            /*acc.quest_clusters$invokePaste(false);
+            *///?}
             return 40;
         });
         STEPS.add(() -> {
@@ -467,7 +474,7 @@ public final class DevSelfTest {
         STEPS.add(() -> {
             shot("qc_15_settlement");
             Minecraft.getInstance().screen.onClose();
-            PacketDistributor.sendToServer(new ClusterPayloads.RequestLeaderboard());
+            Net.sendToServer(new ClusterPayloads.RequestLeaderboard());
             return 20;
         });
         STEPS.add(() -> {
@@ -488,9 +495,11 @@ public final class DevSelfTest {
                     "settlement button in the quest book");
             return 10;
         });
+        // FTB Quests' own deletes can only be undone on 1.21.1 (1.20.1 has no history)
+        //? if neoforge {
         // ---------------------------------------------------------------- undo of "delete cluster and members"
         STEPS.add(() -> {
-            PacketDistributor.sendToServer(new ClusterPayloads.Create(chapterId(), "Temp", List.of(D3)));
+            Net.sendToServer(new ClusterPayloads.Create(chapterId(), "Temp", List.of(D3)));
             return 20;
         });
         STEPS.add(() -> {
@@ -498,14 +507,14 @@ public final class DevSelfTest {
             check(temp != null, "temp cluster created");
             if (temp != null) {
                 ClusterEditor.clusterMenu(screen, temp); // builds fine
-                dev.architectury.networking.NetworkManager.sendToServer(new dev.ftb.mods.ftbquests.net.DeleteObjectMessage(List.copyOf(temp.members())));
+                Ftbq.delete(List.copyOf(temp.members()));
             }
             return 30;
         });
         STEPS.add(() -> {
             check(ClientQuestFile.INSTANCE.getQuest(D3) == null && ClientClusters.store().clusterOfMember(D3).isEmpty(),
                     "delete with members removes quest and cluster");
-            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
+            undo();
             return 30;
         });
         STEPS.add(() -> {
@@ -514,6 +523,7 @@ public final class DevSelfTest {
             check(back != null && back.title().equals("Temp"), "undo also restores its cluster (" + back + ")");
             return 0;
         });
+        //?}
         STEPS.add(() -> {
             screen.questPanel.scrollTo(cluster().x(), cluster().y());
             ClusterViewState.setExpanded(cluster(), false);
@@ -535,14 +545,14 @@ public final class DevSelfTest {
             var inside = com.questclusters.compat.QuestEnhanceCompat.anchorsInside(ch, cluster().members());
             check(inside.contains(0xA1L), "anchor serving only cluster lines is detected: " + inside);
             before = new double[]{((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(0xA1L)).getX()};
-            PacketDistributor.sendToServer(new ClusterPayloads.Move(CLUSTER, 1, 0));
+            Net.sendToServer(new ClusterPayloads.Move(CLUSTER, 1, 0));
             return 25;
         });
         STEPS.add(() -> {
             if (!net.neoforged.fml.ModList.get().isLoaded("quest_enhance")) return 0;
             double ax = ((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(0xA1L)).getX();
             check(Math.abs(ax - (before[0] + 1)) < 1e-6, "anchor moves with the cluster: " + before[0] + " -> " + ax);
-            dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
+            undo();
             return 25;
         });
         STEPS.add(() -> {
@@ -572,7 +582,7 @@ public final class DevSelfTest {
         });
         // A2) background image
         STEPS.add(() -> {
-            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style()
+            Net.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style()
                     .withBackground("minecraft:block/oak_planks", com.questclusters.data.ClusterStyle.MODE_TILE, 4, true))));
             return 20;
         });
@@ -594,7 +604,7 @@ public final class DevSelfTest {
         });
         STEPS.add(() -> {
             shot("qc_12_background_tile");
-            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style()
+            Net.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style()
                     .withBackground("minecraft:textures/gui/sprites/widget/button.png", com.questclusters.data.ClusterStyle.MODE_NINE_SLICE, 3, true))));
             return 20;
         });
@@ -774,7 +784,7 @@ public final class DevSelfTest {
             check(gold.getString().equals("Gold") && hasColor(gold, net.minecraft.ChatFormatting.GOLD), "& colour codes are parsed");
             check(json.getString().equals("JSON") && hasColor(json, net.minecraft.ChatFormatting.RED), "JSON text is parsed");
             // 3) colours are stored and synced
-            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withStyle(
+            Net.sendToServer(new ClusterPayloads.Update(cluster().withStyle(
                     new com.questclusters.data.ClusterStyle(0xFF00FF00, 0xFFFF00FF, 0xFFFF0000, 0xFF123456))));
             return 20;
         });
@@ -785,8 +795,8 @@ public final class DevSelfTest {
             before = new double[]{cluster().x(), cluster().y()};
             var ch = ClientQuestFile.INSTANCE.getChapter(chapterId());
             for (long m : cluster().members()) {
-                var mv = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(m);
-                dev.architectury.networking.NetworkManager.sendToServer(new dev.ftb.mods.ftbquests.net.MoveMovableMessage(m, ch.id, mv.getX() + 1, mv.getY()));
+                var mv = Ftbq.movable(ClientQuestFile.INSTANCE, m);
+                Ftbq.requestMove(mv, ch.id, mv.getX() + 1, mv.getY());
             }
             return 40;
         });
@@ -794,13 +804,13 @@ public final class DevSelfTest {
             check(Math.abs(cluster().x() - (before[0] + 1)) < 1e-6 && Math.abs(cluster().y() - before[1]) < 1e-6,
                     "box follows when all members are moved with FTB Quests' move: " + before[0] + " -> " + cluster().x());
             // 4b) "box has its own position": the box and the members move independently
-            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style().withFreeBox(true))));
+            Net.sendToServer(new ClusterPayloads.Update(cluster().withStyle(cluster().style().withFreeBox(true))));
             return 20;
         });
         STEPS.add(() -> {
             check(cluster().style().freeBox(), "free box option saved and synced");
             before = new double[]{cluster().x(), cluster().y(), memberX(cluster().members().get(0))};
-            PacketDistributor.sendToServer(new ClusterPayloads.Move(cluster().id(), 1, 0, true)); // frame drag
+            Net.sendToServer(new ClusterPayloads.Move(cluster().id(), 1, 0, true)); // frame drag
             return 30;
         });
         STEPS.add(() -> {
@@ -808,20 +818,20 @@ public final class DevSelfTest {
                     "free box: moving the members leaves the box (box " + before[0] + " -> " + cluster().x() + ")");
             var ch = ClientQuestFile.INSTANCE.getChapter(chapterId());
             for (long m : cluster().members()) {
-                var mv = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(m);
-                dev.architectury.networking.NetworkManager.sendToServer(new dev.ftb.mods.ftbquests.net.MoveMovableMessage(m, ch.id, mv.getX() - 1, mv.getY()));
+                var mv = Ftbq.movable(ClientQuestFile.INSTANCE, m);
+                Ftbq.requestMove(mv, ch.id, mv.getX() - 1, mv.getY());
             }
             return 40;
         });
         STEPS.add(() -> {
             check(Math.abs(cluster().x() - before[0]) < 1e-6, "free box: FTB Quests' member move leaves the box too");
-            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withBoxPosition(cluster().x() + 2, cluster().y())));
+            Net.sendToServer(new ClusterPayloads.Update(cluster().withBoxPosition(cluster().x() + 2, cluster().y())));
             return 20;
         });
         STEPS.add(() -> {
             check(Math.abs(cluster().x() - (before[0] + 2)) < 1e-6 && Math.abs(memberX(cluster().members().get(0)) - before[2]) < 1e-6,
                     "free box: the box moves alone");
-            PacketDistributor.sendToServer(new ClusterPayloads.Update(cluster().withBoxPosition(before[0], before[1])
+            Net.sendToServer(new ClusterPayloads.Update(cluster().withBoxPosition(before[0], before[1])
                     .withStyle(cluster().style().withFreeBox(false))));
             return 20;
         });
@@ -887,6 +897,25 @@ public final class DevSelfTest {
         });
     }
 
+    /** Undo / redo the last edit: FTB Quests' history on 1.21.1, Quest Clusters' own list on 1.20.1. */
+    private static void undo() {
+        //? if neoforge {
+        dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
+        //?} else {
+        /*var server = Minecraft.getInstance().getSingleplayerServer();
+        server.execute(() -> com.questclusters.platform.History.undo(dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE));
+        *///?}
+    }
+
+    private static void redo() {
+        //? if neoforge {
+        dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.redo());
+        //?} else {
+        /*var server = Minecraft.getInstance().getSingleplayerServer();
+        server.execute(() -> com.questclusters.platform.History.redo(dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE));
+        *///?}
+    }
+
     private static boolean creatingWorld;
 
     @SubscribeEvent
@@ -897,8 +926,14 @@ public final class DevSelfTest {
     }
     private static volatile long frames;
 
+    //? if neoforge {
     @SubscribeEvent
     public static void countFrame(net.neoforged.neoforge.client.event.RenderFrameEvent.Post event) {
+    //?} else {
+    /*@SubscribeEvent
+    public static void countFrame(net.minecraftforge.event.TickEvent.RenderTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+    *///?}
         frames++;
     }
 
@@ -941,12 +976,22 @@ public final class DevSelfTest {
                         net.minecraft.world.Difficulty.PEACEFUL, false, new net.minecraft.world.level.GameRules(),
                         net.minecraft.world.level.WorldDataConfiguration.DEFAULT),
                 new net.minecraft.world.level.levelgen.WorldOptions(-6938601152623422702L, true, false),
+                //? if neoforge {
                 net.minecraft.world.level.levelgen.presets.WorldPresets::createNormalWorldDimensions,
                 new net.minecraft.client.gui.screens.TitleScreen()));
+                //?} else {
+                /*net.minecraft.world.level.levelgen.presets.WorldPresets::createNormalWorldDimensions));
+                *///?}
     }
 
+    //? if neoforge {
     @SubscribeEvent
     public static void tick(ClientTickEvent.Post event) {
+    //?} else {
+    /*@SubscribeEvent
+    public static void tick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+    *///?}
         if (PROP == null || step == Integer.MAX_VALUE) {
             return;
         }
@@ -1145,16 +1190,14 @@ public final class DevSelfTest {
         net.minecraft.client.gui.screens.Screen[] parent = new net.minecraft.client.gui.screens.Screen[1];
         return List.of(
                 () -> {
-                    var container = net.neoforged.fml.ModList.get().getModContainerById(modId).orElse(null);
-                    var factory = container == null ? null
-                            : container.getCustomExtension(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class).orElse(null);
+                    var factory = com.questclusters.platform.ModContext.configScreenOf(modId).orElse(null);
                     check(factory != null, modId + ": config button in the mods list");
                     List<String> missing = keys.get().stream().filter(k -> !net.minecraft.client.resources.language.I18n.exists(k)).toList();
                     check(missing.isEmpty(), modId + ": config labels translated" + (missing.isEmpty() ? "" : ", missing " + missing));
                     if (factory != null) {
                         parent[0] = new net.minecraft.client.gui.screens.Screen(net.minecraft.network.chat.Component.literal("parent")) {
                         };
-                        Minecraft.getInstance().setScreen(factory.createScreen(container, parent[0]));
+                        Minecraft.getInstance().setScreen(factory.apply(parent[0]));
                     }
                     return 20;
                 },

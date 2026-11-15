@@ -1,5 +1,7 @@
 package com.questclusters.server;
 
+import com.questclusters.platform.Ftbq;
+import com.questclusters.platform.Net;
 import com.questclusters.QuestClusters;
 import com.questclusters.data.ScoreCalc;
 import com.questclusters.data.ScoreEntry;
@@ -9,19 +11,16 @@ import com.questclusters.net.ClusterPayloads;
 import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
 import dev.ftb.mods.ftbquests.events.ObjectCompletedEvent;
-import dev.ftb.mods.ftbquests.integration.PermissionsHelper;
 import dev.ftb.mods.ftbquests.quest.BaseQuestFile;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
 import dev.ftb.mods.ftbquests.quest.TeamData;
-import dev.ftb.mods.ftbquests.quest.history.ChangeType;
-import dev.ftb.mods.ftbquests.quest.history.QuestBookEditEvent;
+import com.questclusters.platform.History;
 import dev.ftb.mods.ftbteams.api.FTBTeamsAPI;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.nio.file.Files;
@@ -121,7 +120,7 @@ public final class ServerScoring {
         PENDING_OPEN.entrySet().removeIf(e -> {
             if (e.getValue() > ticks) return false;
             ServerPlayer p = server.getPlayerList().getPlayer(e.getKey());
-            if (p != null) PacketDistributor.sendToPlayer(p, new ClusterPayloads.OpenSettlement());
+            if (p != null) Net.sendToPlayer(p, new ClusterPayloads.OpenSettlement());
             return true;
         });
     }
@@ -133,7 +132,7 @@ public final class ServerScoring {
     // ---------------------------------------------------------------- sync
 
     public static void sendTo(ServerPlayer player) {
-        PacketDistributor.sendToPlayer(player, new ClusterPayloads.ScoringSync(new LinkedHashMap<>(ENTRIES), settings));
+        Net.sendToPlayer(player, new ClusterPayloads.ScoringSync(new LinkedHashMap<>(ENTRIES), settings));
     }
 
     static void broadcast() {
@@ -144,8 +143,8 @@ public final class ServerScoring {
     // ---------------------------------------------------------------- edits (undoable)
 
     public static void handleSetEntry(ServerPlayer player, long questId, ScoreEntry entry) {
-        ServerQuestFile.getInstance().ifPresent(file -> {
-            if (!PermissionsHelper.canPlayerEdit(player)) {
+        Ftbq.server().ifPresent(file -> {
+            if (!Ftbq.canEdit(player)) {
                 player.displayClientMessage(Component.translatable("quest_clusters.error.no_permission").withStyle(ChatFormatting.RED), false);
                 return;
             }
@@ -155,20 +154,20 @@ public final class ServerScoring {
             ScoreEntry before = ENTRIES.get(questId);
             ScoreEntry after = entry.isEmpty() ? null : entry;
             if (!java.util.Objects.equals(before, after)) {
-                file.getHistoryStack().addAndApply(file, new EntryChange(questId, before, after));
+                History.record(file, new EntryChange(questId, before, after));
             }
         });
     }
 
     public static void handleSetSettings(ServerPlayer player, SettlementSettings s) {
-        ServerQuestFile.getInstance().ifPresent(file -> {
-            if (!PermissionsHelper.canPlayerEdit(player)) {
+        Ftbq.server().ifPresent(file -> {
+            if (!Ftbq.canEdit(player)) {
                 player.displayClientMessage(Component.translatable("quest_clusters.error.no_permission").withStyle(ChatFormatting.RED), false);
                 return;
             }
             if (s.intro().size() > SettlementSettings.MAX_LINES || s.outro().size() > SettlementSettings.MAX_LINES) return;
             if (!s.equals(settings)) {
-                file.getHistoryStack().addAndApply(file, new SettingsChange(settings, s));
+                History.record(file, new SettingsChange(settings, s));
             }
         });
     }
@@ -178,11 +177,16 @@ public final class ServerScoring {
         if (e == null || e.isEmpty()) ENTRIES.remove(questId);
         else ENTRIES.put(questId, e);
         dirty = true;
-        ServerQuestFile.getInstance().ifPresent(ServerQuestFile::markDirty);
+        Ftbq.server().ifPresent(ServerQuestFile::markDirty);
         broadcast();
     }
 
-    record EntryChange(long questId, ScoreEntry before, ScoreEntry after) implements QuestBookEditEvent {
+    private static Component questTitle(BaseQuestFile file, long id) {
+        var o = file.getBase(id);
+        return o != null ? History.logText(o.getTitle()) : Component.literal(com.questclusters.data.QuestCluster.idToString(id));
+    }
+
+    record EntryChange(long questId, ScoreEntry before, ScoreEntry after) implements History.Change {
         @Override
         public boolean apply(ServerQuestFile file) {
             setEntry(questId, after);
@@ -196,12 +200,12 @@ public final class ServerScoring {
         }
 
         @Override
-        public List<Component> description(BaseQuestFile file, ChangeType type) {
-            return List.of(Component.translatable("quest_clusters.event.score", getTitle(file, questId)));
+        public List<Component> description(BaseQuestFile file) {
+            return List.of(Component.translatable("quest_clusters.event.score", questTitle(file, questId)));
         }
     }
 
-    record SettingsChange(SettlementSettings before, SettlementSettings after) implements QuestBookEditEvent {
+    record SettingsChange(SettlementSettings before, SettlementSettings after) implements History.Change {
         @Override
         public boolean apply(ServerQuestFile file) {
             set(after);
@@ -217,12 +221,12 @@ public final class ServerScoring {
         private static void set(SettlementSettings s) {
             settings = s;
             dirty = true;
-            ServerQuestFile.getInstance().ifPresent(ServerQuestFile::markDirty);
+            Ftbq.server().ifPresent(ServerQuestFile::markDirty);
             broadcast();
         }
 
         @Override
-        public List<Component> description(BaseQuestFile file, ChangeType type) {
+        public List<Component> description(BaseQuestFile file) {
             return List.of(Component.translatable("quest_clusters.event.settlement"));
         }
     }
@@ -276,10 +280,10 @@ public final class ServerScoring {
 
     public static void handleLeaderboard(ServerPlayer player) {
         if (!settings.leaderboard()) return;
-        ServerQuestFile.getInstance().ifPresent(file -> {
+        Ftbq.server().ifPresent(file -> {
             UUID team = file.getOrCreateTeamData(player).getTeamId();
             List<ScoreCalc.Row> rows = leaderboard(file, team);
-            PacketDistributor.sendToPlayer(player, new ClusterPayloads.Leaderboard(rows.size() > 200 ? rows.subList(0, 200) : rows));
+            Net.sendToPlayer(player, new ClusterPayloads.Leaderboard(rows.size() > 200 ? rows.subList(0, 200) : rows));
         });
     }
 }

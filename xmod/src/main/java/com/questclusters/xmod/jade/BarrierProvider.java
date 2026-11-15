@@ -1,5 +1,6 @@
 package com.questclusters.xmod.jade;
 
+import com.questclusters.platform.Rl;
 import dev.ftb.mods.ftbquests.block.entity.BaseBarrierBlockEntity;
 import dev.ftb.mods.ftbquests.block.entity.QuestBarrierBlockEntity;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
@@ -17,7 +18,7 @@ import snownee.jade.api.ui.IElementHelper;
 
 final class BarrierProvider implements IBlockComponentProvider {
     /** Same id as FTB XMod Compat's, so the Jade config toggle carries over. */
-    private static final ResourceLocation UID = ResourceLocation.fromNamespaceAndPath("ftbquests", "barrier");
+    private static final ResourceLocation UID = Rl.of("ftbquests", "barrier");
 
     @Override
     public ResourceLocation getUid() {

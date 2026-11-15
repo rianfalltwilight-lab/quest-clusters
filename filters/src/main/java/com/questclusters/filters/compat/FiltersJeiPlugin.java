@@ -1,5 +1,6 @@
 package com.questclusters.filters.compat;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.filters.client.screen.FuelScreen;
 import com.questclusters.filters.client.screen.ItemListScreen;
 import com.questclusters.filters.client.screen.TagListScreen;
@@ -24,7 +25,7 @@ import java.util.List;
 public class FiltersJeiPlugin implements IModPlugin {
     @Override
     public ResourceLocation getPluginUid() {
-        return ResourceLocation.fromNamespaceAndPath("quest_clusters_filters", "jei");
+        return Rl.of("quest_clusters_filters", "jei");
     }
 
     @Override

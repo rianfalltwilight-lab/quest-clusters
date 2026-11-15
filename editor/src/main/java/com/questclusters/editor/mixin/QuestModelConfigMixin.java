@@ -1,5 +1,6 @@
 package com.questclusters.editor.mixin;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.editor.EntityModels;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
@@ -35,7 +36,7 @@ public abstract class QuestModelConfigMixin {
             if (v.isEmpty()) {
                 if (now != null) self.setRawIcon(ItemStack.EMPTY);
             } else if (now == null || !now.toString().equals(v)) {
-                self.setRawIcon(EntityModels.iconFor(ResourceLocation.parse(v)));
+                self.setRawIcon(EntityModels.iconFor(Rl.parse(v)));
             }
         }, names).setOrder(-125);
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient() && net.neoforged.fml.ModList.get().isLoaded("watermedia")) {

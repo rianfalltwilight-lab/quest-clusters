@@ -1,5 +1,7 @@
 package com.questclusters.editor.compat.kubejs;
 
+import com.questclusters.platform.Ftbq;
+import com.questclusters.platform.Rl;
 import com.mojang.datafixers.util.Either;
 import com.questclusters.editor.data.CanvasElement;
 import com.questclusters.editor.data.DescriptionTable;
@@ -69,11 +71,11 @@ public final class QuestUtils {
     // ------------------------------------------------------------------ plumbing
 
     static ServerQuestFile server() {
-        return ServerQuestFile.getInstance().orElseThrow(() -> new IllegalStateException("No quest book loaded on the server"));
+        return Ftbq.server().orElseThrow(() -> new IllegalStateException("No quest book loaded on the server"));
     }
 
     static BaseQuestFile file() {
-        var s = ServerQuestFile.getInstance();
+        var s = Ftbq.server();
         if (s.isPresent()) return s.get();
         return dev.ftb.mods.ftbquests.api.FTBQuestsAPI.api().getQuestFile(true);
     }
@@ -380,7 +382,7 @@ public final class QuestUtils {
     }
 
     public static String descriptionFont(String text, String font) {
-        return json(Component.literal(text).withStyle(Style.EMPTY.withFont(ResourceLocation.parse(font))));
+        return json(Component.literal(text).withStyle(Style.EMPTY.withFont(Rl.parse(font))));
     }
 
     public static String descriptionTranslation(String key, String fallback) {
@@ -516,7 +518,7 @@ public final class QuestUtils {
     }
 
     static ResourceLocation typeId(String type) {
-        return type.contains(":") ? ResourceLocation.parse(type) : ResourceLocation.fromNamespaceAndPath("ftbquests", type);
+        return type.contains(":") ? Rl.parse(type) : Rl.of("ftbquests", type);
     }
 
     public static String createTask(Object questId, String type) {

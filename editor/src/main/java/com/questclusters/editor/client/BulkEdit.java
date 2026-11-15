@@ -1,5 +1,6 @@
 package com.questclusters.editor.client;
 
+import com.questclusters.platform.Ftbq;
 import dev.architectury.networking.NetworkManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.ui.EditConfigScreen;
@@ -8,7 +9,6 @@ import dev.ftb.mods.ftbquests.api.FTBQuestsAPI;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
 import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
 import dev.ftb.mods.ftbquests.net.CreateObjectMessage;
-import dev.ftb.mods.ftbquests.net.EditObjectMessage;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import dev.ftb.mods.ftbquests.quest.QuestObjectBase;
 import dev.ftb.mods.ftbquests.quest.task.Task;
@@ -44,7 +44,7 @@ public final class BulkEdit {
             for (String k : after.getAllKeys()) if (!Objects.equals(after.get(k), before.get(k))) changed.add(k);
             for (String k : before.getAllKeys()) if (!after.contains(k)) changed.add(k);
             changed.removeAll(List.of("id", "x", "y"));
-            EditObjectMessage.sendToServer(first);
+            Ftbq.sendEdit(first);
             for (Quest q : quests.subList(1, quests.size())) {
                 CompoundTag t = new CompoundTag();
                 q.writeData(t, lookup);
@@ -55,7 +55,7 @@ public final class BulkEdit {
                 }
                 q.readData(t, lookup);
                 q.clearCachedData();
-                EditObjectMessage.sendToServer(q);
+                Ftbq.sendEdit(q);
             }
         });
         first.fillConfigGroup(first.createSubGroup(group));

@@ -1,5 +1,6 @@
 package com.questclusters.editor.client.desc;
 
+import com.questclusters.platform.Net;
 import com.questclusters.editor.PersistentData;
 import com.questclusters.editor.net.EditorNetwork;
 import net.minecraft.client.Minecraft;
@@ -7,7 +8,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +27,7 @@ public final class ClientPersistentData {
         long now = System.currentTimeMillis();
         if (keys.isEmpty() || now - lastRequest < 1000L || Minecraft.getInstance().getConnection() == null) return;
         lastRequest = now;
-        PacketDistributor.sendToServer(new EditorNetwork.PersistentRequest(List.copyOf(keys).subList(0, Math.min(64, keys.size()))));
+        Net.sendToServer(new EditorNetwork.PersistentRequest(List.copyOf(keys).subList(0, Math.min(64, keys.size()))));
     }
 
     public static void receive(List<String> keys, CompoundTag forge, CompoundTag kube) {

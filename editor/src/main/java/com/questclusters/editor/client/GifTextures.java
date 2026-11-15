@@ -1,5 +1,6 @@
 package com.questclusters.editor.client;
 
+import com.questclusters.platform.Rl;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.questclusters.editor.QuestClustersEditor;
@@ -141,7 +142,7 @@ public final class GifTextures {
                 sh = first.getHeight();
             }
             if (sw > 2048 || sh > 2048 || n > 1000) throw new IllegalArgumentException("GIF too large");
-            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(QuestClustersEditor.MOD_ID,
+            ResourceLocation id = Rl.of(QuestClustersEditor.MOD_ID,
                     "dynamic_gif/" + UUID.nameUUIDFromBytes(gif.toString().getBytes()));
             DynamicTexture tex = new DynamicTexture(sw, sh, true);
             Minecraft.getInstance().getTextureManager().register(id, tex);

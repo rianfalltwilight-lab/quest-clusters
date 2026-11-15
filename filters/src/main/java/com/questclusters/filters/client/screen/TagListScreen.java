@@ -1,5 +1,6 @@
 package com.questclusters.filters.client.screen;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.filters.filter.ListArgs;
 import com.questclusters.filters.filter.TagListFilter;
 import dev.ftb.mods.ftbfiltersystem.api.client.gui.AbstractFilterScreen;
@@ -150,7 +151,7 @@ public class TagListScreen<F extends TagListFilter> extends FilterScreenBase<F> 
         }
         if (typed != null && q.contains(":") && reverse.isEmpty() && filtered.stream().noneMatch(t -> t.id().toString().equals(typed))
                 && allTags.stream().noneMatch(t -> t.id().toString().equals(typed))) {
-            filtered.addFirst(new TagInfo(ResourceLocation.parse(typed), 0, List.of(), false));
+            filtered.addFirst(new TagInfo(Rl.parse(typed), 0, List.of(), false));
         }
         shown = filtered;
         scroll = Math.max(0, Math.min(scroll, shown.size() - rows));
@@ -221,7 +222,7 @@ public class TagListScreen<F extends TagListFilter> extends FilterScreenBase<F> 
         for (String p : parts) {
             String t = ListArgs.normaliseTag(p);
             if (t == null) continue;
-            ResourceLocation id = ResourceLocation.parse(t);
+            ResourceLocation id = Rl.parse(t);
             if (checked.contains(id)) continue;
             if (checked.size() >= TagListFilter.MAX_TAGS) break;
             checked.add(id);

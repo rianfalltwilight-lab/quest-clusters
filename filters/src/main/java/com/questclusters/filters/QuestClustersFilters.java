@@ -1,5 +1,6 @@
 package com.questclusters.filters;
 
+import com.questclusters.platform.Rl;
 import dev.ftb.mods.ftbfiltersystem.api.event.FilterRegistrationEvent;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -30,7 +31,7 @@ public final class QuestClustersFilters {
      * has the module (otherwise the client could not open these filters, or edits would be dropped by the server).
      */
     public record Presence() implements CustomPacketPayload {
-        public static final Type<Presence> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(MOD_ID, "presence"));
+        public static final Type<Presence> TYPE = new Type<>(Rl.of(MOD_ID, "presence"));
         public static final StreamCodec<ByteBuf, Presence> CODEC = StreamCodec.unit(new Presence());
 
         @Override

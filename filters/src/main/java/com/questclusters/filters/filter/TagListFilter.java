@@ -1,5 +1,6 @@
 package com.questclusters.filters.filter;
 
+import com.questclusters.platform.Rl;
 import dev.ftb.mods.ftbfiltersystem.api.FilterException;
 import dev.ftb.mods.ftbfiltersystem.api.filter.AbstractSmartFilter;
 import dev.ftb.mods.ftbfiltersystem.api.filter.SmartFilter;
@@ -49,7 +50,7 @@ public abstract class TagListFilter extends AbstractSmartFilter {
         for (String part : ListArgs.split(arg)) {
             String t = ListArgs.normaliseTag(part);
             if (t == null) throw new FilterException("invalid tag: " + part);
-            ResourceLocation rl = ResourceLocation.parse(t);
+            ResourceLocation rl = Rl.parse(t);
             if (!out.contains(rl)) out.add(rl);
         }
         return out;

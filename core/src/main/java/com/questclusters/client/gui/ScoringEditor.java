@@ -1,5 +1,6 @@
 package com.questclusters.client.gui;
 
+import com.questclusters.platform.Net;
 import com.questclusters.client.ClientScoring;
 import com.questclusters.data.ScoreEntry;
 import com.questclusters.data.SettlementSettings;
@@ -13,7 +14,6 @@ import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
 import dev.ftb.mods.ftbquests.quest.Movable;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,7 @@ public final class ScoringEditor {
         ScoreEntry[] e = {ClientScoring.entry(q.id)};
         ConfigGroup g = new ConfigGroup("quest_clusters.scoring", accepted -> {
             screen.openGui();
-            if (accepted) PacketDistributor.sendToServer(new ClusterPayloads.SetScore(q.id, e[0]));
+            if (accepted) Net.sendToServer(new ClusterPayloads.SetScore(q.id, e[0]));
         });
         g.addInt("score", e[0].score(), v -> e[0] = new ScoreEntry(v, e[0].node(), e[0].opensSettlement()), 0,
                 -ScoreEntry.MAX_SCORE, ScoreEntry.MAX_SCORE).setOrder(0);
@@ -60,7 +60,7 @@ public final class ScoringEditor {
             if (accepted) {
                 for (Quest q : quests) {
                     ScoreEntry old = ClientScoring.entry(q.id);
-                    PacketDistributor.sendToServer(new ClusterPayloads.SetScore(q.id, new ScoreEntry(score[0], old.node(), old.opensSettlement())));
+                    Net.sendToServer(new ClusterPayloads.SetScore(q.id, new ScoreEntry(score[0], old.node(), old.opensSettlement())));
                 }
             }
         });
@@ -76,7 +76,7 @@ public final class ScoringEditor {
         ConfigGroup g = new ConfigGroup("quest_clusters.settlement", accepted -> {
             screen.openGui();
             if (accepted) {
-                PacketDistributor.sendToServer(new ClusterPayloads.SetSettlement(new SettlementSettings(title[0], intro, outro,
+                Net.sendToServer(new ClusterPayloads.SetSettlement(new SettlementSettings(title[0], intro, outro,
                         SettlementSettings.parseRanks(ranks), flags[0], flags[1])));
             }
         });

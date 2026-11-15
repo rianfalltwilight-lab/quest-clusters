@@ -1,5 +1,6 @@
 package com.questclusters.client.gui;
 
+import com.questclusters.platform.Rl;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -85,7 +86,7 @@ final class ClusterRender {
     }
 
     private static final net.minecraft.resources.ResourceLocation DEFAULT_LINE_TEXTURE =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("ftbquests", "textures/gui/dependency.png");
+            Rl.of("ftbquests", "textures/gui/dependency.png");
 
     /**
      * Dependency line drawn like FTB Quests' own: the chapter theme's line texture scrolling along the line,
@@ -118,13 +119,13 @@ final class ClusterRender {
         org.joml.Matrix4f m = ps.last().pose();
         float l = (float) len;
         float repeats = l / (half * 2F); // texture is square: one tile per line-width
-        var buf = com.mojang.blaze3d.vertex.Tesselator.getInstance().begin(
-                com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS, com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX_COLOR);
-        buf.addVertex(m, 0, -half, 0).setUv(repeats + scroll, 0).setColor(startColor);
-        buf.addVertex(m, 0, half, 0).setUv(repeats + scroll, 1).setColor(startColor);
-        buf.addVertex(m, l, half, 0).setUv(scroll, 1).setColor(endColor);
-        buf.addVertex(m, l, -half, 0).setUv(scroll, 0).setColor(endColor);
-        com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(buf.buildOrThrow());
+        com.questclusters.platform.Quads.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                        com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX_COLOR)
+                .vertex(m, 0, -half, 0).uv(repeats + scroll, 0).color(startColor).next()
+                .vertex(m, 0, half, 0).uv(repeats + scroll, 1).color(startColor).next()
+                .vertex(m, l, half, 0).uv(scroll, 1).color(endColor).next()
+                .vertex(m, l, -half, 0).uv(scroll, 0).color(endColor).next()
+                .draw();
         ps.popPose();
     }
 

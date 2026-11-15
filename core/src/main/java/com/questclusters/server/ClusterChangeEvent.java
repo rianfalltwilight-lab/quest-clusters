@@ -3,8 +3,7 @@ package com.questclusters.server;
 import com.questclusters.data.QuestCluster;
 import dev.ftb.mods.ftbquests.quest.BaseQuestFile;
 import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
-import dev.ftb.mods.ftbquests.quest.history.ChangeType;
-import dev.ftb.mods.ftbquests.quest.history.QuestBookEditEvent;
+import com.questclusters.platform.History;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.List;
  * @param before state before the change, or null if the change created the cluster
  * @param after  state after the change, or null if the change removed the cluster
  */
-public record ClusterChangeEvent(QuestCluster before, QuestCluster after) implements QuestBookEditEvent {
+public record ClusterChangeEvent(QuestCluster before, QuestCluster after) implements History.Change {
     @Override
     public boolean apply(ServerQuestFile file) {
         ServerClusters.setRaw(file, before != null ? before.id() : after.id(), after);
@@ -30,12 +29,12 @@ public record ClusterChangeEvent(QuestCluster before, QuestCluster after) implem
     }
 
     @Override
-    public List<Component> description(BaseQuestFile file, ChangeType changeType) {
+    public List<Component> description(BaseQuestFile file) {
         String key = before == null ? "create" : after == null ? "dissolve"
                 : before.members().equals(after.members()) ? (before.x() != after.x() || before.y() != after.y() ? "move" : "edit")
                 : "members";
         QuestCluster shown = after != null ? after : before;
         return List.of(Component.translatable("quest_clusters.event." + key,
-                QuestBookEditEvent.sanitizeComponent(com.questclusters.client.gui.ClusterText.text(shown.title()))));
+                History.logText(com.questclusters.client.gui.ClusterText.text(shown.title()))));
     }
 }

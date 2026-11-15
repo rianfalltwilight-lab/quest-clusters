@@ -1,5 +1,7 @@
 package com.questclusters.editor.client;
 
+import com.questclusters.platform.Ftbq;
+import com.questclusters.platform.Rl;
 import com.questclusters.editor.data.CanvasElement;
 import com.questclusters.mixin.client.QuestScreenAccessor;
 import dev.architectury.networking.NetworkManager;
@@ -13,7 +15,6 @@ import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
 import dev.ftb.mods.ftbquests.net.CopyChapterImageMessage;
 import dev.ftb.mods.ftbquests.net.CopyQuestMessage;
 import dev.ftb.mods.ftbquests.net.CreateObjectMessage;
-import dev.ftb.mods.ftbquests.net.EditObjectMessage;
 import dev.ftb.mods.ftbquests.quest.Chapter;
 import dev.ftb.mods.ftbquests.quest.ChapterImage;
 import dev.ftb.mods.ftbquests.quest.Movable;
@@ -73,7 +74,7 @@ public final class CanvasEdit {
     /** Sized to fit the text at the current zoom, like a typed label. */
     public static void createText(QuestScreen screen, Chapter chapter, double x, double y, CanvasElement.Text t) {
         var font = Minecraft.getInstance().font;
-        Component c = Component.literal(t.text()).withStyle(Style.EMPTY.withFont(ResourceLocation.parse(t.font())));
+        Component c = Component.literal(t.text()).withStyle(Style.EMPTY.withFont(Rl.parse(t.font())));
         double bs = Math.max(1, screen.getQuestButtonSize());
         create(chapter, x, y, Math.max(0.25, (font.width(c) + 2) / bs), Math.max(0.25, (font.lineHeight + 2) / bs), "", t.encode());
     }
@@ -96,7 +97,7 @@ public final class CanvasEdit {
         img.writeData(t, ClientQuestFile.INSTANCE.holderLookup());
         t.putString("click_action", "none:" + payload);
         img.readData(t, ClientQuestFile.INSTANCE.holderLookup());
-        EditObjectMessage.sendToServer(img);
+        Ftbq.sendEdit(img);
     }
 
     private static void openTextEditor(QuestScreen screen, CanvasElement.Text start, java.util.function.Consumer<CanvasElement.Text> done) {

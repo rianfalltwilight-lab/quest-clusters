@@ -1,5 +1,6 @@
 package com.questclusters.client.gui;
 
+import com.questclusters.platform.Net;
 import com.questclusters.client.ClientScoring;
 import com.questclusters.net.ClusterPayloads;
 import dev.ftb.mods.ftblibrary.icon.Icons;
@@ -10,7 +11,6 @@ import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
 import dev.ftb.mods.ftbquests.client.gui.quests.TabButton;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Buttons in the quest book's top-right column. */
 public final class ScoringButtons {
@@ -66,7 +66,7 @@ public final class ScoringButtons {
         @Override
         public void onClicked(MouseButton button) {
             playClickSound();
-            PacketDistributor.sendToServer(new ClusterPayloads.RequestLeaderboard());
+            Net.sendToServer(new ClusterPayloads.RequestLeaderboard());
         }
     }
 }

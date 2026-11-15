@@ -1,5 +1,7 @@
 package com.questclusters.api;
 
+import com.questclusters.platform.Ftbq;
+import com.questclusters.platform.Net;
 import com.questclusters.QuestClusters;
 import com.questclusters.client.ClientClusters;
 import com.questclusters.data.ClusterStore;
@@ -107,7 +109,7 @@ public final class QuestClustersAPI {
     }
 
     public static void openSettlement(net.minecraft.server.level.ServerPlayer player) {
-        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.questclusters.net.ClusterPayloads.OpenSettlement());
+        Net.sendToPlayer(player, new com.questclusters.net.ClusterPayloads.OpenSettlement());
     }
 
     // ------------------------------------------------------------------ helpers
@@ -134,11 +136,11 @@ public final class QuestClustersAPI {
 
     private static ServerQuestFile serverFile(String what) {
         var server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null || !server.isSameThread() || ServerQuestFile.getInstance().isEmpty()) {
+        if (server == null || !server.isSameThread() || Ftbq.server().isEmpty()) {
             QuestClusters.LOGGER.warn("QuestClusters.{} must be called on the server thread", what);
             return null;
         }
-        return ServerQuestFile.getInstance().get();
+        return Ftbq.server().get();
     }
 
     private static ClusterStore store() {

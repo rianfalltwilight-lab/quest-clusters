@@ -7,7 +7,11 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 
 /** Client events on the mod bus (NeoForge routes them here by event type). */
+//? if neoforge {
 @EventBusSubscriber(modid = QuestClusters.MOD_ID, value = Dist.CLIENT)
+//?} else {
+/*@EventBusSubscriber(modid = QuestClusters.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+*///?}
 public final class ClientModEvents {
     private ClientModEvents() {
     }

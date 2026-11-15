@@ -1,5 +1,6 @@
 package com.questclusters.editor.client.gui;
 
+import com.questclusters.platform.Rl;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -43,8 +44,8 @@ public final class DecorativeLinesWidget extends Widget {
      * The line texture, repeated along the line and tinted with the colours above. Resource packs made for Quest
      * Enhance replace {@link #QE_TEXTURE}; if none does, ours is used (and can be replaced the same way).
      */
-    public static final ResourceLocation QE_TEXTURE = ResourceLocation.fromNamespaceAndPath("quest_enhance", "textures/gui/decorative_line.png");
-    public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("quest_clusters_editor", "textures/gui/decorative_line.png");
+    public static final ResourceLocation QE_TEXTURE = Rl.of("quest_enhance", "textures/gui/decorative_line.png");
+    public static final ResourceLocation TEXTURE = Rl.of("quest_clusters_editor", "textures/gui/decorative_line.png");
     private static ResourceLocation texture;
 
     /** The texture in use; looked up again after a resource reload. */

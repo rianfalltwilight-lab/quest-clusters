@@ -59,7 +59,7 @@ public final class QuestEnhanceCompat {
         }
         java.util.Map<String, Long> anchorIds = new java.util.HashMap<>();
         for (dev.ftb.mods.ftbquests.quest.ChapterImage img : chapter.getImages()) {
-            p.anchorKey(img).ifPresent(k -> anchorIds.put(k, img.id));
+            p.anchorKey(img).ifPresent(k -> anchorIds.put(k, com.questclusters.platform.Ftbq.id(img)));
         }
         if (anchorIds.isEmpty()) {
             return result;

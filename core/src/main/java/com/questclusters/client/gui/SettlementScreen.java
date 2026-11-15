@@ -186,8 +186,13 @@ public class SettlementScreen extends Screen {
         return true;
     }
 
+    //? if neoforge {
     @Override
     public boolean mouseScrolled(double x, double y, double dx, double dy) {
+    //?} else {
+    /*@Override
+    public boolean mouseScrolled(double x, double y, double dy) {
+    *///?}
         scroll = Math.max(-height * 0.6F, Math.min(contentHeight, scroll - (float) dy * 20F));
         return true;
     }

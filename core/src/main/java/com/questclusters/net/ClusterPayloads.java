@@ -1,5 +1,6 @@
 package com.questclusters.net;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.QuestClusters;
 import com.questclusters.data.ClusterCodecs;
 import com.questclusters.data.QuestCluster;
@@ -17,7 +18,7 @@ public final class ClusterPayloads {
     }
 
     private static <T extends CustomPacketPayload> CustomPacketPayload.Type<T> newType(String path) {
-        return new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(QuestClusters.MOD_ID, path));
+        return new CustomPacketPayload.Type<>(Rl.of(QuestClusters.MOD_ID, path));
     }
 
     // ------------------------------------------------------------------ S2C

@@ -54,8 +54,13 @@ public class LeaderboardScreen extends Screen {
         if (rows.isEmpty()) g.drawCenteredString(font, Component.translatable("quest_clusters.leaderboard.empty"), width / 2, y + 10, 0xFF888888);
     }
 
+    //? if neoforge {
     @Override
     public boolean mouseScrolled(double x, double y, double dx, double dy) {
+    //?} else {
+    /*@Override
+    public boolean mouseScrolled(double x, double y, double dy) {
+    *///?}
         scroll = Math.max(0, Math.min(Math.max(0, rows.size() - 5), scroll - (int) Math.signum(dy)));
         return true;
     }

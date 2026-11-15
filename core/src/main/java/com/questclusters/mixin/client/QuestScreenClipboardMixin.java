@@ -22,8 +22,14 @@ public abstract class QuestScreenClipboardMixin {
         ClusterClipboard.onCopy(List.copyOf(acc.quest_clusters$getSelectedObjects()), acc.quest_clusters$getSelectedChapter());
     }
 
+    //? if neoforge {
     @Inject(method = "pasteSelectedQuest", at = @At("HEAD"))
     private void quest_clusters$rebuildClusters(boolean withDeps, Chapter chapter, CallbackInfoReturnable<Boolean> cir) {
+    //?} else {
+    /*@Inject(method = "pasteSelectedQuest", at = @At("HEAD"))
+    private void quest_clusters$rebuildClusters(boolean withDeps, CallbackInfoReturnable<Boolean> cir) {
+        Chapter chapter = ((QuestScreenAccessor) this).quest_clusters$getSelectedChapter();
+    *///?}
         var xy = ((QuestScreenAccessor) this).quest_clusters$invokeGetSnappedXY();
         ClusterClipboard.onPaste(chapter, xy.getFirst(), xy.getSecond());
     }

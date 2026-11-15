@@ -1,5 +1,6 @@
 package com.questclusters.xmod.rei;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.xmod.recipe.CrateRecipe;
 import com.questclusters.xmod.recipe.RecipeIndex;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
@@ -24,7 +25,7 @@ import java.util.List;
 
 /** The two REI categories; same layout as the JEI ones. */
 final class ReiCategories {
-    private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath("ftbquests", "textures/gui/jei/quest.png");
+    private static final ResourceLocation BACKGROUND = Rl.of("ftbquests", "textures/gui/jei/quest.png");
 
     private ReiCategories() {
     }

@@ -1,5 +1,6 @@
 package com.questclusters.visuals.client;
 
+import com.questclusters.platform.Rl;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.questclusters.visuals.QuestClustersVisuals;
@@ -72,7 +73,7 @@ public final class ApngTextures {
                         }
                     }
                 }
-                ResourceLocation id = ResourceLocation.fromNamespaceAndPath(QuestClustersVisuals.MOD_ID,
+                ResourceLocation id = Rl.of(QuestClustersVisuals.MOD_ID,
                         "apng/" + Integer.toHexString(rl.hashCode()) + "/" + n);
                 Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(copy(canvas)));
                 ids.add(id);

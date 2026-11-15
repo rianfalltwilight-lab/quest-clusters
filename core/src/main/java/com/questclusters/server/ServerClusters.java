@@ -1,5 +1,6 @@
 package com.questclusters.server;
 
+import com.questclusters.platform.Ftbq;
 import com.questclusters.QuestClusters;
 import com.questclusters.data.ClusterPruner;
 import com.questclusters.data.ClusterStore;
@@ -7,7 +8,6 @@ import com.questclusters.data.ClusterValidator;
 import com.questclusters.data.QuestCluster;
 import com.questclusters.data.ValidationError;
 import com.questclusters.net.ClusterNetwork;
-import dev.ftb.mods.ftbquests.integration.PermissionsHelper;
 import dev.ftb.mods.ftbquests.quest.Movable;
 import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
 import net.minecraft.ChatFormatting;
@@ -111,13 +111,13 @@ public final class ServerClusters {
         MinecraftServer srv = ServerLifecycleHooks.getCurrentServer();
         if (srv != null) {
             ServerScoring.tick(srv);
-            ServerQuestFile.getInstance().filter(f -> !f.isLoading()).ifPresent(com.questclusters.api.QuestBookHooks::fireTick);
+            Ftbq.server().filter(f -> !f.isLoading()).ifPresent(com.questclusters.api.QuestBookHooks::fireTick);
         }
         if (++tickCounter % 20 == 0) {
             pruneRequested = true;
         }
         if (pruneRequested) {
-            ServerQuestFile.getInstance().filter(f -> !f.isLoading()).ifPresent(ServerClusters::runPrune);
+            Ftbq.server().filter(f -> !f.isLoading()).ifPresent(ServerClusters::runPrune);
         }
     }
 
@@ -234,7 +234,7 @@ public final class ServerClusters {
                 reject(player, new ValidationError("no_cluster"));
                 return;
             }
-            file.getHistoryStack().addAndApply(file, new ClusterChangeEvent(current.get(), null));
+            com.questclusters.platform.History.record(file, new ClusterChangeEvent(current.get(), null));
         });
     }
 
@@ -254,18 +254,18 @@ public final class ServerClusters {
                 reject(player, err.orElse(new ValidationError("no_chapter", QuestCluster.idToString(c.chapterId()))));
                 return;
             }
-            List<dev.ftb.mods.ftbquests.quest.history.QuestBookEditEvent> events = new ArrayList<>();
+            List<com.questclusters.platform.History.Change> events = new ArrayList<>();
             for (long id : c.members()) {
-                if (file.getBase(id) instanceof Movable m && !m.isPositionLocked()) {
-                    dev.ftb.mods.ftbquests.quest.history.events.MoveMovableObject
-                            .create(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
+                if (file.getBase(id) instanceof Movable m && !com.questclusters.platform.History.locked(m)) {
+                    com.questclusters.platform.History
+                            .move(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
                 }
             }
             // Quest Enhance anchor points that only serve lines inside the cluster move with it
             for (long imageId : com.questclusters.compat.QuestEnhanceCompat.anchorsInside(chapter, c.members())) {
-                if (!c.members().contains(imageId) && file.getBase(imageId) instanceof Movable m && !m.isPositionLocked()) {
-                    dev.ftb.mods.ftbquests.quest.history.events.MoveMovableObject
-                            .create(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
+                if (!c.members().contains(imageId) && file.getBase(imageId) instanceof Movable m && !com.questclusters.platform.History.locked(m)) {
+                    com.questclusters.platform.History
+                            .move(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
                 }
             }
             if (!membersOnly) {
@@ -274,7 +274,7 @@ public final class ServerClusters {
                 SKIP_FOLLOW.add(c.id()); // the box stays put even if it would otherwise follow
             }
             if (!events.isEmpty()) {
-                file.getHistoryStack().addAndApply(file, new dev.ftb.mods.ftbquests.quest.history.events.CompositeEditEvent(events));
+                com.questclusters.platform.History.record(file, events);
             }
         });
     }
@@ -286,7 +286,7 @@ public final class ServerClusters {
             reject(player, err.get());
             return;
         }
-        file.getHistoryStack().addAndApply(file, new ClusterChangeEvent(STORE.get(cluster.id()).orElse(null), cluster));
+        com.questclusters.platform.History.record(file, new ClusterChangeEvent(STORE.get(cluster.id()).orElse(null), cluster));
     }
 
     /**
@@ -360,7 +360,7 @@ public final class ServerClusters {
             return false;
         }
         dirty = true;
-        ServerQuestFile.getInstance().ifPresent(ServerQuestFile::markDirty);
+        Ftbq.server().ifPresent(ServerQuestFile::markDirty);
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ClusterNetwork.sendRemoveToAll(server, clusterId);
@@ -375,11 +375,11 @@ public final class ServerClusters {
     }
 
     private static void withEditableFile(ServerPlayer player, java.util.function.Consumer<ServerQuestFile> action) {
-        Optional<ServerQuestFile> file = ServerQuestFile.getInstance();
+        Optional<ServerQuestFile> file = Ftbq.server();
         if (file.isEmpty() || file.get().isLoading()) {
             return;
         }
-        if (!PermissionsHelper.canPlayerEdit(player)) {
+        if (!Ftbq.canEdit(player)) {
             reject(player, new ValidationError("no_permission"));
             return;
         }

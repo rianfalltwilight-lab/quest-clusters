@@ -1,5 +1,6 @@
 package com.questclusters.editor.server;
 
+import com.questclusters.platform.Ftbq;
 import com.questclusters.api.QuestBookHooks;
 import com.questclusters.editor.QuestClustersEditor;
 import com.questclusters.editor.data.BookExtras;
@@ -104,9 +105,9 @@ public final class ServerEditor implements QuestBookHooks.Listener {
 
     /** A change requested by an editor in game: checked, then applied as one undoable step. */
     public static void handleEdit(ServerPlayer player, String action, CompoundTag data) {
-        var file = ServerQuestFile.getInstance().orElse(null);
+        var file = Ftbq.server().orElse(null);
         if (file == null || file.isLoading()) return;
-        if (!dev.ftb.mods.ftbquests.integration.PermissionsHelper.canPlayerEdit(player)) {
+        if (!Ftbq.canEdit(player)) {
             player.displayClientMessage(net.minecraft.network.chat.Component.translatable("quest_clusters_editor.error.no_permission")
                     .withStyle(net.minecraft.ChatFormatting.RED), false);
             return;

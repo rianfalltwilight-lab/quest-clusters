@@ -1,5 +1,6 @@
 package com.questclusters.visuals.client;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.client.DevSelfTest;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
@@ -62,9 +63,9 @@ final class VisualsDevTest {
                     Icon e = Icon.getIcon("entity:minecraft:creeper[rotate=true]");
                     DevSelfTest.moduleCheck(e instanceof EntityIcon, "visuals: entity icon strings give entity icons");
                     DevSelfTest.moduleCheck(!(Icon.getIcon("entity:minecraft:zombie[rotate=maybe]") instanceof EntityIcon), "visuals: invalid entity icon falls back");
-                    ResourceLocation apng = ResourceLocation.fromNamespaceAndPath("quest_clusters_visuals", "textures/gui/example.apng.png");
+                    ResourceLocation apng = Rl.of("quest_clusters_visuals", "textures/gui/example.apng.png");
                     DevSelfTest.moduleCheck(ApngTextures.bindIfAnimated(apng), "visuals: .apng.png binds an animation frame");
-                    DevSelfTest.moduleCheck(!ApngTextures.bindIfAnimated(ResourceLocation.withDefaultNamespace("textures/block/stone.png")),
+                    DevSelfTest.moduleCheck(!ApngTextures.bindIfAnimated(Rl.mc("textures/block/stone.png")),
                             "visuals: plain textures untouched");
                     var ch = ClientQuestFile.INSTANCE.getChapter(0xC1L);
                     DevSelfTest.moduleCheck(ChapterShaders.shaderFor(ch) != null, "visuals: chapter background shader compiled");

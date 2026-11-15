@@ -1,5 +1,7 @@
 package com.questclusters.client;
 
+import com.questclusters.platform.Rl;
+
 /** Image references as stored in quest books and our data, resolved to texture files (client only). */
 public final class Textures {
     private Textures() {
@@ -18,7 +20,7 @@ public final class Textures {
             return rl;
         }
         String path = rl.getPath().startsWith("textures/") ? rl.getPath() : "textures/" + rl.getPath();
-        return net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(rl.getNamespace(), path + ".png");
+        return Rl.of(rl.getNamespace(), path + ".png");
     }
 
     /**

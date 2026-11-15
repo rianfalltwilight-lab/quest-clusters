@@ -46,7 +46,11 @@ public final class ClusterBoxWidget extends ClusterWidgetBase {
 
     @Override
     public dev.ftb.mods.ftblibrary.ui.CursorType getCursor() {
+        //? if neoforge {
         return ClusterWidgets.canEdit() ? dev.ftb.mods.ftblibrary.ui.CursorType.MOVE : null;
+        //?} else {
+        /*return ClusterWidgets.canEdit() ? dev.ftb.mods.ftblibrary.ui.CursorType.HAND : null;
+        *///?}
     }
 
     @Override

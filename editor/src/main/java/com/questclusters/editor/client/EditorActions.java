@@ -1,5 +1,6 @@
 package com.questclusters.editor.client;
 
+import com.questclusters.platform.Net;
 import com.questclusters.editor.data.BookExtras;
 import com.questclusters.editor.data.ChapterExtras;
 import com.questclusters.editor.data.EditorPatch;
@@ -10,7 +11,6 @@ import dev.ftb.mods.ftblibrary.config.ui.resource.SelectImageResourceScreen;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
 import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -27,7 +27,7 @@ public final class EditorActions {
      */
     public static void send(String action, EditorPatch patch) {
         if (!patch.isEmpty()) {
-            PacketDistributor.sendToServer(new EditorNetwork.Edit(action, patch.write()));
+            Net.sendToServer(new EditorNetwork.Edit(action, patch.write()));
             patch.applyTo(ClientEditor.book());
         }
     }

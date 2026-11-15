@@ -1,5 +1,6 @@
 package com.questclusters.filters.client;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.client.DevSelfTest;
 import com.questclusters.filters.Downgrade;
 import com.questclusters.filters.client.screen.FuelScreen;
@@ -175,9 +176,9 @@ final class FiltersDevTest {
                         return 5;
                     }
                     s.reverseForTest(new ItemStack(Items.OAK_LOG));
-                    check(s.shownForTest().contains(ResourceLocation.parse("minecraft:logs")) && !s.shownForTest().contains(ResourceLocation.parse("minecraft:planks")),
+                    check(s.shownForTest().contains(Rl.parse("minecraft:logs")) && !s.shownForTest().contains(Rl.parse("minecraft:planks")),
                             "reverse lookup shows the block's tags");
-                    s.toggleForTest(ResourceLocation.parse("minecraft:logs"));
+                    s.toggleForTest(Rl.parse("minecraft:logs"));
                     s.searchForTest("#mymod:custom_ores");
                     return 5;
                 },
@@ -188,7 +189,7 @@ final class FiltersDevTest {
                 },
                 () -> {
                     var s = (TagListScreen<?>) Minecraft.getInstance().screen;
-                    check(s.shownForTest().contains(ResourceLocation.parse("mymod:custom_ores")), "typed tag that is not loaded is offered");
+                    check(s.shownForTest().contains(Rl.parse("mymod:custom_ores")), "typed tag that is not loaded is offered");
                     s.searchForTest("logs");
                     return 15;
                 },

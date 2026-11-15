@@ -72,6 +72,7 @@ public final class ClusterText {
     private static final class ClientParse {
         static Component parse(String raw) {
             var file = dev.ftb.mods.ftbquests.client.ClientQuestFile.INSTANCE;
+            //? if neoforge {
             var lookup = file != null ? file.holderLookup()
                     : net.minecraft.client.Minecraft.getInstance().level != null
                     ? net.minecraft.client.Minecraft.getInstance().level.registryAccess() : null;
@@ -79,6 +80,9 @@ public final class ClusterText {
                 throw new IllegalStateException("no registries yet");
             }
             return dev.ftb.mods.ftbquests.util.TextUtils.parseRawText(raw, lookup);
+            //?} else {
+            /*return dev.ftb.mods.ftbquests.util.TextUtils.parseRawText(raw);
+            *///?}
         }
     }
 

@@ -2,10 +2,9 @@ package com.questclusters;
 
 import com.questclusters.net.ClusterNetwork;
 import com.questclusters.server.ServerClusters;
-import net.neoforged.bus.api.IEventBus;
+import com.questclusters.platform.Events;
+import com.questclusters.platform.ModContext;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,15 +13,25 @@ public final class QuestClusters {
     public static final String MOD_ID = "quest_clusters";
     public static final Logger LOGGER = LoggerFactory.getLogger("QuestClusters");
 
-    public QuestClusters(IEventBus modBus) {
+    //? if neoforge {
+    public QuestClusters(net.neoforged.bus.api.IEventBus modBus, net.neoforged.fml.ModContainer container) {
+        this(new ModContext(modBus, container));
+    }
+    //?} else {
+    /*public QuestClusters() {
+        this(ModContext.current());
+    }
+    *///?}
+
+    private QuestClusters(ModContext ctx) {
         com.questclusters.api.QuestBookHooks.register(com.questclusters.server.MigrationNotice.INSTANCE);
-        modBus.addListener(ClusterNetwork::register);
+        ClusterNetwork.register(ctx);
         com.questclusters.task.ClusterTask.init(); // register the "Complete quest cluster" task type early
         com.questclusters.server.ServerScoring.init();
         if (System.getProperty("quest_clusters.devtest") != null) {
             com.questclusters.migration.MigrationRegistry.register(new com.questclusters.migration.DevProbeMigration());
         }
-        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.RegisterCommandsEvent e) -> com.questclusters.server.ClusterCommands.register(e.getDispatcher()));
-        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> ServerClusters.tick());
+        Events.commands(com.questclusters.server.ClusterCommands::register);
+        Events.serverTick(ServerClusters::tick);
     }
 }

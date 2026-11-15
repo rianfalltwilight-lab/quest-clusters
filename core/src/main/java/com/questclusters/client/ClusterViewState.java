@@ -159,7 +159,7 @@ public final class ClusterViewState {
         JsonObject root = readFile();
         JsonObject mine = new JsonObject();
         STATE.overrides().forEach((id, v) -> mine.addProperty(QuestCluster.idToString(id), v));
-        if (mine.isEmpty()) {
+        if (mine.size() == 0) {
             root.remove(worldKey);
         } else {
             root.add(worldKey, mine);

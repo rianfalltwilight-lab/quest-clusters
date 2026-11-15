@@ -27,6 +27,11 @@ public interface QuestScreenAccessor {
     @Invoker("copyObjectsToClipboard")
     boolean quest_clusters$invokeCopy();
 
+    //? if neoforge {
     @Invoker("pasteSelectedQuest")
     boolean quest_clusters$invokePaste(boolean withDeps, Chapter chapter);
+    //?} else {
+    /*@Invoker("pasteSelectedQuest")
+    boolean quest_clusters$invokePaste(boolean withDeps);
+    *///?}
 }

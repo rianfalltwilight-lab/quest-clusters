@@ -1,5 +1,6 @@
 package com.questclusters.client;
 
+import com.questclusters.platform.Net;
 import com.questclusters.data.ClusterTemplate;
 import com.questclusters.data.QuestCluster;
 import com.questclusters.net.ClusterPayloads;
@@ -11,7 +12,6 @@ import dev.ftb.mods.ftbquests.quest.Movable;
 import dev.ftb.mods.ftbquests.quest.Quest;
 import net.minecraft.client.Minecraft;
 import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -65,8 +65,7 @@ public final class ClusterClipboard {
 
     /** Quest Enhance copies quests and chapter images only. */
     private static boolean copyable(long id) {
-        var o = ClientQuestFile.INSTANCE.getBase(id);
-        return o instanceof Quest || o instanceof ChapterImage;
+        return ClientQuestFile.INSTANCE.getBase(id) instanceof Quest || com.questclusters.platform.Ftbq.image(ClientQuestFile.INSTANCE, id) != null;
     }
 
     /** Called before the screen pastes; (tx, ty) is the snapped paste anchor. */
@@ -89,7 +88,7 @@ public final class ClusterClipboard {
         }
         var payload = new ClusterPayloads.Paste(target.id, templates);
         // after this tick's copy requests have gone out
-        Minecraft.getInstance().tell(() -> PacketDistributor.sendToServer(payload));
+        Minecraft.getInstance().tell(() -> Net.sendToServer(payload));
     }
 
     static void tick() {

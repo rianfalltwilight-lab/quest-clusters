@@ -1,5 +1,7 @@
 package com.questclusters.client.gui;
 
+import com.questclusters.platform.Ftbq;
+import com.questclusters.platform.Net;
 import com.questclusters.client.ClientClusters;
 import com.questclusters.client.ClusterViewState;
 import com.questclusters.data.QuestCluster;
@@ -13,7 +15,6 @@ import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.ContextMenuItem;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
 import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
-import dev.ftb.mods.ftbquests.net.DeleteObjectMessage;
 import dev.ftb.mods.ftbquests.quest.Chapter;
 import dev.ftb.mods.ftbquests.quest.Movable;
 import dev.ftb.mods.ftbquests.quest.Quest;
@@ -21,7 +22,6 @@ import dev.ftb.mods.ftbquests.quest.theme.property.ThemeProperties;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -135,12 +135,12 @@ public final class ClusterEditor {
         }
         menu.add(ContextMenuItem.SEPARATOR);
         menu.add(new ContextMenuItem(tr("dissolve"), ThemeProperties.DELETE_ICON.get(),
-                b -> PacketDistributor.sendToServer(new ClusterPayloads.Dissolve(c.id())))
+                b -> Net.sendToServer(new ClusterPayloads.Dissolve(c.id())))
                 .setYesNoText(tr("dissolve.confirm", ClusterText.title(c))));
         menu.add(new ContextMenuItem(tr("delete_all", c.members().size()).withStyle(ChatFormatting.RED),
                 ThemeProperties.DELETE_ICON.get(),
                 // FTB Quests' own delete (undoable via its history); the server then drops the empty cluster
-                b -> NetworkManager.sendToServer(new DeleteObjectMessage(List.copyOf(c.members()))))
+                b -> Ftbq.delete(List.copyOf(c.members())))
                 .setYesNoText(tr("delete_all.confirm", c.members().size(), ClusterText.title(c))));
         return menu;
     }
@@ -151,7 +151,7 @@ public final class ClusterEditor {
         String[] title = {Component.translatable("quest_clusters.default_title").getString()};
         ConfigGroup group = new ConfigGroup("quest_clusters", accepted -> {
             if (accepted && !title[0].isBlank()) {
-                PacketDistributor.sendToServer(new ClusterPayloads.Create(chapter.id, title[0].strip(), List.copyOf(members)));
+                Net.sendToServer(new ClusterPayloads.Create(chapter.id, title[0].strip(), List.copyOf(members)));
             }
             reopen(screen);
         });
@@ -259,14 +259,14 @@ public final class ClusterEditor {
 
     static void setMembers(QuestCluster c, List<Long> members) {
         if (members.isEmpty()) {
-            PacketDistributor.sendToServer(new ClusterPayloads.Dissolve(c.id()));
+            Net.sendToServer(new ClusterPayloads.Dissolve(c.id()));
         } else {
             update(c.withMembers(members));
         }
     }
 
     static void update(QuestCluster c) {
-        PacketDistributor.sendToServer(new ClusterPayloads.Update(c));
+        Net.sendToServer(new ClusterPayloads.Update(c));
     }
 
     /**
@@ -281,7 +281,7 @@ public final class ClusterEditor {
         if (c.style().freeBox() && fromBox) {
             update(c.withBoxPosition(c.x() + dx, c.y() + dy));
         } else {
-            PacketDistributor.sendToServer(new ClusterPayloads.Move(c.id(), dx, dy, c.style().freeBox()));
+            Net.sendToServer(new ClusterPayloads.Move(c.id(), dx, dy, c.style().freeBox()));
         }
     }
 
@@ -360,7 +360,7 @@ public final class ClusterEditor {
             }
             quest.removeInvalidDependencies();
             if (quest.verifyDependencies(false)) {
-                NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.EditObjectMessage.forQuestObject(quest));
+                Ftbq.sendEdit(quest);
                 changed++;
             } else {
                 quest.clearDependencies();

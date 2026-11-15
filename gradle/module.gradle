@@ -29,7 +29,38 @@ ext.mdg = extensions.getByName(legacy ? 'legacyForge' : 'neoForge')
 
 stonecutter {
     constants.match(legacy ? 'forge' : 'neoforge', 'forge', 'neoforge')
+    if (legacy) {
+        // Shared sources are written for 1.21.1 / NeoForge. On 1.20.1 these names are rewritten before compiling:
+        // Forge's packages with the same classes, and backports of 1.21 networking types (core/src/forge).
+        replacements.string(true) {
+            replace('net.minecraft.network.codec.', 'com.questclusters.compat.codec.')
+            replace('net.minecraft.network.protocol.common.custom.CustomPacketPayload', 'com.questclusters.compat.net.CustomPacketPayload')
+            replace('RegistryFriendlyByteBuf', 'FriendlyByteBuf')
+            replace('net.neoforged.api.distmarker.', 'net.minecraftforge.api.distmarker.')
+            replace('net.neoforged.bus.api.', 'net.minecraftforge.eventbus.api.')
+            replace('net.neoforged.fml.common.EventBusSubscriber', 'net.minecraftforge.fml.common.Mod.EventBusSubscriber')
+            replace('net.neoforged.fml.common.Mod', 'net.minecraftforge.fml.common.Mod')
+            replace('net.neoforged.fml.ModList', 'net.minecraftforge.fml.ModList')
+            replace('net.neoforged.fml.ModContainer', 'net.minecraftforge.fml.ModContainer')
+            replace('net.neoforged.fml.loading.', 'net.minecraftforge.fml.loading.')
+            replace('net.neoforged.fml.event.', 'net.minecraftforge.fml.event.')
+            replace('net.neoforged.fml.config.', 'net.minecraftforge.fml.config.')
+            replace('net.neoforged.neoforge.client.event.', 'net.minecraftforge.client.event.')
+            replace('net.neoforged.neoforge.event.', 'net.minecraftforge.event.')
+            replace('net.neoforged.neoforge.server.', 'net.minecraftforge.server.')
+            replace('net.neoforged.neoforge.fluids.', 'net.minecraftforge.fluids.')
+            replace('net.neoforged.neoforge.common.', 'net.minecraftforge.common.')
+            replace('NeoForge.EVENT_BUS', 'MinecraftForge.EVENT_BUS')
+            replace('common.NeoForge;', 'common.MinecraftForge;')
+            replace('ModConfigSpec', 'ForgeConfigSpec')
+        }
+    }
 }
+
+// Whole files that exist for one loader only (backports, loader glue) live in <module>/src/<loader>/java, so they
+// are plain Java; small differences inside shared files use //? if forge { ... } comments.
+sourceSets.main.java.srcDir(new File(moduleDir, "src/${project.loader}/java"))
+sourceSets.main.resources.srcDir(new File(moduleDir, "src/${project.loader}/resources"))
 
 base {
     archivesName = project.module_id
@@ -109,13 +140,16 @@ dependencies {
 
 def mixinConfig = "${project.module_id}.mixins.json"
 def hasMixins = new File(moduleDir, "src/main/resources/$mixinConfig").exists()
-if (legacy && hasMixins) {
+// 1.20.1-only mixins (backports such as chapter image ids) have their own config in src/forge/resources
+def forgeMixinConfig = "${project.module_id}.forge.mixins.json"
+def mixinConfigs = [mixinConfig, forgeMixinConfig].findAll { new File(moduleDir, legacy && it == forgeMixinConfig ? "src/forge/resources/$it" : "src/main/resources/$it").exists() }
+if (legacy && !mixinConfigs.isEmpty()) {
     mixin {
         add sourceSets.main, "${project.module_id}.refmap.json"
-        config mixinConfig
+        mixinConfigs.each { config it }
     }
     tasks.named('jar') {
-        manifest.attributes(['MixinConfigs': mixinConfig])
+        manifest.attributes(['MixinConfigs': mixinConfigs.join(',')])
     }
 }
 

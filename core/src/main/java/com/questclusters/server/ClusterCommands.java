@@ -1,5 +1,7 @@
 package com.questclusters.server;
 
+import com.questclusters.platform.Ftbq;
+import com.questclusters.platform.Net;
 import com.mojang.brigadier.CommandDispatcher;
 import com.questclusters.data.ScoreCalc;
 import com.questclusters.net.ClusterPayloads;
@@ -10,7 +12,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Collection;
 import java.util.List;
@@ -40,7 +41,7 @@ public final class ClusterCommands {
     }
 
     private static int migrateStatus(CommandSourceStack src) {
-        var file = ServerQuestFile.getInstance().orElse(null);
+        var file = Ftbq.server().orElse(null);
         if (file == null || file.getFolder() == null) return 0;
         var applied = com.questclusters.migration.MigrationRunner.applied(file.getFolder());
         var all = com.questclusters.migration.MigrationRegistry.all();
@@ -58,7 +59,7 @@ public final class ClusterCommands {
     }
 
     private static int migrateBackup(CommandSourceStack src) {
-        var file = ServerQuestFile.getInstance().orElse(null);
+        var file = Ftbq.server().orElse(null);
         if (file == null || file.getFolder() == null) return 0;
         try {
             file.saveNow();
@@ -72,7 +73,7 @@ public final class ClusterCommands {
     }
 
     private static int open(Collection<ServerPlayer> players) {
-        players.forEach(p -> PacketDistributor.sendToPlayer(p, new ClusterPayloads.OpenSettlement()));
+        players.forEach(p -> Net.sendToPlayer(p, new ClusterPayloads.OpenSettlement()));
         return players.size();
     }
 
@@ -81,7 +82,7 @@ public final class ClusterCommands {
             src.sendFailure(Component.translatable("quest_clusters.leaderboard.disabled"));
             return 0;
         }
-        var file = ServerQuestFile.getInstance().orElse(null);
+        var file = Ftbq.server().orElse(null);
         if (file == null) return 0;
         var viewer = src.getPlayer() != null ? file.getOrCreateTeamData(src.getPlayer()).getTeamId() : null;
         List<ScoreCalc.Row> rows = ServerScoring.leaderboard(file, viewer);

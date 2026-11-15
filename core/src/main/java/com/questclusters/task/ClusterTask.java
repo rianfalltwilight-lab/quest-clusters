@@ -1,5 +1,6 @@
 package com.questclusters.task;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.QuestClusters;
 import com.questclusters.client.ClientClusters;
 import com.questclusters.data.ClusterStore;
@@ -37,7 +38,7 @@ import java.util.Optional;
  */
 public class ClusterTask extends Task {
     public static final TaskType TYPE = TaskTypes.register(
-            ResourceLocation.fromNamespaceAndPath(QuestClusters.MOD_ID, "cluster"),
+            Rl.of(QuestClusters.MOD_ID, "cluster"),
             ClusterTask::new,
             () -> ItemIcon.getItemIcon(Items.BOOKSHELF));
 
@@ -128,18 +129,30 @@ public class ClusterTask extends Task {
         return ItemIcon.getItemIcon(Items.BOOKSHELF);
     }
 
+    //? if neoforge {
     @Override
     public void writeData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.writeData(nbt, provider);
+    //?} else {
+    /*@Override
+    public void writeData(CompoundTag nbt) {
+        super.writeData(nbt);
+    *///?}
         nbt.putString("cluster", QuestCluster.idToString(clusterId));
         if (required > 0) {
             nbt.putInt("required", required);
         }
     }
 
+    //? if neoforge {
     @Override
     public void readData(CompoundTag nbt, HolderLookup.Provider provider) {
         super.readData(nbt, provider);
+    //?} else {
+    /*@Override
+    public void readData(CompoundTag nbt) {
+        super.readData(nbt);
+    *///?}
         clusterId = QuestCluster.idFromString(nbt.getString("cluster"));
         required = nbt.getInt("required");
     }

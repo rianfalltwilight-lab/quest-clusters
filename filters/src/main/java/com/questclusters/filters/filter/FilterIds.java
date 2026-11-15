@@ -1,5 +1,6 @@
 package com.questclusters.filters.filter;
 
+import com.questclusters.platform.Rl;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Map;
@@ -24,6 +25,6 @@ public final class FilterIds {
     }
 
     private static ResourceLocation rl(String path) {
-        return ResourceLocation.fromNamespaceAndPath(NS, path);
+        return Rl.of(NS, path);
     }
 }

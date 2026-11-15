@@ -1,5 +1,6 @@
 package com.questclusters.xmod.jei;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.xmod.QuestClustersXMod;
 import com.questclusters.xmod.recipe.CrateRecipe;
 import com.questclusters.xmod.recipe.QuestRecipe;
@@ -36,7 +37,7 @@ import java.util.List;
  */
 @JeiPlugin
 public final class QuestsJeiPlugin implements IModPlugin {
-    private static final ResourceLocation UID = ResourceLocation.fromNamespaceAndPath(QuestClustersXMod.MOD_ID, "quests");
+    private static final ResourceLocation UID = Rl.of(QuestClustersXMod.MOD_ID, "quests");
     static @Nullable IJeiRuntime runtime;
 
     @Override

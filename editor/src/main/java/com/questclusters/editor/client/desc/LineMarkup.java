@@ -1,5 +1,6 @@
 package com.questclusters.editor.client.desc;
 
+import com.questclusters.platform.Rl;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
@@ -173,7 +174,7 @@ public final class LineMarkup {
             text = drop(line, cut, tail);
         }
         if (code) {
-            text = Component.empty().append(text).withStyle(st -> st.withFont(net.minecraft.resources.ResourceLocation.withDefaultNamespace("uniform")));
+            text = Component.empty().append(text).withStyle(st -> st.withFont(Rl.mc("uniform")));
         }
         boolean thick = bold && (barLeft || barRight);
         return new Line(Kind.TEXT, text, center, barLeft, barRight, thick, spoiler, code, heading, callout, bullet, level, 0);

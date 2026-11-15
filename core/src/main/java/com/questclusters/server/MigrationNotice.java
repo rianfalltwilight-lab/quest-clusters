@@ -1,12 +1,12 @@
 package com.questclusters.server;
 
+import com.questclusters.platform.Ftbq;
 import com.questclusters.api.QuestBookHooks;
 import com.questclusters.migration.Migration;
 import com.questclusters.migration.MigrationRegistry;
 import com.questclusters.migration.MigrationRunner;
 import dev.ftb.mods.ftblibrary.snbt.SNBT;
 import dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag;
-import dev.ftb.mods.ftbquests.integration.PermissionsHelper;
 import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -65,7 +65,7 @@ public final class MigrationNotice implements QuestBookHooks.Listener {
     }
 
     static boolean isAdmin(ServerPlayer player) {
-        return PermissionsHelper.hasEditorPermission(player) || player.server.isSingleplayerOwner(player.getGameProfile());
+        return Ftbq.isEditor(player) || player.server.isSingleplayerOwner(player.getGameProfile());
     }
 
     @Override

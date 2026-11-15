@@ -1,5 +1,6 @@
 package com.questclusters.editor.client;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.client.DevSelfTest;
 import com.questclusters.editor.client.gui.DecorativeLinesWidget;
 import com.questclusters.editor.data.BookExtras;
@@ -53,7 +54,7 @@ final class EditorDevTest {
     }
 
     private static final net.minecraft.resources.ResourceLocation GIF =
-            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("quest_clusters_editor", "textures/gui/example.gif");
+            Rl.of("quest_clusters_editor", "textures/gui/example.gif");
 
     private static com.questclusters.editor.data.DescriptionTable tableUnderTest;
     private static volatile String scriptQuest;
@@ -135,7 +136,7 @@ final class EditorDevTest {
                     var icon = ClientEditor.icon("minecraft:block/oak_planks");
                     var sprite = net.minecraft.client.Minecraft.getInstance().getModelManager()
                             .getAtlas(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)
-                            .getSprite(net.minecraft.resources.ResourceLocation.withDefaultNamespace("block/oak_planks"));
+                            .getSprite(Rl.mc("block/oak_planks"));
                     DevSelfTest.moduleCheck(icon instanceof dev.ftb.mods.ftblibrary.icon.AtlasSpriteIcon
                             && !sprite.contents().name().equals(net.minecraft.client.renderer.texture.MissingTextureAtlasSprite.getLocation()),
                             "editor: sprite-id backgrounds resolve to the atlas sprite (" + icon.getClass().getSimpleName() + ")");
@@ -391,7 +392,7 @@ final class EditorDevTest {
                     var pasted = imgs.stream().filter(i -> i.getImage().toString().startsWith("quest_clusters_editor:textures/pasted/")).findFirst();
                     DevSelfTest.moduleCheck(imgs.size() >= imagesBefore + 3 && pasted.isPresent(), "editor: pasted image became a chapter image");
                     pasted.ifPresent(p -> {
-                        var rl = net.minecraft.resources.ResourceLocation.parse(p.getImage().toString());
+                        var rl = Rl.parse(p.getImage().toString());
                         DevSelfTest.moduleCheck(Minecraft.getInstance().getTextureManager().getTexture(rl, null) != null, "editor: pasted texture shown without reload");
                     });
                     // cleanup keeps the used image (only in memory so far) and deletes an unused one

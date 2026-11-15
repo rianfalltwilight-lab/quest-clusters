@@ -1,16 +1,15 @@
 package com.questclusters.net;
 
+import com.questclusters.platform.Net;
 import com.questclusters.client.ClientClusters;
 import com.questclusters.data.QuestCluster;
 import com.questclusters.server.ServerClusters;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import com.questclusters.platform.ModContext;
 
 /**
- * Packet registration and send helpers. Handlers run on the main thread (NeoForge default).
+ * Packet registration and send helpers. Handlers run on the main thread.
  */
 public final class ClusterNetwork {
     public static final String PROTOCOL = "1";
@@ -18,42 +17,42 @@ public final class ClusterNetwork {
     private ClusterNetwork() {
     }
 
-    public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar r = event.registrar(PROTOCOL);
+    public static void register(ModContext ctx) {
+        Net.Channel r = Net.channel(ctx, PROTOCOL);
 
-        r.playToClient(ClusterPayloads.SyncAll.TYPE, ClusterPayloads.SyncAll.CODEC,
-                (p, ctx) -> ClientClusters.replaceAll(p.clusters()));
-        r.playToClient(ClusterPayloads.Upsert.TYPE, ClusterPayloads.Upsert.CODEC,
-                (p, ctx) -> ClientClusters.upsert(p.cluster()));
-        r.playToClient(ClusterPayloads.Remove.TYPE, ClusterPayloads.Remove.CODEC,
-                (p, ctx) -> ClientClusters.remove(p.clusterId()));
+        r.toClient(ClusterPayloads.SyncAll.TYPE, ClusterPayloads.SyncAll.CODEC,
+                p -> ClientClusters.replaceAll(p.clusters()));
+        r.toClient(ClusterPayloads.Upsert.TYPE, ClusterPayloads.Upsert.CODEC,
+                p -> ClientClusters.upsert(p.cluster()));
+        r.toClient(ClusterPayloads.Remove.TYPE, ClusterPayloads.Remove.CODEC,
+                p -> ClientClusters.remove(p.clusterId()));
 
-        r.playToClient(ClusterPayloads.ScoringSync.TYPE, ClusterPayloads.ScoringSync.CODEC,
-                (p, ctx) -> com.questclusters.client.ClientScoring.set(p.entries(), p.settings()));
-        r.playToClient(ClusterPayloads.OpenSettlement.TYPE, ClusterPayloads.OpenSettlement.CODEC,
-                (p, ctx) -> com.questclusters.client.ClientScoring.openSettlement());
-        r.playToClient(ClusterPayloads.Leaderboard.TYPE, ClusterPayloads.Leaderboard.CODEC,
-                (p, ctx) -> com.questclusters.client.ClientScoring.showLeaderboard(p.rows()));
-        r.playToServer(ClusterPayloads.SetScore.TYPE, ClusterPayloads.SetScore.CODEC,
-                (p, ctx) -> com.questclusters.server.ServerScoring.handleSetEntry((ServerPlayer) ctx.player(), p.questId(), p.entry()));
-        r.playToServer(ClusterPayloads.SetSettlement.TYPE, ClusterPayloads.SetSettlement.CODEC,
-                (p, ctx) -> com.questclusters.server.ServerScoring.handleSetSettings((ServerPlayer) ctx.player(), p.settings()));
-        r.playToServer(ClusterPayloads.RequestLeaderboard.TYPE, ClusterPayloads.RequestLeaderboard.CODEC,
-                (p, ctx) -> com.questclusters.server.ServerScoring.handleLeaderboard((ServerPlayer) ctx.player()));
-        r.playToServer(ClusterPayloads.Create.TYPE, ClusterPayloads.Create.CODEC,
-                (p, ctx) -> ServerClusters.handleCreate((ServerPlayer) ctx.player(), p.chapterId(), p.title(), p.members()));
-        r.playToServer(ClusterPayloads.Update.TYPE, ClusterPayloads.Update.CODEC,
-                (p, ctx) -> ServerClusters.handleUpdate((ServerPlayer) ctx.player(), p.cluster()));
-        r.playToServer(ClusterPayloads.Paste.TYPE, ClusterPayloads.Paste.CODEC,
-                (p, ctx) -> ServerClusters.handlePaste((ServerPlayer) ctx.player(), p.chapterId(), p.clusters()));
-        r.playToServer(ClusterPayloads.Move.TYPE, ClusterPayloads.Move.CODEC,
-                (p, ctx) -> ServerClusters.handleMove((ServerPlayer) ctx.player(), p.clusterId(), p.dx(), p.dy(), p.membersOnly()));
-        r.playToServer(ClusterPayloads.Dissolve.TYPE, ClusterPayloads.Dissolve.CODEC,
-                (p, ctx) -> ServerClusters.handleDissolve((ServerPlayer) ctx.player(), p.clusterId()));
+        r.toClient(ClusterPayloads.ScoringSync.TYPE, ClusterPayloads.ScoringSync.CODEC,
+                p -> com.questclusters.client.ClientScoring.set(p.entries(), p.settings()));
+        r.toClient(ClusterPayloads.OpenSettlement.TYPE, ClusterPayloads.OpenSettlement.CODEC,
+                p -> com.questclusters.client.ClientScoring.openSettlement());
+        r.toClient(ClusterPayloads.Leaderboard.TYPE, ClusterPayloads.Leaderboard.CODEC,
+                p -> com.questclusters.client.ClientScoring.showLeaderboard(p.rows()));
+        r.toServer(ClusterPayloads.SetScore.TYPE, ClusterPayloads.SetScore.CODEC,
+                (p, player) -> com.questclusters.server.ServerScoring.handleSetEntry(player, p.questId(), p.entry()));
+        r.toServer(ClusterPayloads.SetSettlement.TYPE, ClusterPayloads.SetSettlement.CODEC,
+                (p, player) -> com.questclusters.server.ServerScoring.handleSetSettings(player, p.settings()));
+        r.toServer(ClusterPayloads.RequestLeaderboard.TYPE, ClusterPayloads.RequestLeaderboard.CODEC,
+                (p, player) -> com.questclusters.server.ServerScoring.handleLeaderboard(player));
+        r.toServer(ClusterPayloads.Create.TYPE, ClusterPayloads.Create.CODEC,
+                (p, player) -> ServerClusters.handleCreate(player, p.chapterId(), p.title(), p.members()));
+        r.toServer(ClusterPayloads.Update.TYPE, ClusterPayloads.Update.CODEC,
+                (p, player) -> ServerClusters.handleUpdate(player, p.cluster()));
+        r.toServer(ClusterPayloads.Paste.TYPE, ClusterPayloads.Paste.CODEC,
+                (p, player) -> ServerClusters.handlePaste(player, p.chapterId(), p.clusters()));
+        r.toServer(ClusterPayloads.Move.TYPE, ClusterPayloads.Move.CODEC,
+                (p, player) -> ServerClusters.handleMove(player, p.clusterId(), p.dx(), p.dy(), p.membersOnly()));
+        r.toServer(ClusterPayloads.Dissolve.TYPE, ClusterPayloads.Dissolve.CODEC,
+                (p, player) -> ServerClusters.handleDissolve(player, p.clusterId()));
     }
 
     public static void sendFullSync(ServerPlayer player) {
-        PacketDistributor.sendToPlayer(player, new ClusterPayloads.SyncAll(ServerClusters.store().all().stream().toList()));
+        Net.sendToPlayer(player, new ClusterPayloads.SyncAll(ServerClusters.store().all().stream().toList()));
     }
 
     public static void sendFullSyncToAll(MinecraftServer server) {
@@ -61,10 +60,10 @@ public final class ClusterNetwork {
     }
 
     public static void sendUpsertToAll(MinecraftServer server, QuestCluster cluster) {
-        PacketDistributor.sendToAllPlayers(new ClusterPayloads.Upsert(cluster));
+        Net.sendToAll(new ClusterPayloads.Upsert(cluster));
     }
 
     public static void sendRemoveToAll(MinecraftServer server, long clusterId) {
-        PacketDistributor.sendToAllPlayers(new ClusterPayloads.Remove(clusterId));
+        Net.sendToAll(new ClusterPayloads.Remove(clusterId));
     }
 }

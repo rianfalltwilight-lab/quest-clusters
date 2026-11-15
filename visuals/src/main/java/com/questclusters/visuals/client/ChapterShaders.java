@@ -1,5 +1,6 @@
 package com.questclusters.visuals.client;
 
+import com.questclusters.platform.Rl;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -33,8 +34,8 @@ import java.util.Set;
  * Off unless "shader_background" is enabled in the settings.
  */
 public final class ChapterShaders {
-    public static final ResourceLocation DEFAULT = ResourceLocation.fromNamespaceAndPath(QuestClustersVisuals.MOD_ID, "chapter_background");
-    static final ResourceLocation CQA_DEFAULT = ResourceLocation.fromNamespaceAndPath("certain_questing_additions", "custom_background");
+    public static final ResourceLocation DEFAULT = Rl.of(QuestClustersVisuals.MOD_ID, "chapter_background");
+    static final ResourceLocation CQA_DEFAULT = Rl.of("certain_questing_additions", "custom_background");
     private static final String[] NAMESPACES = {QuestClustersVisuals.MOD_ID, "certain_questing_additions"};
 
     private static final Map<ResourceLocation, ShaderInstance> SHADERS = new HashMap<>();
@@ -51,7 +52,7 @@ public final class ChapterShaders {
         ResourceLocation def = null;
         // read the legacy namespace first so ours overrides it
         for (int i = NAMESPACES.length - 1; i >= 0; i--) {
-            var res = rp.getResource(ResourceLocation.fromNamespaceAndPath(NAMESPACES[i], "chapter_shaders.json"));
+            var res = rp.getResource(Rl.of(NAMESPACES[i], "chapter_shaders.json"));
             if (res.isEmpty()) continue;
             try (Reader r = res.get().openAsReader()) {
                 JsonObject root = JsonParser.parseReader(r).getAsJsonObject();

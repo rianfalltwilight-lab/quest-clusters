@@ -1,5 +1,6 @@
 package com.questclusters.editor.client.desc;
 
+import com.questclusters.platform.Rl;
 import com.questclusters.editor.client.GifTextures;
 import com.questclusters.editor.data.DescriptionTable;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
@@ -252,7 +253,7 @@ public final class InsertComponents {
                         .withUnderlined(true).withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, cmd)));
             }
             case "hover" -> lit(text).withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, lit((String) v.get("hover")))));
-            case "font" -> lit(text).withStyle(Style.EMPTY.withFont(ResourceLocation.parse((String) v.get("font"))));
+            case "font" -> lit(text).withStyle(Style.EMPTY.withFont(Rl.parse((String) v.get("font"))));
             case "translate" -> Component.translatableWithFallback((String) v.get("key"), text);
             case "keybind" -> {
                 String k = (String) v.get("key");
