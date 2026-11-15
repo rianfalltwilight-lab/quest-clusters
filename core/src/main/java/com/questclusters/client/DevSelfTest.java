@@ -242,10 +242,13 @@ public final class DevSelfTest {
             dragFrom = p;
             return 3;
         });
+        // FTB widgets read the mouse position when they draw: the press must not see the previous position
+        STEPS.add(waitFrames(2));
         STEPS.add(() -> {
             realButton(0, true);
             return 3;
         });
+        STEPS.add(waitFrames(2));
         for (int i = 1; i <= 5; i++) {
             final int k = i;
             STEPS.add(() -> {
@@ -253,6 +256,7 @@ public final class DevSelfTest {
                 realMove(dragFrom[0] + 2 * cell * k / 5D, dragFrom[1] + cell * k / 5D);
                 return 2;
             });
+            STEPS.add(waitFrames(2));
         }
         STEPS.add(() -> {
             realButton(0, false);
@@ -1110,7 +1114,8 @@ public final class DevSelfTest {
         wrapper().mouseReleased(x, y, button);
     }
 
-    private static void click(double x, double y, int button) {
+    /** A real press and release at GUI coordinates (for module self-tests too). */
+    public static void click(double x, double y, int button) {
         press(x, y, button);
         release(x, y, button);
     }

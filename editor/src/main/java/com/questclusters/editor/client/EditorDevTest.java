@@ -652,8 +652,10 @@ final class EditorDevTest {
     /** MQA-style description markup on the "Markup test" quest: layout, spoiler click, Shift+O. */
     static List<java.util.function.IntSupplier> markupSteps() {
         long quest = 0xA31L;
+        boolean[] wasEditing = new boolean[1];
         return List.of(
                 () -> {
+                    wasEditing[0] = ClientQuestFile.canClientPlayerEdit();
                     var q = ClientQuestFile.INSTANCE.getQuest(quest);
                     DevSelfTest.moduleCheck(q != null, "markup: test quest exists");
                     if (q != null) DevSelfTest.questScreen().open(q, false);
@@ -689,7 +691,12 @@ final class EditorDevTest {
                 hoverLine(quest, 6),
                 () -> {
                     var spoiler = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, 6);
-                    if (spoiler != null) spoiler.mousePressed(dev.ftb.mods.ftblibrary.ui.input.MouseButton.LEFT);
+                    // a real click: FTB works out what is under the mouse itself
+                    if (spoiler != null) DevSelfTest.click(spoiler.getX() + spoiler.width / 2D, spoiler.getY() + spoiler.height / 2D, 0);
+                    return 5;
+                },
+                () -> {
+                    var spoiler = com.questclusters.editor.client.desc.LineRender.fieldFor(quest, 6);
                     DevSelfTest.moduleCheck(spoiler != null && com.questclusters.editor.client.desc.LineRender.revealed(
                             com.questclusters.editor.client.desc.LineRender.info(spoiler)), "markup: clicking the spoiler shows it");
                     editMode(true);
@@ -714,15 +721,17 @@ final class EditorDevTest {
                     if (raw.size() > 3) {
                         com.questclusters.editor.client.desc.DescriptionLines.set(ClientQuestFile.INSTANCE.getQuest(quest), DevSelfTest.questScreen().viewQuestPanel, 3, "> Left bar text");
                     }
-                    editMode(false);
+                    editMode(wasEditing[0]);
                     return 20;
                 });
     }
 
     /** Quest tree view: dependency nesting, reading order, chapter headings in the all-chapters view. */
     static List<java.util.function.IntSupplier> treeSteps() {
+        boolean[] wasEditing = new boolean[1];
         return List.of(
                 () -> {
+                    wasEditing[0] = ClientQuestFile.canClientPlayerEdit();
                     editMode(true);
                     var c2 = ClientQuestFile.INSTANCE.getChapter(C2);
                     var rows = com.questclusters.editor.client.gui.QuestTreeScreen.rows(c2, false);
@@ -745,8 +754,8 @@ final class EditorDevTest {
                 () -> {
                     DevSelfTest.moduleShot("qc_42_quest_tree");
                     DevSelfTest.questScreen().openGui();
-                    editMode(false);
-                    return 10;
+                    editMode(wasEditing[0]);
+                    return 20;
                 });
     }
 
@@ -754,7 +763,14 @@ final class EditorDevTest {
     static List<java.util.function.IntSupplier> perfSteps() {
         long[] mtime = new long[1];
         java.nio.file.Path[] teamFile = new java.nio.file.Path[1];
+        boolean[] wasEditing = new boolean[1];
         return List.of(
+                () -> {
+                    // player mode: in edit mode FTB Quests never asks whether a quest is visible
+                    wasEditing[0] = ClientQuestFile.canClientPlayerEdit();
+                    editMode(false);
+                    return 20;
+                },
                 () -> {
                     var qs = DevSelfTest.questScreen();
                     qs.open(ClientQuestFile.INSTANCE.getChapter(C1), false);
@@ -809,7 +825,8 @@ final class EditorDevTest {
                     String name = net.minecraft.client.Minecraft.getInstance().player.getGameProfile().getName();
                     server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(),
                             "ftbquests change_progress " + name + " reset 0000000000000A31"));
-                    return 10;
+                    editMode(wasEditing[0]);
+                    return 20;
                 });
     }
 
