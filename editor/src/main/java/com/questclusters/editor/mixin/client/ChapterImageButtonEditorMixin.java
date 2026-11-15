@@ -23,7 +23,7 @@ public abstract class ChapterImageButtonEditorMixin {
 
     @Inject(method = "draw", at = @At("HEAD"), cancellable = true)
     private void quest_clusters_editor$drawSpecial(GuiGraphics g, Theme theme, int x, int y, int w, int h, CallbackInfo ci) {
-        CanvasElement el = CanvasElement.parse(chapterImage.getClickAction().actionData());
+        CanvasElement el = CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(chapterImage));
         if (el == null) {
             return;
         }

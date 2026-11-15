@@ -3,7 +3,6 @@ package com.questclusters.editor.client.desc;
 import com.questclusters.editor.data.DescriptionTable;
 import dev.ftb.mods.ftbquests.client.gui.quests.ViewQuestPanel;
 import dev.ftb.mods.ftbquests.quest.Quest;
-import dev.ftb.mods.ftbquests.quest.translation.TranslationKey;
 
 import java.util.List;
 
@@ -14,7 +13,7 @@ public final class DescriptionLines {
 
     /** Replaces (or with null removes) the first raw line holding this table payload. */
     public static void replace(Quest quest, ViewQuestPanel view, String tablePayload, String newLine) {
-        quest.modifyTranslatableListValue(TranslationKey.QUEST_DESC, list -> {
+        com.questclusters.platform.Ftbq.editDescription(quest, list -> {
             for (int i = 0; i < list.size(); i++) {
                 if (tablePayload.equals(DescriptionTable.payloadOf(list.get(i)))) {
                     if (newLine == null) list.remove(i);
@@ -28,7 +27,7 @@ public final class DescriptionLines {
 
     /** Replaces a raw line by index ({@code -1} or out of range: appended). */
     public static void set(Quest quest, ViewQuestPanel view, int line, String newLine) {
-        quest.modifyTranslatableListValue(TranslationKey.QUEST_DESC, list -> {
+        com.questclusters.platform.Ftbq.editDescription(quest, list -> {
             if (line >= 0 && line < list.size()) list.set(line, newLine);
             else list.add(newLine);
         });
@@ -36,7 +35,7 @@ public final class DescriptionLines {
     }
 
     public static void append(Quest quest, ViewQuestPanel view, List<String> lines) {
-        quest.modifyTranslatableListValue(TranslationKey.QUEST_DESC, list -> list.addAll(lines));
+        com.questclusters.platform.Ftbq.editDescription(quest, list -> list.addAll(lines));
         reopen(view);
     }
 

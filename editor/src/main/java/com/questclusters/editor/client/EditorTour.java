@@ -9,8 +9,6 @@ import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
 import dev.ftb.mods.ftbquests.quest.Chapter;
 import dev.ftb.mods.ftbquests.quest.ChapterImage;
 import net.minecraft.client.Minecraft;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.common.NeoForge;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +27,7 @@ final class EditorTour {
     }
 
     static void register() {
-        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick());
+        com.questclusters.platform.Events.clientTick(EditorTour::tick);
     }
 
     private static void tick() {
@@ -46,7 +44,7 @@ final class EditorTour {
             Chapter c = chapters.get(index);
             int special = 0;
             for (ChapterImage img : c.getImages()) {
-                if (CanvasElement.parse(img.getClickAction().actionData()) != null) special++;
+                if (CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(img)) != null) special++;
             }
             var ce = ClientEditor.book().chapter(c.id);
             QuestClustersEditor.LOGGER.info("[tour] {} '{}': visible={} lines={} drawnSpokes={} specialImages={} background={} prerequisites={}",

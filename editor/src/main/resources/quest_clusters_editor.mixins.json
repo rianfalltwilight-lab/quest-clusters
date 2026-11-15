@@ -7,7 +7,6 @@
     "AdvancementTaskAccessor",
     "ChapterImageAccessor",
     "ChapterVisibilityMixin",
-    "CopyAnchorMixin",
     "KillTaskAccessor",
     "QuestModelConfigMixin",
     "QuestObjectIconAccessor",

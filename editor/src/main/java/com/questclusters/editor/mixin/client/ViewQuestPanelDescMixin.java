@@ -63,7 +63,11 @@ public abstract class ViewQuestPanelDescMixin {
                 field.setMaxWidth(Math.max(20, avail));
                 if (markup.center()) field.addFlags(dev.ftb.mods.ftblibrary.ui.Theme.CENTERED);
                 TextField out = op.call(field, markup.text());
+                //? if neoforge {
                 if (markup.scale() != 1F) field.setScale(markup.scale()).reflow();
+                //?} else {
+                /*if (markup.scale() != 1F) field.setScale(markup.scale()).resize(theme);
+                *///?}
                 return out;
             }
         }

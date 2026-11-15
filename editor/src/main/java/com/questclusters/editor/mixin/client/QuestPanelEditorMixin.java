@@ -22,7 +22,7 @@ public abstract class QuestPanelEditorMixin {
     @Inject(method = "addWidgets", at = @At("TAIL"))
     private void quest_clusters_editor$addWidgets(CallbackInfo ci) {
         QuestPanel self = (QuestPanel) (Object) this;
-        if (((QuestScreen) self.getGui()).getSelectedChapter().isPresent()) {
+        if (((com.questclusters.mixin.client.QuestScreenAccessor) self.getGui()).quest_clusters$getSelectedChapter() != null) {
             self.getWidgets().add(new DecorativeLinesWidget(self));
         }
     }
@@ -46,7 +46,7 @@ public abstract class QuestPanelEditorMixin {
         if (qs.isViewingQuest()) {
             return;
         }
-        var chapter = qs.getSelectedChapter().orElse(null);
+        var chapter = ((com.questclusters.mixin.client.QuestScreenAccessor) qs).quest_clusters$getSelectedChapter();
         var hidden = QuestEnhanceCompat.hiddenLine(chapter, from.moveAndDeleteFocus(), to.moveAndDeleteFocus());
         if (hidden.isEmpty()) {
             op.call(panel, from, to, ps, s, r, g, b, a, a1, mu, t);

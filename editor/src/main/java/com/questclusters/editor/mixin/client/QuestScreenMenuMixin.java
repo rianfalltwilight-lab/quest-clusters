@@ -61,7 +61,7 @@ public abstract class QuestScreenMenuMixin {
             cir.setReturnValue(true);
             return;
         }
-        Movable one = sel.size() == 1 ? sel.getFirst() : null;
+        Movable one = sel.size() == 1 ? sel.get(0) : null;
         if (sel.isEmpty()) {
             for (Widget w : self.questPanel.getWidgets()) {
                 if (w instanceof QuestPositionableButton p && w.isMouseOver()) {

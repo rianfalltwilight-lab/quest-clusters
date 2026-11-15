@@ -138,12 +138,12 @@ final class WaterMediaPlayer extends Screen {
             RenderSystem.setShaderTexture(0, (int) player.texture());
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             Matrix4f m = g.pose().last().pose();
-            var buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-            buf.addVertex(m, x, y, 0).setUv(0, 0);
-            buf.addVertex(m, x, y + h, 0).setUv(0, 1);
-            buf.addVertex(m, x + w, y + h, 0).setUv(1, 1);
-            buf.addVertex(m, x + w, y, 0).setUv(1, 0);
-            BufferUploader.drawWithShader(buf.buildOrThrow());
+            com.questclusters.platform.Quads.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)
+                    .vertex(m, x, y, 0).uv(0, 0).next()
+                    .vertex(m, x, y + h, 0).uv(0, 1).next()
+                    .vertex(m, x + w, y + h, 0).uv(1, 1).next()
+                    .vertex(m, x + w, y, 0).uv(1, 0).next()
+                    .draw();
         }
         if (error != null) {
             Component msg = Component.translatable("quest_clusters_editor.video.error." + error, path);
@@ -165,8 +165,13 @@ final class WaterMediaPlayer extends Screen {
         super.render(g, mx, my, pt);
     }
 
+    //? if neoforge {
     @Override
     public void renderBackground(GuiGraphics g, int mx, int my, float pt) {
+    //?} else {
+    /*@Override
+    public void renderBackground(GuiGraphics g) {
+    *///?}
     }
 
     private static String time(long ms) {

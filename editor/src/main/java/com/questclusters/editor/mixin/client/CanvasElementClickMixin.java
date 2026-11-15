@@ -9,7 +9,9 @@ import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
 import dev.ftb.mods.ftbquests.client.gui.quests.ChapterImageButton;
 import dev.ftb.mods.ftbquests.quest.ChapterImage;
+//? if neoforge {
 import dev.ftb.mods.ftbquests.quest.ImageClickAction;
+//?}
 import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -29,15 +31,23 @@ public abstract class CanvasElementClickMixin {
     private ChapterImage chapterImage;
 
     private boolean quest_clusters_editor$interactive() {
-        CanvasElement e = CanvasElement.parse(chapterImage.getClickAction().actionData());
+        CanvasElement e = CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(chapterImage));
         return e instanceof CanvasElement.Text || e instanceof CanvasElement.Video;
     }
 
+    //? if neoforge {
     @WrapOperation(method = {"checkMouseOver", "mousePressed"}, at = @At(value = "INVOKE",
             target = "Ldev/ftb/mods/ftbquests/quest/ImageClickAction;isNone()Z"))
     private boolean quest_clusters_editor$special(ImageClickAction action, Operation<Boolean> op) {
         return op.call(action) && !quest_clusters_editor$interactive();
     }
+    //?} else {
+    /*@WrapOperation(method = {"checkMouseOver", "mousePressed"}, at = @At(value = "INVOKE",
+            target = "Ljava/lang/String;isEmpty()Z"))
+    private boolean quest_clusters_editor$special(String click, Operation<Boolean> op) {
+        return op.call(click) && !quest_clusters_editor$interactive();
+    }
+    *///?}
 
     @Inject(method = "onClicked", at = @At("HEAD"), cancellable = true)
     private void quest_clusters_editor$click(MouseButton button, CallbackInfo ci) {
@@ -45,18 +55,14 @@ public abstract class CanvasElementClickMixin {
                 || ClientQuestFile.INSTANCE == null || ClientQuestFile.INSTANCE.canEdit()) {
             return;
         }
-        switch (CanvasElement.parse(chapterImage.getClickAction().actionData())) {
-            case CanvasElement.Text t -> {
-                KubeJSBridge.textClicked(t.text(), chapterImage.getChapter().id, chapterImage.getX(), chapterImage.getY(),
-                        chapterImage.getWidth(), chapterImage.getHeight());
-                ci.cancel();
-            }
-            case CanvasElement.Video v -> {
-                VideoSupport.open(v.path());
-                ci.cancel();
-            }
-            case null, default -> {
-            }
+        CanvasElement el = CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(chapterImage));
+        if (el instanceof CanvasElement.Text t) {
+            KubeJSBridge.textClicked(t.text(), chapterImage.getChapter().id, chapterImage.getX(), chapterImage.getY(),
+                    chapterImage.getWidth(), chapterImage.getHeight());
+            ci.cancel();
+        } else if (el instanceof CanvasElement.Video v) {
+            VideoSupport.open(v.path());
+            ci.cancel();
         }
     }
 }

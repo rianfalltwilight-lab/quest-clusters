@@ -15,7 +15,6 @@ import dev.ftb.mods.ftbquests.quest.reward.RandomReward;
 import dev.ftb.mods.ftbquests.quest.reward.Reward;
 import dev.ftb.mods.ftbquests.quest.task.ItemTask;
 import dev.ftb.mods.ftbquests.quest.task.Task;
-import dev.ftb.mods.ftbquests.quest.translation.TranslationKey;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -61,7 +60,7 @@ public final class BookCheck {
             for (ChapterImage img : ch.getImages()) {
                 String tex = imageTexture(img);
                 if (tex != null && !textureExists.test(tex)) {
-                    out.add(issue(Level.ERROR, "missing_image", img.id, ch.id, tex));
+                    out.add(issue(Level.ERROR, "missing_image", com.questclusters.platform.Ftbq.id(img), ch.id, tex));
                 }
             }
         });
@@ -125,8 +124,7 @@ public final class BookCheck {
         for (Reward r : q.getRewards()) {
             if (r instanceof ItemReward ir && missing(ir.getItem())) out.add(issue(Level.ERROR, "missing_item_reward", q.id, ch, q.getTitle()));
         }
-        TranslationKey title = TranslationKey.TITLE;
-        if (file.getTranslationManager().hasMissingTranslation(q, title)) {
+        if (com.questclusters.platform.Ftbq.missingTitleTranslation(file, q)) {
             out.add(issue(Level.INFO, "missing_translation", q.id, ch, q.getTitle()));
         }
     }
@@ -139,7 +137,7 @@ public final class BookCheck {
         if (ch.getQuests().isEmpty() && ch.getQuestLinks().isEmpty() && ch.getImages().isEmpty()) {
             out.add(issue(Level.WARN, "empty_chapter", ch.id, ch.id, ch.getTitle()));
         }
-        if (file.getTranslationManager().hasMissingTranslation(ch, TranslationKey.TITLE)) {
+        if (com.questclusters.platform.Ftbq.missingTitleTranslation(file, ch)) {
             out.add(issue(Level.INFO, "missing_translation", ch.id, ch.id, ch.getTitle()));
         }
     }
@@ -221,7 +219,7 @@ public final class BookCheck {
     /** The texture a chapter image draws, if it is a plain texture (items, colours and the like have none). */
     private static String imageTexture(ChapterImage img) {
         // guide points, canvas text, GIFs and videos are drawn by the editor, not from the image
-        if (img.getClickAction().actionData().startsWith(CanvasElement.PREFIX)) return null;
+        if (com.questclusters.platform.Ftbq.clickData(img).startsWith(CanvasElement.PREFIX)) return null;
         String s = img.getImage().toString();
         if (s.isEmpty() || !s.contains(":") || s.startsWith("item:") || s.startsWith("#") || s.startsWith("http")) return null;
         int q = s.indexOf('?');

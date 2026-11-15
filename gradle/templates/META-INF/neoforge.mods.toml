@@ -15,7 +15,7 @@ ${module_description}
 
 [[mixins]]
 config = "${module_id}.mixins.json"
-
+${loader_mixins}
 [[dependencies.${module_id}]]
 modId = "neoforge"
 type = "required"

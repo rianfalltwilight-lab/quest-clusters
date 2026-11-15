@@ -52,7 +52,7 @@ public final class DescriptionTable {
 
     public static DescriptionTable createDefault(List<List<String>> rows) {
         DescriptionTable t = new DescriptionTable();
-        t.columns = rows.getFirst().size();
+        t.columns = rows.get(0).size();
         rows.forEach(r -> t.rows.add(new ArrayList<>(r)));
         return t;
     }

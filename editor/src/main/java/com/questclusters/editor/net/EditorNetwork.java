@@ -11,7 +11,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /** Editor payloads. E1: the server sends the whole book's editor data on login and after every change. */
 public final class EditorNetwork {
@@ -70,15 +69,15 @@ public final class EditorNetwork {
     private EditorNetwork() {
     }
 
-    public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar(PROTOCOL);
-        r.playToClient(SyncBook.TYPE, SyncBook.CODEC, (p, ctx) -> ClientEditor.replace(p.data()));
-        r.playToServer(Edit.TYPE, Edit.CODEC, (p, ctx) -> com.questclusters.editor.server.ServerEditor.handleEdit(
-                (ServerPlayer) ctx.player(), p.action(), p.patch()));
-        r.playToServer(PersistentRequest.TYPE, PersistentRequest.CODEC,
-                (p, ctx) -> com.questclusters.editor.PersistentData.handleRequest((ServerPlayer) ctx.player(), p.keys()));
-        r.playToClient(PersistentResponse.TYPE, PersistentResponse.CODEC,
-                (p, ctx) -> com.questclusters.editor.client.desc.ClientPersistentData.receive(p.keys(), p.forge(), p.kubejs()));
+    public static void register(com.questclusters.platform.ModContext ctx) {
+        Net.channel(ctx, PROTOCOL)
+                .toClient(SyncBook.TYPE, SyncBook.CODEC, p -> ClientEditor.replace(p.data()))
+                .toServer(Edit.TYPE, Edit.CODEC, (p, player) -> com.questclusters.editor.server.ServerEditor.handleEdit(
+                        player, p.action(), p.patch()))
+                .toServer(PersistentRequest.TYPE, PersistentRequest.CODEC,
+                        (p, player) -> com.questclusters.editor.PersistentData.handleRequest(player, p.keys()))
+                .toClient(PersistentResponse.TYPE, PersistentResponse.CODEC,
+                        p -> com.questclusters.editor.client.desc.ClientPersistentData.receive(p.keys(), p.forge(), p.kubejs()));
     }
 
     public static void send(ServerPlayer player, CompoundTag data) {

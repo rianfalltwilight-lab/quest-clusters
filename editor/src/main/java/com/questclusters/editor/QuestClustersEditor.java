@@ -20,21 +20,33 @@ public final class QuestClustersEditor {
     public static final String MOD_ID = "quest_clusters_editor";
     public static final Logger LOGGER = LoggerFactory.getLogger("Quest Clusters Editor");
 
+    //? if neoforge {
     public QuestClustersEditor(IEventBus modBus, net.neoforged.fml.ModContainer container) {
-        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, EditorConfig.SPEC);
-        container.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, EditorServerConfig.SPEC);
+        this(new com.questclusters.platform.ModContext(modBus, container));
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+            com.questclusters.editor.client.EditorClient.registerConfigScreen(container);
+        }
+    }
+    //?} else {
+    /*public QuestClustersEditor() {
+        this(com.questclusters.platform.ModContext.current());
+    }
+    *///?}
+
+    private QuestClustersEditor(com.questclusters.platform.ModContext ctx) {
+        IEventBus modBus = ctx.modBus();
+        ctx.clientConfig(EditorConfig.SPEC);
+        ctx.commonConfig(EditorServerConfig.SPEC);
         modBus.addListener((net.neoforged.fml.event.config.ModConfigEvent.Loading e) -> {
             if (e.getConfig().getSpec() == EditorConfig.SPEC) EditorConfig.importQuestEnhance();
         });
         MigrationRegistry.register(new QuestEnhanceMigration());
         QuestBookHooks.register(ServerEditor.INSTANCE);
         LineData.Holder.set(new EditorLineData());
-        modBus.addListener(EditorNetwork::register);
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
-                (net.neoforged.neoforge.event.RegisterCommandsEvent e) -> EditorCommands.register(e.getDispatcher()));
+        EditorNetwork.register(ctx);
+        com.questclusters.platform.Events.commands(EditorCommands::register);
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             com.questclusters.editor.client.EditorClient.init(modBus);
-            com.questclusters.editor.client.EditorClient.registerConfigScreen(container);
         }
     }
 }

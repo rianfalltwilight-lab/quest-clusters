@@ -24,8 +24,6 @@ import com.questclusters.editor.data.CanvasElement;
 import com.questclusters.editor.data.ChapterExtras;
 import dev.architectury.networking.NetworkManager;
 import dev.ftb.mods.ftblibrary.ui.ContextMenuItem;
-import dev.ftb.mods.ftbquests.net.CopyChapterImageMessage;
-import dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage;
 import dev.ftb.mods.ftbquests.quest.Chapter;
 import java.util.function.IntSupplier;
 
@@ -42,7 +40,7 @@ final class EditorDevTest {
         var uuid = Minecraft.getInstance().player.getUUID();
         server.execute(() -> {
             var sp = server.getPlayerList().getPlayer(uuid);
-            ServerQuestFile.INSTANCE.getOrCreateTeamData(sp).setPlayerEditMode(sp, on);
+            com.questclusters.platform.Ftbq.setEditMode(ServerQuestFile.INSTANCE, sp, on);
             serverLocked = !ServerQuestFile.INSTANCE.getChapter(C3).isVisible(ServerQuestFile.INSTANCE.getOrCreateTeamData(sp));
         });
     }
@@ -58,6 +56,12 @@ final class EditorDevTest {
 
     private static com.questclusters.editor.data.DescriptionTable tableUnderTest;
     private static volatile String scriptQuest;
+    /** Chapter images the QuestUtils step adds (text + guide point); it runs on 1.21.1 only. */
+    //? if neoforge {
+    private static final int SCRIPT_IMAGES = 2;
+    //?} else {
+    /*private static final int SCRIPT_IMAGES = 0;
+    *///?}
     private static int imagesBefore;
 
     private static void collect(dev.ftb.mods.ftblibrary.ui.Panel p, List<dev.ftb.mods.ftblibrary.ui.Widget> out) {
@@ -89,7 +93,7 @@ final class EditorDevTest {
     }
 
     private static long count(java.util.Collection<ChapterImage> imgs, Class<?> type) {
-        return imgs.stream().filter(i -> type.isInstance(CanvasElement.parse(i.getClickAction().actionData()))).count();
+        return imgs.stream().filter(i -> type.isInstance(CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(i)))).count();
     }
 
     private static void counters() {
@@ -124,8 +128,9 @@ final class EditorDevTest {
                     DevSelfTest.moduleCheck(b.chapter(C2).hiddenLines.size() == 1 && b.chapter(C2).hiddenLines.get(0).revealOnHover(), "editor: hidden line imported");
                     DevSelfTest.moduleCheck(b.chapter(C3).prerequisites.equals(List.of(D6)), "editor: chapter prerequisites imported");
                     DevSelfTest.moduleCheck(b.excludedImages.contains(A6), "editor: box-select exclusion imported");
-                    DevSelfTest.moduleCheck(ClientQuestFile.INSTANCE.getBase(A7) instanceof ChapterImage img
-                            && img.getClickAction().actionData().startsWith("quest_enhance:text:"), "editor: legacy 'click' canvas text restored");
+                    ChapterImage a7 = com.questclusters.platform.Ftbq.image(ClientQuestFile.INSTANCE, A7);
+                    DevSelfTest.moduleCheck(a7 != null
+                            && com.questclusters.platform.Ftbq.clickData(a7).startsWith("quest_enhance:text:"), "editor: legacy 'click' canvas text restored");
                     DevSelfTest.moduleCheck(ClientQuestFile.INSTANCE.getChapter(C3).isVisible(ClientQuestFile.INSTANCE.selfTeamData),
                             "editor: locked chapter visible in edit mode");
                     var lineTex = com.questclusters.editor.client.gui.DecorativeLinesWidget.texture();
@@ -253,15 +258,15 @@ final class EditorDevTest {
                     var imgs = ClientQuestFile.INSTANCE.getChapter(C2).getImages();
                     DevSelfTest.moduleCheck(count(imgs, CanvasElement.Anchor.class) == 2, "editor: guide point created");
                     DevSelfTest.moduleCheck(count(imgs, CanvasElement.Gif.class) == 1, "editor: GIF element created");
-                    DevSelfTest.moduleCheck(imgs.stream().anyMatch(i -> CanvasElement.parse(i.getClickAction().actionData()) instanceof CanvasElement.Text t
+                    DevSelfTest.moduleCheck(imgs.stream().anyMatch(i -> CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(i)) instanceof CanvasElement.Text t
                             && t.text().equals("Devtest text") && t.scale() == 1.5), "editor: canvas text created");
                     DevSelfTest.moduleCheck(Math.abs(GifTextures.aspect(GIF) - 1F) < 0.01F, "editor: GIF decoded");
-                    NetworkManager.sendToServer(UndoRedoRequestMessage.undo());
+                    DevSelfTest.undo();
                     return 20;
                 },
                 () -> {
                     DevSelfTest.moduleCheck(!ClientEditor.book().excludedImages.contains(A7), "editor: undo reverts the last editor change");
-                    NetworkManager.sendToServer(new CopyChapterImageMessage(0xA5L, C2, 5, 5));
+                    com.questclusters.platform.Ftbq.copyImage(0xA5L, ClientQuestFile.INSTANCE.getChapter(C2), 5, 5);
                     var qs = DevSelfTest.questScreen();
                     var sel = ((QuestScreenAccessor) qs).quest_clusters$getSelectedObjects();
                     sel.clear();
@@ -277,7 +282,7 @@ final class EditorDevTest {
                     var keys = new java.util.HashSet<String>();
                     int anchors = 0;
                     for (ChapterImage i : file.getChapter(C2).getImages()) {
-                        if (CanvasElement.parse(i.getClickAction().actionData()) instanceof CanvasElement.Anchor a) {
+                        if (CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(i)) instanceof CanvasElement.Anchor a) {
                             anchors++;
                             keys.add(a.uuid());
                         }
@@ -315,7 +320,11 @@ final class EditorDevTest {
                     DevSelfTest.moduleCheck(table.isPresent() && table.get().height > 40, "editor: description table drawn as a grid ("
                             + table.map(w -> w.height).orElse(0) + " px)");
                     DevSelfTest.moduleCheck(all.stream().anyMatch(w -> w instanceof dev.ftb.mods.ftbquests.client.gui.ImageComponentWidget iw
+                            //? if neoforge {
                             && iw.getComponent().getImage() instanceof com.questclusters.editor.client.desc.GifIcon), "editor: description GIF");
+                            //?} else {
+                            /*&& iw.getComponent().image instanceof com.questclusters.editor.client.desc.GifIcon), "editor: description GIF");
+                            *///?}
                     DevSelfTest.moduleCheck(all.stream().anyMatch(w -> w instanceof dev.ftb.mods.ftblibrary.ui.TextField tf
                             && rawText(tf).equals("Hello placeholder")), "editor: persistent-data placeholder shows the value");
                     DevSelfTest.moduleShot("qc_34_editor_description");
@@ -339,7 +348,8 @@ final class EditorDevTest {
                     return 10;
                 },
                 () -> {
-                    if (!(com.questclusters.editor.client.desc.TableEditorScreen.last instanceof com.questclusters.editor.client.desc.TableEditorScreen ed)) {
+                    var ed = com.questclusters.editor.client.desc.TableEditorScreen.last;
+                    if (ed == null) {
                         DevSelfTest.moduleCheck(false, "editor: table editor opens");
                         return 5;
                     }
@@ -373,6 +383,8 @@ final class EditorDevTest {
                     imagesBefore = ClientQuestFile.INSTANCE.getChapter(C2).getImages().size();
                     DevSelfTest.moduleCheck(com.questclusters.editor.client.paste.PasteActions.pasteOnCanvas(qs, false), "editor: clipboard image pasted");
                     com.questclusters.editor.client.paste.ClipboardImage.testOverride = null;
+                    // the QuestUtils script API (KubeJS) is 1.21.1 only
+                    //? if neoforge {
                     var server = Minecraft.getInstance().getSingleplayerServer();
                     server.execute(() -> {
                         String q = com.questclusters.editor.compat.kubejs.QuestUtils.createQuest("00000000000000C2", 6, 6, "Script quest");
@@ -384,13 +396,14 @@ final class EditorDevTest {
                         com.questclusters.editor.compat.kubejs.QuestUtils.createDecorativeAnchor("00000000000000C2", 7, 6);
                         com.questclusters.editor.compat.kubejs.QuestUtils.setQuestShape(q, "hexagon");
                     });
+                    //?}
                     return 30;
                 },
                 () -> {
                     var file = ClientQuestFile.INSTANCE;
                     var imgs = file.getChapter(C2).getImages();
                     var pasted = imgs.stream().filter(i -> i.getImage().toString().startsWith("quest_clusters_editor:textures/pasted/")).findFirst();
-                    DevSelfTest.moduleCheck(imgs.size() >= imagesBefore + 3 && pasted.isPresent(), "editor: pasted image became a chapter image");
+                    DevSelfTest.moduleCheck(imgs.size() >= imagesBefore + 1 + SCRIPT_IMAGES && pasted.isPresent(), "editor: pasted image became a chapter image");
                     pasted.ifPresent(p -> {
                         var rl = Rl.parse(p.getImage().toString());
                         DevSelfTest.moduleCheck(Minecraft.getInstance().getTextureManager().getTexture(rl, null) != null, "editor: pasted texture shown without reload");
@@ -406,15 +419,17 @@ final class EditorDevTest {
                     } catch (Exception e) {
                         DevSelfTest.moduleCheck(false, "editor: cleanup " + e);
                     }
+                    //? if neoforge {
                     Quest sq = scriptQuest == null ? null : file.getQuest(dev.ftb.mods.ftbquests.quest.QuestObjectBase.parseCodeString(scriptQuest));
                     DevSelfTest.moduleCheck(sq != null && sq.getTitle().getString().equals("Script quest") && sq.getRawDescription().size() == 3,
                             "editor: QuestUtils created a quest with title and description");
-                    DevSelfTest.moduleCheck(imgs.stream().anyMatch(i -> CanvasElement.parse(i.getClickAction().actionData()) instanceof CanvasElement.Text t
+                    DevSelfTest.moduleCheck(imgs.stream().anyMatch(i -> CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(i)) instanceof CanvasElement.Text t
                             && t.text().equals("Script text")), "editor: QuestUtils canvas text keeps its payload");
                     DevSelfTest.moduleCheck(sq != null && sq.getRawDescription().get(2).startsWith("{quest_enhance_video:"), "editor: video description line");
                     var line = sq == null ? null : sq.getDescription().get(2);
                     DevSelfTest.moduleCheck(line != null && line.getString().equals("Watch") && line.getStyle().getClickEvent() != null
                             && line.getStyle().getClickEvent().getValue().startsWith("quest_enhance_video/"), "editor: video link parsed");
+                    //?}
                     var icon = com.questclusters.editor.EntityModels.withVideo(net.minecraft.world.item.ItemStack.EMPTY, "intro/start.mp4");
                     DevSelfTest.moduleCheck("intro/start.mp4".equals(com.questclusters.editor.EntityModels.videoOf(icon))
                             && com.questclusters.editor.EntityModels.isVideoPlaceholder(icon)

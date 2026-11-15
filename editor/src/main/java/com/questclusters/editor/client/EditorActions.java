@@ -67,7 +67,11 @@ public final class EditorActions {
     /** As above, but {@code back} reopens whatever screen the picker was opened from (before {@code onPicked}). */
     public static void pickImage(QuestScreen screen, String current, Consumer<String> onPicked, Runnable back) {
         ImageResourceConfig cfg = new ImageResourceConfig();
+        //? if neoforge {
         cfg.withAllowEmpty(true);
+        //?} else {
+        /*cfg.setAllowEmpty(true);
+        *///?}
         ResourceLocation rl = current.isEmpty() ? null : ResourceLocation.tryParse(current);
         cfg.setValue(rl == null ? ImageResourceConfig.NONE : rl);
         new SelectImageResourceScreen(cfg, accepted -> {

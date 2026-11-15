@@ -9,8 +9,7 @@ public final class EditorClient {
     }
 
     public static void init(net.neoforged.bus.api.IEventBus modBus) {
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientTickEvent.Pre e) ->
-                com.questclusters.editor.perf.VisibilityCache.clear());
+        com.questclusters.platform.Events.clientTickStart(com.questclusters.editor.perf.VisibilityCache::clear);
         // a resource pack may add or remove a decorative line texture
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent e) -> e.registerReloadListener(
                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener) rm ->
@@ -39,9 +38,11 @@ public final class EditorClient {
      * "Config" button in the mods list: NeoForge's screen for the client options. The internal flag that records the
      * one-time Quest Enhance import is not shown.
      */
+    //? if neoforge {
     public static void registerConfigScreen(net.neoforged.fml.ModContainer container) {
         container.registerExtensionPoint(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
                 (mod, parent) -> new net.neoforged.neoforge.client.gui.ConfigurationScreen(mod, parent,
                         (context, key, element) -> "imported_quest_enhance".equals(key) ? null : element));
     }
+    //?}
 }

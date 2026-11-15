@@ -67,8 +67,14 @@ public final class EntityModelIcon extends Icon {
         e.yHeadRotO = e.getYRot();
         try {
             float s = e.getScale();
+            //? if neoforge {
             InventoryScreen.renderEntityInInventory(g, x + w / 2F, y + h / 2F, scale / s,
                     new org.joml.Vector3f(0F, e.getBbHeight() / 2F, 0F), pose, camera, e);
+            //?} else {
+            /*int size = Math.max(1, Math.round(scale / s));
+            InventoryScreen.renderEntityInInventory(g, Math.round(x + w / 2F), Math.round(y + h / 2F + e.getBbHeight() * size / 2F),
+                    size, pose, camera, e);
+            *///?}
         } finally {
             e.yBodyRot = bodyRot;
             e.setYRot(yRot);

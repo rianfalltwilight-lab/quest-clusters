@@ -120,11 +120,11 @@ public final class ServerEditor implements QuestBookHooks.Listener {
         // only objects that exist, of the right kind
         patch.chapters.keySet().removeIf(id -> !(file.getBase(id) instanceof Chapter));
         patch.quests.keySet().removeIf(id -> !(file.getBase(id) instanceof Quest));
-        patch.images.keySet().removeIf(id -> !(file.getBase(id) instanceof ChapterImage));
+        patch.images.keySet().removeIf(id -> com.questclusters.platform.Ftbq.image(file, id) == null);
         patch.chapters.forEach((id, c) -> c.prerequisites.removeIf(q -> !(file.getBase(q) instanceof Quest quest) || quest.getChapter().id == id));
         if (patch.isEmpty()) return;
         String a = ACTIONS.contains(action) ? action : "edit";
-        file.getHistoryStack().addAndApply(file, new EditorChangeEvent(patch, patch.snapshot(book), a));
+        com.questclusters.platform.History.record(file, new EditorChangeEvent(patch, patch.snapshot(book), a));
     }
 
     static void applyRaw(ServerQuestFile file, com.questclusters.editor.data.EditorPatch patch) {
@@ -141,17 +141,16 @@ public final class ServerEditor implements QuestBookHooks.Listener {
     }
 
     private static long chapterOf(BaseQuestFile file, long id) {
-        var o = file.getBase(id);
-        if (o instanceof Quest q) return q.getChapter().id;
-        if (o instanceof ChapterImage img) return img.getChapter().id;
-        return 0L;
+        if (file.getBase(id) instanceof Quest q) return q.getChapter().id;
+        ChapterImage img = com.questclusters.platform.Ftbq.image(file, id);
+        return img != null ? img.getChapter().id : 0L;
     }
 
     /** Drops data of objects that no longer exist. Returns true if anything changed. */
     static boolean prune(BaseQuestFile file, BookExtras b) {
         boolean changed = b.chapters.keySet().removeIf(id -> !(file.getBase(id) instanceof Chapter));
         changed |= b.quests.keySet().removeIf(id -> !(file.getBase(id) instanceof Quest));
-        changed |= b.excludedImages.removeIf(id -> !(file.getBase(id) instanceof ChapterImage));
+        changed |= b.excludedImages.removeIf(id -> com.questclusters.platform.Ftbq.image(file, id) == null);
         for (var e : b.chapters.entrySet()) {
             Chapter chapter = (Chapter) file.getBase(e.getKey());
             ChapterExtras c = e.getValue();
@@ -179,7 +178,7 @@ public final class ServerEditor implements QuestBookHooks.Listener {
         for (Quest q : chapter.getQuests()) out.add(NodeKeys.quest(q.id));
         for (QuestLink l : chapter.getQuestLinks()) out.add(NodeKeys.link(l.id));
         for (ChapterImage img : chapter.getImages()) {
-            if (CanvasElement.parse(img.getClickAction().actionData()) instanceof CanvasElement.Anchor a && a.nodeKey() != null) {
+            if (CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(img)) instanceof CanvasElement.Anchor a && a.nodeKey() != null) {
                 out.add(a.nodeKey());
             }
         }

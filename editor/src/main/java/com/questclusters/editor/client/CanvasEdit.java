@@ -4,7 +4,6 @@ import com.questclusters.platform.Ftbq;
 import com.questclusters.platform.Rl;
 import com.questclusters.editor.data.CanvasElement;
 import com.questclusters.mixin.client.QuestScreenAccessor;
-import dev.architectury.networking.NetworkManager;
 import dev.ftb.mods.ftblibrary.config.ConfigGroup;
 import dev.ftb.mods.ftblibrary.config.NameMap;
 import dev.ftb.mods.ftblibrary.config.ui.EditConfigScreen;
@@ -12,9 +11,6 @@ import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.misc.SimpleToast;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
 import dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen;
-import dev.ftb.mods.ftbquests.net.CopyChapterImageMessage;
-import dev.ftb.mods.ftbquests.net.CopyQuestMessage;
-import dev.ftb.mods.ftbquests.net.CreateObjectMessage;
 import dev.ftb.mods.ftbquests.quest.Chapter;
 import dev.ftb.mods.ftbquests.quest.ChapterImage;
 import dev.ftb.mods.ftbquests.quest.Movable;
@@ -51,16 +47,13 @@ public final class CanvasEdit {
     // ------------------------------------------------------------------ creation
 
     private static void create(Chapter chapter, double x, double y, double w, double h, String image, String payload) {
-        ChapterImage img = new ChapterImage(0L, chapter);
         CompoundTag t = new CompoundTag();
         t.putDouble("x", x);
         t.putDouble("y", y);
         t.putDouble("width", w);
         t.putDouble("height", h);
         t.putString("image", image);
-        t.putString("click_action", "none:" + payload);
-        img.readData(t, ClientQuestFile.INSTANCE.holderLookup());
-        NetworkManager.sendToServer(CreateObjectMessage.requestCreation(img));
+        Ftbq.createImage(Ftbq.newImage(chapter, t, payload), true);
     }
 
     public static void addGuidePoint(Chapter chapter, double x, double y) {
@@ -93,11 +86,7 @@ public final class CanvasEdit {
     }
 
     public static void setPayload(ChapterImage img, String payload) {
-        CompoundTag t = new CompoundTag();
-        img.writeData(t, ClientQuestFile.INSTANCE.holderLookup());
-        t.putString("click_action", "none:" + payload);
-        img.readData(t, ClientQuestFile.INSTANCE.holderLookup());
-        Ftbq.sendEdit(img);
+        Ftbq.setElement(img, payload);
     }
 
     private static void openTextEditor(QuestScreen screen, CanvasElement.Text start, java.util.function.Consumer<CanvasElement.Text> done) {
@@ -162,7 +151,7 @@ public final class CanvasEdit {
         for (Movable m : sel) {
             double x = m.getX(), y = m.getY();
             double[] n = transformed(mode, cx, cy, x, y);
-            m.requestMove(chapter, n[0], n[1]);
+            Ftbq.requestMove(m, chapter.id, n[0], n[1]);
         }
         return true;
     }
@@ -209,9 +198,9 @@ public final class CanvasEdit {
         if (!hasMultiClipboard() || target == null) return false;
         for (ClipEntry e : clipboard) {
             if (e.quest()) {
-                NetworkManager.sendToServer(new CopyQuestMessage(e.id(), target.id, x + e.dx(), y + e.dy(), withDeps));
+                Ftbq.copyQuest(e.id(), target, x + e.dx(), y + e.dy(), withDeps);
             } else {
-                NetworkManager.sendToServer(new CopyChapterImageMessage(e.id(), target.id, x + e.dx(), y + e.dy()));
+                Ftbq.copyImage(e.id(), target, x + e.dx(), y + e.dy());
             }
         }
         return true;

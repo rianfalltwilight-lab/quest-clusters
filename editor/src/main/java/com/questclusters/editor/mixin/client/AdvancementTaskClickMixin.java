@@ -29,10 +29,16 @@ public abstract class AdvancementTaskClickMixin {
         if (mc.player == null) return;
         var advancements = mc.player.connection.getAdvancements();
         ResourceLocation id = ((com.questclusters.editor.mixin.AdvancementTaskAccessor) task).quest_clusters_editor$advancement();
+        //? if neoforge {
         var holder = id == null ? null : advancements.get(id);
         if (holder == null) return;
         var node = advancements.getTree().get(holder);
         if (node != null) advancements.setSelectedTab(node.root().holder(), true);
+        //?} else {
+        /*var advancement = id == null ? null : advancements.getAdvancements().get(id);
+        if (advancement == null) return;
+        advancements.setSelectedTab(advancement.getRoot(), true);
+        *///?}
         mc.setScreen(new AdvancementsScreen(advancements));
         ci.cancel();
     }

@@ -37,30 +37,26 @@ public final class CanvasRender {
         ps.translate(-ox, -oy, 0);
         int alpha = transparent ? 100 : img.getAlpha();
         int rgb = img.getColor().rgba() & 0xFFFFFF;
-        switch (el) {
-            case CanvasElement.Text t -> drawText(g, theme, t, w, h, img.isAlignToCorner(), (alpha << 24) | rgb);
-            case CanvasElement.Gif gif -> {
-                ResourceLocation rl = ResourceLocation.tryParse(gif.resource());
-                if (rl == null || !com.questclusters.editor.client.GifTextures.draw(g, rl, 0, 0, w, h, (alpha << 24) | rgb)) {
-                    g.fill(0, 0, w, h, (alpha << 24) | 0x212121);
-                }
+        if (el instanceof CanvasElement.Text t) {
+            drawText(g, theme, t, w, h, img.isAlignToCorner(), (alpha << 24) | rgb);
+        } else if (el instanceof CanvasElement.Gif gif) {
+            ResourceLocation rl = ResourceLocation.tryParse(gif.resource());
+            if (rl == null || !com.questclusters.editor.client.GifTextures.draw(g, rl, 0, 0, w, h, (alpha << 24) | rgb)) {
+                g.fill(0, 0, w, h, (alpha << 24) | 0x212121);
             }
-            case CanvasElement.Video v -> {
-                if (!img.getImage().isEmpty()) {
-                    img.getImage().withColor(img.getColor().withAlpha(alpha)).draw(g, 0, 0, w, h);
-                } else {
-                    g.fill(0, 0, w, h, (alpha << 24) | 0x212121);
-                }
-                Font font = Minecraft.getInstance().font;
-                float s = Math.max(0.5F, Math.min(w, h) / 24F);
-                ps.pushPose();
-                ps.translate(w / 2F, h / 2F, 0);
-                ps.scale(s, s, 1);
-                g.drawString(font, "▶", -font.width("▶") / 2, -font.lineHeight / 2, 0xFFFFFFFF, true);
-                ps.popPose();
+        } else if (el instanceof CanvasElement.Video) {
+            if (!img.getImage().isEmpty()) {
+                img.getImage().withColor(img.getColor().withAlpha(alpha)).draw(g, 0, 0, w, h);
+            } else {
+                g.fill(0, 0, w, h, (alpha << 24) | 0x212121);
             }
-            default -> {
-            }
+            Font font = Minecraft.getInstance().font;
+            float s = Math.max(0.5F, Math.min(w, h) / 24F);
+            ps.pushPose();
+            ps.translate(w / 2F, h / 2F, 0);
+            ps.scale(s, s, 1);
+            g.drawString(font, "▶", -font.width("▶") / 2, -font.lineHeight / 2, 0xFFFFFFFF, true);
+            ps.popPose();
         }
         if (selected) {
             int a = (int) (45 + 20 * Math.sin(System.currentTimeMillis() * 0.003D));

@@ -7,3 +7,14 @@ dependencies {
     modCompileOnly("dev.latvian.mods:${ld('kubejs')}:${project.kubejs_version}")
     modCompileOnly("dev.latvian.mods:${project.rhino_artifact}:${project.rhino_version}")
 }
+
+// 1.20.1: KubeJS 6 (script events are EventJS subclasses)
+stonecutter {
+    if (legacy) {
+        replacements.string(true) {
+            replace('dev.latvian.mods.kubejs.event.KubeEvent', 'dev.latvian.mods.kubejs.event.EventJS')
+            replace('implements KubeEvent', 'extends EventJS')
+            replace('ImageComponent.ImageAlign.byName(', 'ImageComponent.ImageAlign.fromString(')
+        }
+    }
+}

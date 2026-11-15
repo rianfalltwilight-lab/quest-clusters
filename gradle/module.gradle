@@ -55,6 +55,8 @@ stonecutter {
             replace('NeoForge.EVENT_BUS', 'MinecraftForge.EVENT_BUS')
             replace('ModConfigSpec', 'ForgeConfigSpec')
             replace('ItemStack.isSameItemSameComponents(', 'ItemStack.isSameItemSameTags(')
+            // FTB Library 2001 keeps the image pickers one package up
+            replace('dev.ftb.mods.ftblibrary.config.ui.resource.', 'dev.ftb.mods.ftblibrary.config.ui.')
         }
         // Minecraft 1.20.2 added horizontal scrolling: mouseScrolled(x, y, dx, dy) is mouseScrolled(x, y, dy) here
         replacements.regex(true) {
@@ -194,7 +196,10 @@ def generateModMetadata = tasks.register('generateModMetadata', ProcessResources
             display_test            : project.findProperty('display_test') ?: 'MATCH_VERSION',
             // placeholders inside the inserted text are not expanded by the template engine: resolve them here
             extra_dependencies      : legacy ? forgeDeps(extra) : extra,
-            has_mixins              : hasMixins
+            has_mixins              : hasMixins,
+            // NeoForge-only mixins (src/neoforge/resources/<id>.neoforge.mixins.json)
+            loader_mixins           : !legacy && new File(moduleDir, "src/neoforge/resources/${project.module_id}.neoforge.mixins.json").exists()
+                    ? "\n[[mixins]]\nconfig = \"${project.module_id}.neoforge.mixins.json\"\n" : ''
     ]
     inputs.properties props
     filteringCharset = 'UTF-8'

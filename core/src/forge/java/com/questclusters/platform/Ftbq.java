@@ -89,4 +89,68 @@ public final class Ftbq {
     public static Optional<String> chapterFileName(dev.ftb.mods.ftbquests.quest.Chapter chapter) {
         return chapter.getPath().map(p -> p.substring(p.lastIndexOf('/') + 1));
     }
+
+    /** Edits the quest's description lines and sends the quest to the server (1.20.1 keeps them on the quest). */
+    public static void editDescription(dev.ftb.mods.ftbquests.quest.Quest quest, java.util.function.Consumer<java.util.List<String>> edit) {
+        edit.accept(quest.getRawDescription());
+        quest.clearCachedData();
+        sendEdit(quest);
+    }
+
+    /** FTB Quests for 1.20.1 has one language per book: nothing can be missing. */
+    public static boolean missingTitleTranslation(BaseQuestFile file, QuestObjectBase o) {
+        return false;
+    }
+
+    // ------------------------------------------------------------------ editing objects from the client
+
+    public static void write(QuestObjectBase o, net.minecraft.nbt.CompoundTag tag) {
+        o.writeData(tag);
+    }
+
+    public static void read(QuestObjectBase o, net.minecraft.nbt.CompoundTag tag) {
+        o.readData(tag);
+    }
+
+    /** Asks the server to create a new object (a task, ...). */
+    public static void create(QuestObjectBase o) {
+        new dev.ftb.mods.ftbquests.net.CreateObjectMessage(o, null).sendToServer();
+    }
+
+    /** A new chapter image from saved data, and Quest Enhance element data for its click (null: none). */
+    public static ChapterImage newImage(dev.ftb.mods.ftbquests.quest.Chapter chapter, net.minecraft.nbt.CompoundTag data, String element) {
+        ChapterImage img = new ChapterImage(chapter);
+        if (element != null) data.putString("click", element);
+        img.readData(data);
+        return img;
+    }
+
+    /** 1.20.1: images are part of their chapter; adding one sends the chapter. No settings screen opens. */
+    public static void createImage(ChapterImage img, boolean openEditor) {
+        img.getChapter().getImages().add(img);
+        sendEdit(img.getChapter());
+    }
+
+    /** Changes an image through its saved data and sends its chapter to the server. */
+    public static void editImage(ChapterImage img, java.util.function.Consumer<net.minecraft.nbt.CompoundTag> change) {
+        var t = img.writeData(new net.minecraft.nbt.CompoundTag());
+        change.accept(t);
+        img.readData(t);
+        sendEdit(img.getChapter());
+    }
+
+    /** Replaces the image's Quest Enhance element data. */
+    public static void setElement(ChapterImage img, String element) {
+        editImage(img, t -> t.putString("click", element));
+    }
+
+    public static void copyQuest(long questId, dev.ftb.mods.ftbquests.quest.Chapter target, double x, double y, boolean withDeps) {
+        var quest = target.file.getQuest(questId);
+        if (quest != null) new dev.ftb.mods.ftbquests.net.CopyQuestMessage(quest, target, x, y, withDeps).sendToServer();
+    }
+
+    public static void copyImage(long imageId, dev.ftb.mods.ftbquests.quest.Chapter target, double x, double y) {
+        ChapterImage img = image(target.file, imageId);
+        if (img != null) new dev.ftb.mods.ftbquests.net.CopyChapterImageMessage(img, target, x, y).sendToServer();
+    }
 }

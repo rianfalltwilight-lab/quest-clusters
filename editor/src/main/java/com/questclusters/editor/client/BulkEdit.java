@@ -27,19 +27,18 @@ public final class BulkEdit {
     }
 
     public static void edit(QuestScreen screen, List<Quest> quests) {
-        Quest first = quests.getFirst();
-        var lookup = ClientQuestFile.INSTANCE.holderLookup();
+        Quest first = quests.get(0);
         CompoundTag before = new CompoundTag();
-        first.writeData(before, lookup);
+        com.questclusters.platform.Ftbq.write(first, before);
         ConfigGroup group = new ConfigGroup(FTBQuestsAPI.MOD_ID, accepted -> {
             EditorActions.reopen(screen);
             if (!accepted) {
-                first.readData(before, lookup); // the page edits the object directly: put it back
+                com.questclusters.platform.Ftbq.read(first, before); // the page edits the object directly: put it back
                 first.clearCachedData();
                 return;
             }
             CompoundTag after = new CompoundTag();
-            first.writeData(after, lookup);
+            com.questclusters.platform.Ftbq.write(first, after);
             List<String> changed = new ArrayList<>();
             for (String k : after.getAllKeys()) if (!Objects.equals(after.get(k), before.get(k))) changed.add(k);
             for (String k : before.getAllKeys()) if (!after.contains(k)) changed.add(k);
@@ -47,13 +46,13 @@ public final class BulkEdit {
             Ftbq.sendEdit(first);
             for (Quest q : quests.subList(1, quests.size())) {
                 CompoundTag t = new CompoundTag();
-                q.writeData(t, lookup);
+                com.questclusters.platform.Ftbq.write(q, t);
                 for (String k : changed) {
                     Tag v = after.get(k);
                     if (v == null) t.remove(k);
                     else t.put(k, v.copy());
                 }
-                q.readData(t, lookup);
+                com.questclusters.platform.Ftbq.read(q, t);
                 q.clearCachedData();
                 Ftbq.sendEdit(q);
             }
@@ -66,10 +65,10 @@ public final class BulkEdit {
         List<ContextMenuItem> out = new ArrayList<>();
         for (TaskType type : TaskTypes.TYPES.values()) {
             out.add(new ContextMenuItem(type.getDisplayName(), type.getIconSupplier(), b ->
-                    type.getGuiProvider().openCreationGui(screen.questPanel, quests.getFirst(), task -> {
+                    type.getGuiProvider().openCreationGui(screen.questPanel, quests.get(0), task -> {
                         for (Quest q : quests) {
                             Task copy = QuestObjectBase.copy(task, () -> type.createTask(0L, q));
-                            if (copy != null) NetworkManager.sendToServer(CreateObjectMessage.requestCreation(copy));
+                            if (copy != null) com.questclusters.platform.Ftbq.create(copy);
                         }
                     })));
         }

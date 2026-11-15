@@ -2,8 +2,12 @@ package com.questclusters.editor.client.paste;
 
 import com.questclusters.editor.QuestClustersEditor;
 import net.minecraft.network.chat.Component;
+//? if neoforge {
 import net.minecraft.server.packs.PackLocationInfo;
+//?}
+//? if neoforge {
 import net.minecraft.server.packs.PackSelectionConfig;
+//?}
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.server.packs.repository.Pack;
@@ -20,6 +24,12 @@ import java.util.Optional;
  * exists (its pasted images and GIFs, referenced by books made with it).
  */
 public final class ConfigPacks {
+    //? if neoforge {
+    private static final int PACK_FORMAT = 34;
+    //?} else {
+    /*private static final int PACK_FORMAT = 15;
+    *///?}
+
     private ConfigPacks() {
     }
 
@@ -37,17 +47,25 @@ public final class ConfigPacks {
             }
             Path meta = root.resolve("pack.mcmeta");
             if (!Files.exists(meta)) {
-                Files.writeString(meta, "{\"pack\":{\"description\":\"" + title + "\",\"pack_format\":34}}");
+                Files.writeString(meta, "{\"pack\":{\"description\":\"" + title + "\",\"pack_format\":" + PACK_FORMAT + "}}");
             }
         } catch (IOException e) {
             QuestClustersEditor.LOGGER.warn("Could not prepare resource pack folder {}: {}", root, e.toString());
             return;
         }
+        //? if neoforge {
         PackLocationInfo info = new PackLocationInfo(id, Component.literal(title), PackSource.BUILT_IN, Optional.empty());
         event.addRepositorySource(consumer -> {
             Pack pack = Pack.readMetaAndCreate(info, new PathPackResources.PathResourcesSupplier(root), PackType.CLIENT_RESOURCES,
                     new PackSelectionConfig(true, Pack.Position.TOP, false));
             if (pack != null) consumer.accept(pack);
         });
+        //?} else {
+        /*event.addRepositorySource(consumer -> {
+            Pack pack = Pack.readMetaAndCreate(id, Component.literal(title), true, name -> new PathPackResources(name, root, false),
+                    PackType.CLIENT_RESOURCES, Pack.Position.TOP, PackSource.BUILT_IN);
+            if (pack != null) consumer.accept(pack);
+        });
+        *///?}
     }
 }

@@ -169,13 +169,12 @@ public final class QuestUtils {
     }
 
     public static String getChapterImageType(Object image) {
-        return switch (element(image)) {
-            case CanvasElement.Gif g -> "gif";
-            case CanvasElement.Video v -> "video";
-            case CanvasElement.Text t -> "text";
-            case CanvasElement.Anchor a -> "anchor";
-            case null -> "image";
-        };
+        CanvasElement e = element(image);
+        if (e instanceof CanvasElement.Gif) return "gif";
+        if (e instanceof CanvasElement.Video) return "video";
+        if (e instanceof CanvasElement.Text) return "text";
+        if (e instanceof CanvasElement.Anchor) return "anchor";
+        return "image";
     }
 
     public static String getChapterGifResource(Object image) {

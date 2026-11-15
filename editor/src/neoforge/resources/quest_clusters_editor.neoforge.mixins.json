@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.questclusters.editor.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "CopyAnchorMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -24,7 +24,9 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.contents.KeybindContents;
+//? if neoforge {
 import net.minecraft.network.chat.contents.PlainTextContents;
+//?}
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -139,8 +141,8 @@ public final class InsertComponents {
                 str(g, v, "text", text.isEmpty() ? tr("ponder.default").getString() : text);
                 List<String> items = Ponder.items().stream().map(ResourceLocation::toString).toList();
                 if (items.isEmpty()) items = List.of("minecraft:air");
-                v.putIfAbsent("item", items.getFirst());
-                g.addEnum("item", (String) v.get("item"), x -> v.put("item", x), NameMap.of(items.getFirst(), items).create());
+                v.putIfAbsent("item", items.get(0));
+                g.addEnum("item", (String) v.get("item"), x -> v.put("item", x), NameMap.of(items.get(0), items).create());
             }
             case "copy" -> {
                 str(g, v, "text", text.isEmpty() ? "Copy" : text);
@@ -157,8 +159,8 @@ public final class InsertComponents {
             case "font" -> {
                 str(g, v, "text", text);
                 List<String> fonts = com.questclusters.editor.client.CanvasEditFonts.fonts();
-                v.putIfAbsent("font", fonts.getFirst());
-                g.addEnum("font", (String) v.get("font"), x -> v.put("font", x), NameMap.of(fonts.getFirst(), fonts).create());
+                v.putIfAbsent("font", fonts.get(0));
+                g.addEnum("font", (String) v.get("font"), x -> v.put("font", x), NameMap.of(fonts.get(0), fonts).create());
             }
             case "translate" -> {
                 str(g, v, "key", "");
@@ -168,9 +170,9 @@ public final class InsertComponents {
                 List<String> keys = new ArrayList<>();
                 for (KeyMapping k : Minecraft.getInstance().options.keyMappings) keys.add(k.getName());
                 keys.sort(String::compareTo);
-                v.putIfAbsent("key", keys.contains("key.inventory") ? "key.inventory" : keys.getFirst());
+                v.putIfAbsent("key", keys.contains("key.inventory") ? "key.inventory" : keys.get(0));
                 g.addEnum("key", (String) v.get("key"), x -> v.put("key", x),
-                        NameMap.of(keys.getFirst(), keys).name(k -> Component.translatable(k)).create());
+                        NameMap.of(keys.get(0), keys).name(k -> Component.translatable(k)).create());
             }
             case "obfuscated" -> str(g, v, "text", text);
             case "item_tooltip" -> {
@@ -192,18 +194,18 @@ public final class InsertComponents {
             case "video" -> {
                 List<String> videos = com.questclusters.editor.client.video.VideoSupport.list();
                 if (videos.isEmpty()) return;
-                v.putIfAbsent("video", videos.getFirst());
+                v.putIfAbsent("video", videos.get(0));
                 if (!videos.contains((String) v.get("video"))) {
                     videos = new ArrayList<>(videos);
                     videos.add((String) v.get("video"));
                 }
-                g.addEnum("video", (String) v.get("video"), x -> v.put("video", x), NameMap.of(videos.getFirst(), videos).create());
+                g.addEnum("video", (String) v.get("video"), x -> v.put("video", x), NameMap.of(videos.get(0), videos).create());
                 str(g, v, "text", text);
             }
             case "gif" -> {
                 List<String> gifs = GifTextures.list().stream().map(ResourceLocation::toString).toList();
-                v.putIfAbsent("gif", gifs.getFirst());
-                g.addEnum("gif", (String) v.get("gif"), x -> v.put("gif", x), NameMap.of(gifs.getFirst(), gifs).create());
+                v.putIfAbsent("gif", gifs.get(0));
+                g.addEnum("gif", (String) v.get("gif"), x -> v.put("gif", x), NameMap.of(gifs.get(0), gifs).create());
                 imageFields(g, v, 200, 0, false);
             }
             default -> {
@@ -265,7 +267,11 @@ public final class InsertComponents {
             default -> null;
         };
         if (c != null) {
+            //? if neoforge {
             return Component.Serializer.toJson(c, ClientQuestFile.INSTANCE.holderLookup());
+            //?} else {
+            /*return Component.Serializer.toJson(c);
+            *///?}
         }
         return switch (kind) {
             case "persistent" -> {
@@ -350,13 +356,21 @@ public final class InsertComponents {
         if (!s.startsWith("{")) return false;
         Component c;
         try {
+            //? if neoforge {
             c = Component.Serializer.fromJson(s, ClientQuestFile.INSTANCE.holderLookup());
+            //?} else {
+            /*c = Component.Serializer.fromJson(s);
+            *///?}
         } catch (Exception e) {
             return false;
         }
         if (c == null) return false;
         Map<String, Object> v = new HashMap<>();
+        //? if neoforge {
         String text = c.getContents() instanceof PlainTextContents.LiteralContents l ? l.text() : c.getString();
+        //?} else {
+        /*String text = c.getContents() instanceof net.minecraft.network.chat.contents.LiteralContents l ? l.text() : c.getString();
+        *///?}
         v.put("text", text);
         // key binding: translate + ": " + keybind
         if (c.getContents() instanceof TranslatableContents t && c.getSiblings().size() == 2
@@ -411,12 +425,14 @@ public final class InsertComponents {
             }
         }
         HoverEvent hover = st.getHoverEvent();
-        if (hover != null && hover.getValue(HoverEvent.Action.SHOW_TEXT) instanceof Component h) {
+        Component h = hover == null ? null : hover.getValue(HoverEvent.Action.SHOW_TEXT);
+        if (h != null) {
             v.put("hover", h.getString());
             open("hover", back, v, out);
             return true;
         }
-        if (hover != null && hover.getValue(HoverEvent.Action.SHOW_ITEM) instanceof HoverEvent.ItemStackInfo info) {
+        HoverEvent.ItemStackInfo info = hover == null ? null : hover.getValue(HoverEvent.Action.SHOW_ITEM);
+        if (info != null) {
             v.put("item", info.getItemStack());
             open("item_tooltip", back, v, out);
             return true;

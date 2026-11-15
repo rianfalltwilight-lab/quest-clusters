@@ -55,15 +55,13 @@ public final class PasteActions {
             h *= 8 / longest;
         }
         var xy = ((QuestScreenAccessor) screen).quest_clusters$invokeGetSnappedXY();
-        ChapterImage ci = new ChapterImage(0L, chapter);
         CompoundTag t = new CompoundTag();
         t.putDouble("x", xy.getFirst());
         t.putDouble("y", xy.getSecond());
         t.putDouble("width", Math.max(0.25, w));
         t.putDouble("height", Math.max(0.25, h));
         t.putString("image", rl.toString());
-        ci.readData(t, ClientQuestFile.INSTANCE.holderLookup());
-        NetworkManager.sendToServer(CreateObjectMessage.requestCreation(ci, false));
+        com.questclusters.platform.Ftbq.createImage(com.questclusters.platform.Ftbq.newImage(chapter, t, null), false);
         return true;
     }
 

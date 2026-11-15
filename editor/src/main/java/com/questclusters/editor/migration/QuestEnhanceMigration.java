@@ -2,13 +2,11 @@ package com.questclusters.editor.migration;
 
 import com.questclusters.editor.data.BookExtras;
 import com.questclusters.editor.data.QuestEnhanceImport;
-import com.questclusters.editor.mixin.ChapterImageAccessor;
 import com.questclusters.editor.server.EditorStorage;
 import com.questclusters.migration.Migration;
 import com.questclusters.migration.MigrationContext;
 import dev.ftb.mods.ftbquests.quest.BaseQuestFile;
 import dev.ftb.mods.ftbquests.quest.ChapterImage;
-import dev.ftb.mods.ftbquests.quest.ImageClickAction;
 import dev.ftb.mods.ftbquests.quest.ServerQuestFile;
 
 /**
@@ -54,8 +52,9 @@ public final class QuestEnhanceMigration implements Migration {
         int fixed = 0;
         if (ctx.questFile() instanceof BaseQuestFile file) {
             for (QuestEnhanceImport.LegacyClick c : r.legacyClicks()) {
-                if (file.getBase(c.imageId()) instanceof ChapterImage img && img.getClickAction().isNone()) {
-                    ((ChapterImageAccessor) (Object) img).quest_clusters_editor$setClickAction(ImageClickAction.NONE.withData(c.data()));
+                ChapterImage img = com.questclusters.platform.Ftbq.image(file, c.imageId());
+                if (img != null && com.questclusters.editor.compat.Images.noClick(img)) {
+                    com.questclusters.editor.compat.Images.setElement(img, c.data());
                     fixed++;
                 }
             }
@@ -68,10 +67,9 @@ public final class QuestEnhanceMigration implements Migration {
         BaseQuestFile file = ctx.questFile() instanceof BaseQuestFile f ? f : null;
         EditorStorage.save(ctx.questsFolder(), existing, id -> {
             if (file == null) return 1L;
-            var o = file.getBase(id);
-            if (o instanceof dev.ftb.mods.ftbquests.quest.Quest q) return q.getChapter().id;
-            if (o instanceof ChapterImage img) return img.getChapter().id;
-            return 0L;
+            if (file.getBase(id) instanceof dev.ftb.mods.ftbquests.quest.Quest q) return q.getChapter().id;
+            ChapterImage img = com.questclusters.platform.Ftbq.image(file, id);
+            return img != null ? img.getChapter().id : 0L;
         });
         ctx.log("imported " + r.stats() + (fixed > 0 ? "; restored " + fixed + " legacy canvas element(s)" : ""));
     }

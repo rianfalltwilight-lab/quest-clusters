@@ -898,7 +898,7 @@ public final class DevSelfTest {
     }
 
     /** Undo / redo the last edit: FTB Quests' history on 1.21.1, Quest Clusters' own list on 1.20.1. */
-    private static void undo() {
+    public static void undo() {
         //? if neoforge {
         dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.undo());
         //?} else {
@@ -907,7 +907,7 @@ public final class DevSelfTest {
         *///?}
     }
 
-    private static void redo() {
+    public static void redo() {
         //? if neoforge {
         dev.architectury.networking.NetworkManager.sendToServer(dev.ftb.mods.ftbquests.net.UndoRedoRequestMessage.redo());
         //?} else {

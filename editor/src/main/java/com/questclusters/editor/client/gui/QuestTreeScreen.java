@@ -138,7 +138,7 @@ public final class QuestTreeScreen extends AbstractButtonListScreen {
 
     @Override
     public void addButtons(Panel panel) {
-        Chapter current = questScreen.getSelectedChapter().orElse(null);
+        Chapter current = ((com.questclusters.mixin.client.QuestScreenAccessor) questScreen).quest_clusters$getSelectedChapter();
         for (Row r : rows(current, allChapters)) panel.add(new RowButton(panel, r));
     }
 

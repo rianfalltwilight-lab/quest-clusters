@@ -103,7 +103,8 @@ public final class EditorMenus {
             ConfigQuestObject<Quest> cfg = new ConfigQuestObject<>(o -> o instanceof Quest q && q.getChapter() != ch && !current.contains(q.id));
             new SelectQuestObjectScreen<>(cfg, accepted -> {
                 EditorActions.reopen(screen);
-                if (accepted && cfg.getValue() instanceof Quest q) {
+                Quest q = cfg.getValue();
+                if (accepted && q != null) {
                     EditorActions.editChapter("prerequisites", ch.id, c -> {
                         if (!c.prerequisites.contains(q.id)) c.prerequisites.add(q.id);
                     });
@@ -131,7 +132,11 @@ public final class EditorMenus {
             if (!(w instanceof QuestButton qb)) continue;
             String from = key(qb.moveAndDeleteFocus());
             if (from == null) continue;
+            //? if neoforge {
             for (QuestButton dep : qb.getDependencies().values()) {
+            //?} else {
+            /*for (QuestButton dep : qb.getDependencies()) {
+            *///?}
                 String to = key(dep.moveAndDeleteFocus());
                 if (to == null) continue;
                 if (from.equals(self)) {
@@ -172,8 +177,8 @@ public final class EditorMenus {
             List<Quest> quests = sel.stream().map(m -> (Quest) m).toList();
             add.add(item("bulk_edit", Icons.SETTINGS, () -> com.questclusters.editor.client.BulkEdit.edit(screen, quests)));
             add.add(ContextMenuItem.subMenu(tr("bulk_add_task"), Icons.ADD, com.questclusters.editor.client.BulkEdit.addTaskItems(screen, quests)));
-            String first = ClientEditor.book().quest(ids.getFirst()).boxBackground();
-            String firstView = ClientEditor.book().quest(ids.getFirst()).viewBackground();
+            String first = ClientEditor.book().quest(ids.get(0)).boxBackground();
+            String firstView = ClientEditor.book().quest(ids.get(0)).viewBackground();
             add.add(item("bulk_quest_background", Icons.ART, () -> EditorActions.pickImage(screen, first,
                     v -> EditorActions.editQuests("quest_background", ids, x -> x.withBoxBackground(v)))));
             add.add(item("bulk_view_background", Icons.ART, () -> EditorActions.pickImage(screen, firstView,
@@ -262,7 +267,7 @@ public final class EditorMenus {
     public static void imageItems(List<ContextMenuItem> menu, QuestScreen screen, ChapterImage img) {
         if (!canEdit()) return;
         List<ContextMenuItem> add = new ArrayList<>();
-        CanvasElement el = CanvasElement.parse(img.getClickAction().actionData());
+        CanvasElement el = CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(img));
         if (el instanceof CanvasElement.Text t) {
             add.add(item("canvas_text.edit", Icons.NOTES, () -> CanvasEdit.editText(screen, img, t)));
         } else if (el instanceof CanvasElement.Video && com.questclusters.editor.client.video.VideoSupport.available()) {
@@ -275,8 +280,8 @@ public final class EditorMenus {
         if (el instanceof CanvasElement.Anchor a && a.nodeKey() != null && img.getChapter() != null) {
             add.add(ContextMenuItem.subMenu(tr("node_lines"), Icons.ART, nodeLineItems(screen, img.getChapter().id, a.nodeKey())));
         }
-        boolean ex = ClientEditor.book().excludedImages.contains(img.id);
-        add.add(new ContextMenuItem(tr("box_select", state(ex)), Icons.SETTINGS, b -> EditorActions.setExcluded(List.of(img.id), !ex)));
+        boolean ex = ClientEditor.book().excludedImages.contains(com.questclusters.platform.Ftbq.id(img));
+        add.add(new ContextMenuItem(tr("box_select", state(ex)), Icons.SETTINGS, b -> EditorActions.setExcluded(List.of(com.questclusters.platform.Ftbq.id(img)), !ex)));
         List<Movable> sel = selected(screen);
         if (sel.size() >= 2 && sel.contains(img)) add.addAll(lineAndTransformItems(screen, sel));
         // the menu starts with a title and a separator: put ours after FTB Quests' own entries
@@ -344,7 +349,7 @@ public final class EditorMenus {
     static String key(Movable m) {
         if (m instanceof Quest q) return NodeKeys.quest(q.id);
         if (m instanceof QuestLink l) return NodeKeys.link(l.id);
-        if (m instanceof ChapterImage img && CanvasElement.parse(img.getClickAction().actionData()) instanceof CanvasElement.Anchor a) {
+        if (m instanceof ChapterImage img && CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(img)) instanceof CanvasElement.Anchor a) {
             return a.nodeKey();
         }
         return null;

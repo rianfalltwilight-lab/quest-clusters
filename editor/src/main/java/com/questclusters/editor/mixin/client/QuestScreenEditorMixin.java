@@ -55,7 +55,7 @@ public abstract class QuestScreenEditorMixin {
             return;
         }
         for (ChapterImage img : chapter.getImages()) {
-            if (!excluded.contains(img.id)) continue;
+            if (!excluded.contains(com.questclusters.platform.Ftbq.id(img))) continue;
             boolean was = before != null && before.contains(img);
             if (was && !selected.contains(img)) selected.add(img);
             else if (!was) selected.remove(img);

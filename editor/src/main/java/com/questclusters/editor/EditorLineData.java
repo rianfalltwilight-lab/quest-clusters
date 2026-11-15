@@ -28,7 +28,7 @@ final class EditorLineData implements LineData {
 
     @Override
     public Optional<String> anchorKey(ChapterImage image) {
-        return CanvasElement.parse(image.getClickAction().actionData()) instanceof CanvasElement.Anchor a
+        return CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(image)) instanceof CanvasElement.Anchor a
                 ? Optional.ofNullable(a.nodeKey()) : Optional.empty();
     }
 

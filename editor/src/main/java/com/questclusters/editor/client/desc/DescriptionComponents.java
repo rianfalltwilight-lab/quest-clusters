@@ -60,8 +60,17 @@ public final class DescriptionComponents {
             }
             int w = number(map.get("width"), 200);
             int h = number(map.get("height"), Math.max(1, Math.round(w / GifTextures.aspect(rl))));
+            //? if neoforge {
             ImageComponent img = ImageComponent.create(rl.toString(), w, h,
                     ImageComponent.ImageAlign.byName(map.getOrDefault("align", "center")), "true".equals(map.get("fit")), "");
+            //?} else {
+            /*ImageComponent img = new ImageComponent();
+            img.image = dev.ftb.mods.ftblibrary.icon.Icon.getIcon(rl.toString());
+            img.width = w;
+            img.height = h;
+            img.align = ImageComponent.ImageAlign.fromString(map.getOrDefault("align", "center"));
+            img.fit = "true".equals(map.get("fit"));
+            *///?}
             MutableComponent out = MutableComponent.create(img);
             if (map.containsKey("text")) {
                 out.withStyle(Style.EMPTY.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,

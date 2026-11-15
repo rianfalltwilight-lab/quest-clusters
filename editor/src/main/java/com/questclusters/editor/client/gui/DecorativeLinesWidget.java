@@ -86,7 +86,7 @@ public final class DecorativeLinesWidget extends Widget {
     static String key(Movable m) {
         if (m instanceof Quest q) return NodeKeys.quest(q.id);
         if (m instanceof QuestLink l) return NodeKeys.link(l.id);
-        if (m instanceof ChapterImage img && CanvasElement.parse(img.getClickAction().actionData()) instanceof CanvasElement.Anchor a) {
+        if (m instanceof ChapterImage img && CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(img)) instanceof CanvasElement.Anchor a) {
             return a.nodeKey();
         }
         return null;
@@ -114,7 +114,7 @@ public final class DecorativeLinesWidget extends Widget {
     @Override
     public void draw(GuiGraphics g, Theme theme, int x, int y, int w, int h) {
         QuestScreen qs = (QuestScreen) getGui();
-        Chapter chapter = qs.getSelectedChapter().orElse(null);
+        Chapter chapter = ((com.questclusters.mixin.client.QuestScreenAccessor) qs).quest_clusters$getSelectedChapter();
         ClientQuestFile file = ClientQuestFile.INSTANCE;
         int drawn = 0;
         if (chapter == null || file == null || file.selfTeamData == null) {
@@ -224,11 +224,11 @@ public final class DecorativeLinesWidget extends Widget {
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         RenderSystem.setShaderTexture(0, tex);
         Matrix4f m = g.pose().last().pose();
-        var buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buf.addVertex(m, (float) x1 + nx, (float) y1 + ny, 0).setUv(u0, v0).setColor(start);
-        buf.addVertex(m, (float) x2 + nx, (float) y2 + ny, 0).setUv(u1, v0).setColor(end);
-        buf.addVertex(m, (float) x2 - nx, (float) y2 - ny, 0).setUv(u1, v1).setColor(end);
-        buf.addVertex(m, (float) x1 - nx, (float) y1 - ny, 0).setUv(u0, v1).setColor(start);
-        BufferUploader.drawWithShader(buf.buildOrThrow());
+        com.questclusters.platform.Quads.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR)
+                .vertex(m, (float) x1 + nx, (float) y1 + ny, 0).uv(u0, v0).color(start).next()
+                .vertex(m, (float) x2 + nx, (float) y2 + ny, 0).uv(u1, v0).color(end).next()
+                .vertex(m, (float) x2 - nx, (float) y2 - ny, 0).uv(u1, v1).color(end).next()
+                .vertex(m, (float) x1 - nx, (float) y1 - ny, 0).uv(u0, v1).color(start).next()
+                .draw();
     }
 }
