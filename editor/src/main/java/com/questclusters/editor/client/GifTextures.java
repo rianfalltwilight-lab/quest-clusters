@@ -65,8 +65,25 @@ public final class GifTextures {
 
     /** Draws the current frame tinted with argb; false if the GIF cannot be decoded. */
     public static boolean draw(GuiGraphics g, ResourceLocation gif, int x, int y, int w, int h, int argb) {
+        Anim a = current(gif);
+        if (a == null) return false;
+        RenderSystem.enableBlend();
+        RenderSystem.setShaderColor(((argb >> 16) & 0xFF) / 255F, ((argb >> 8) & 0xFF) / 255F, (argb & 0xFF) / 255F, (argb >>> 24) / 255F);
+        g.blit(a.id, x, y, w, h, 0, 0, a.width, a.height, a.width, a.height);
+        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+        return true;
+    }
+
+    /** The texture holding the GIF's current frame (for callers that draw it themselves), or null. */
+    public static ResourceLocation currentFrame(ResourceLocation gif) {
+        Anim a = current(gif);
+        return a == null ? null : a.id;
+    }
+
+    /** Uploads the frame due by the wall clock, if it changed; null if the GIF cannot be decoded. */
+    private static Anim current(ResourceLocation gif) {
         Anim a = get(gif);
-        if (a == null || a.frames.isEmpty()) return false;
+        if (a == null || a.frames.isEmpty()) return null;
         int idx = 0;
         if (a.frames.size() > 1 && a.total > 0) {
             long t = System.currentTimeMillis() % a.total;
@@ -87,11 +104,7 @@ public final class GifTextures {
             }
             a.texture.upload();
         }
-        RenderSystem.enableBlend();
-        RenderSystem.setShaderColor(((argb >> 16) & 0xFF) / 255F, ((argb >> 8) & 0xFF) / 255F, (argb & 0xFF) / 255F, (argb >>> 24) / 255F);
-        g.blit(a.id, x, y, w, h, 0, 0, a.width, a.height, a.width, a.height);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        return true;
+        return a;
     }
 
     private static Anim get(ResourceLocation gif) {

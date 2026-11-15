@@ -174,5 +174,9 @@
   "quest_clusters_editor.chapter.decorative_line_preset": "Default decorative line preset",
   "quest_clusters_editor.chapter.decorative_line_preset.tooltip": "Look of this chapter's decorative lines; a node can choose its own in its right-click menu",
   "quest_clusters_editor.event.line_presets": "Decorative line presets",
-  "quest_clusters_editor.event.line_preset": "Decorative line preset"
+  "quest_clusters_editor.event.line_preset": "Decorative line preset",
+  "quest_clusters_editor.line_presets.gif": "Use a GIF",
+  "quest_clusters_editor.line_presets.scroll": "Flow speed: %s",
+  "quest_clusters_editor.line_presets.scroll.title": "Repeats per second along the line (-20 to 20, 0 = still)",
+  "quest_clusters_editor.line_presets.gif.none": "No .gif in the resource packs"
 }

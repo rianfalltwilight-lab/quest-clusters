@@ -45,6 +45,7 @@ public final class ExtrasNbt {
             pt.putString("id", p.id());
             pt.putString("name", p.name());
             pt.putString("texture", p.texture());
+            if (p.scroll() != 0F) pt.putFloat("scroll", p.scroll());
             l.add(pt);
         }
         return l;
@@ -55,7 +56,7 @@ public final class ExtrasNbt {
         List<LinePreset> out = new ArrayList<>();
         for (int i = 0; i < l.size() && out.size() < LinePreset.MAX; i++) {
             CompoundTag pt = l.getCompound(i);
-            LinePreset p = new LinePreset(pt.getString("id"), pt.getString("name"), pt.getString("texture"));
+            LinePreset p = new LinePreset(pt.getString("id"), pt.getString("name"), pt.getString("texture"), pt.getFloat("scroll"));
             if (p.isValid() && out.stream().noneMatch(o -> o.id().equals(p.id()))) out.add(p);
         }
         return out;

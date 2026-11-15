@@ -155,6 +155,15 @@ public final class LinePresetsScreen extends AbstractButtonListScreen {
         return p;
     }
 
+    private static Component title(LinePreset p) {
+        var t = Component.literal(p.name());
+        return p.scroll() == 0F ? t : t.append(Component.literal("  " + speed(p.scroll())).withStyle(ChatFormatting.GRAY));
+    }
+
+    private static String speed(float v) {
+        return v == 0F ? "0" : (v > 0 ? "→ " : "← ") + String.format(java.util.Locale.ROOT, "%.2g", Math.abs(v)) + "/s";
+    }
+
     private class TitleTopPanel extends TopPanel {
         @Override
         public void addWidgets() {
@@ -178,7 +187,7 @@ public final class LinePresetsScreen extends AbstractButtonListScreen {
         private final int index;
 
         PresetButton(Panel panel, int index) {
-            super(panel, Component.literal(presets.get(index).name()), Icon.getIcon(presets.get(index).texture()));
+            super(panel, title(presets.get(index)), Icon.getIcon(presets.get(index).texture()));
             this.index = index;
             setHeight(18);
         }
@@ -190,20 +199,56 @@ public final class LinePresetsScreen extends AbstractButtonListScreen {
             getGui().openContextMenu(List.of(
                     new ContextMenuItem(Component.translatable("quest_clusters_editor.line_presets.rename"), Icons.SETTINGS,
                             b -> askName(p.name(), name -> {
-                                presets.set(index, new LinePreset(p.id(), name, p.texture()));
+                                presets.set(index, new LinePreset(p.id(), name, p.texture(), p.scroll()));
                                 changed = true;
                                 refreshWidgets();
                             })),
                     new ContextMenuItem(Component.translatable("quest_clusters_editor.line_presets.image"), Icons.ART,
                             b -> pickImage(p.texture(), texture -> {
-                                presets.set(index, new LinePreset(p.id(), p.name(), texture));
+                                presets.set(index, new LinePreset(p.id(), p.name(), texture, p.scroll()));
                                 changed = true;
                             })),
+                    ContextMenuItem.subMenu(Component.translatable("quest_clusters_editor.line_presets.gif"), Icons.ART, gifItems(p)),
+                    new ContextMenuItem(Component.translatable("quest_clusters_editor.line_presets.scroll", speed(p.scroll())), Icons.SETTINGS,
+                            b -> askScroll(p)),
                     new ContextMenuItem(Component.translatable("gui.remove").withStyle(ChatFormatting.RED), Icons.BIN, b -> {
                         presets.remove(index);
                         changed = true;
                         refreshWidgets();
                     })));
+        }
+
+        private java.util.List<ContextMenuItem> gifItems(LinePreset p) {
+            java.util.List<ContextMenuItem> out = new java.util.ArrayList<>();
+            var gifs = com.questclusters.editor.client.GifTextures.list();
+            if (gifs.isEmpty()) {
+                out.add(new ContextMenuItem(Component.translatable("quest_clusters_editor.line_presets.gif.none"), Icons.ART, b -> {
+                }).setEnabled(false));
+            }
+            for (var gif : gifs) {
+                out.add(new ContextMenuItem(Component.literal(gif.toString()), Icons.ART, b -> {
+                    presets.set(index, new LinePreset(p.id(), p.name(), gif.toString(), p.scroll()));
+                    changed = true;
+                    refreshWidgets();
+                }));
+            }
+            return out;
+        }
+
+        /** Repeats per second along the line, -20..20 (negative flows towards the line's start); 0 = still. */
+        private void askScroll(LinePreset p) {
+            var cfg = new dev.ftb.mods.ftblibrary.config.DoubleConfig(-LinePreset.MAX_SCROLL, LinePreset.MAX_SCROLL);
+            cfg.setValue((double) p.scroll());
+            var overlay = new EditStringConfigOverlay<>(LinePresetsScreen.this, cfg, accepted -> {
+                if (accepted && cfg.getValue() != null) {
+                    float v = (float) Math.max(-LinePreset.MAX_SCROLL, Math.min(LinePreset.MAX_SCROLL, cfg.getValue()));
+                    presets.set(index, presets.get(index).withScroll(v));
+                    changed = true;
+                    refreshWidgets();
+                }
+            }, Component.translatable("quest_clusters_editor.line_presets.scroll.title")).atPosition(getX() + 20, getY() + height);
+            overlay.setExtraZlevel(300);
+            pushModalPanel(overlay);
         }
 
         @Override

@@ -98,6 +98,7 @@ final class EditorDevTest {
     static void register() {
         DevSelfTest.addModuleSteps(presetSteps());
         DevSelfTest.addModuleSteps(anchorInClusterSteps());
+        DevSelfTest.addModuleSteps(animatedLineSteps());
         DevSelfTest.addModuleSteps(DevSelfTest.configScreenSteps("quest_clusters_editor", "qc_37_editor_settings", () -> List.of(
                 "quest_clusters_editor.configuration.title",
                 "quest_clusters_editor.configuration.render_kill_task_entity_models",
@@ -592,5 +593,53 @@ final class EditorDevTest {
             }
         }
         return new int[]{0, 0, 0};
+    }
+
+    /** Dynamic line textures: .mcmeta frame animation, flowing along the line, GIF frames. */
+    static List<java.util.function.IntSupplier> animatedLineSteps() {
+        var magma = new com.questclusters.editor.data.LinePreset("qcmagma", "Magma", "minecraft:block/magma");
+        var flow = new com.questclusters.editor.data.LinePreset("qcflow", "Flow", "minecraft:block/redstone_block", 1.3F);
+        var gif = new com.questclusters.editor.data.LinePreset("qcgif", "Gif", "quest_clusters_editor:textures/gui/example.gif");
+        float[] sample = new float[2];
+        return List.of(
+                () -> {
+                    var qs = DevSelfTest.questScreen();
+                    qs.open(ClientQuestFile.INSTANCE.getChapter(C2), false);
+                    qs.questPanel.scrollTo(0, 0.5);
+                    var p = new com.questclusters.editor.data.EditorPatch();
+                    p.presets = List.of(magma, flow, gif);
+                    var c = ClientEditor.book().chapter(C2).copy();
+                    c.linePreset = magma.id();
+                    p.chapters.put(C2, c);
+                    EditorActions.send("line_presets", p);
+                    return 20;
+                },
+                () -> {
+                    sample[0] = com.questclusters.editor.client.gui.DecorativeLinesWidget.lastV0;
+                    return 25; // more than one magma frame (8 ticks)
+                },
+                () -> {
+                    float v = com.questclusters.editor.client.gui.DecorativeLinesWidget.lastV0;
+                    DevSelfTest.moduleCheck(v != sample[0], "animated lines: .mcmeta frames play (" + sample[0] + " -> " + v + ")");
+                    EditorActions.editChapter("line_preset", C2, x -> x.linePreset = flow.id());
+                    return 10;
+                },
+                () -> {
+                    sample[1] = com.questclusters.editor.client.gui.DecorativeLinesWidget.lastFlow;
+                    return 7;
+                },
+                () -> {
+                    float f = com.questclusters.editor.client.gui.DecorativeLinesWidget.lastFlow;
+                    DevSelfTest.moduleCheck(f != sample[1], "animated lines: a preset with a speed flows (" + sample[1] + " -> " + f + ")");
+                    EditorActions.editChapter("line_preset", C2, x -> x.linePreset = gif.id());
+                    return 10;
+                },
+                () -> {
+                    var tex = com.questclusters.editor.client.gui.DecorativeLinesWidget.lastTexture;
+                    DevSelfTest.moduleCheck(tex != null && tex.getPath().startsWith("dynamic_gif/"), "animated lines: GIF presets draw the GIF's frames (" + tex + ")");
+                    DevSelfTest.moduleShot("qc_40_line_gif");
+                    EditorActions.send("line_presets", com.questclusters.editor.client.gui.LinePresetsScreen.patch(ClientEditor.book(), List.of()));
+                    return 20;
+                });
     }
 }

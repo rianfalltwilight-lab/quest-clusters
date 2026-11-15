@@ -63,4 +63,16 @@ class LinePresetTest {
         assertNotNull(wire);
         assertEquals(List.of(CHAIN), wire.presets);
     }
+
+    @Test
+    void scrollSpeedStoredAndBounded() {
+        BookExtras b = new BookExtras();
+        b.linePresets.add(new LinePreset("f1", "Flow", "a:x.png", -2.5F));
+        BookExtras back = new BookExtras();
+        ExtrasNbt.readBook(ExtrasNbt.writeBook(b, CompoundTag::new), back);
+        assertEquals(-2.5F, back.linePresets.get(0).scroll());
+        assertFalse(new LinePreset("f2", "Too fast", "a:x.png", 21F).isValid());
+        assertFalse(new LinePreset("f3", "NaN", "a:x.png", Float.NaN).isValid());
+        assertTrue(new LinePreset("f4", "Gif", "a:textures/gui/fire.gif", 1F).isValid());
+    }
 }

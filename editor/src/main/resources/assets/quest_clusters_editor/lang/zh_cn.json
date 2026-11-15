@@ -174,5 +174,9 @@
   "quest_clusters_editor.chapter.decorative_line_preset": "默认装饰线预设",
   "quest_clusters_editor.chapter.decorative_line_preset.tooltip": "该章节装饰线的外观；单个节点可在右键菜单里单独选择",
   "quest_clusters_editor.event.line_presets": "装饰线预设",
-  "quest_clusters_editor.event.line_preset": "装饰线预设"
+  "quest_clusters_editor.event.line_preset": "装饰线预设",
+  "quest_clusters_editor.line_presets.gif": "使用 GIF",
+  "quest_clusters_editor.line_presets.scroll": "流动速度：%s",
+  "quest_clusters_editor.line_presets.scroll.title": "每秒沿线移动几格（-20 到 20，0 为不动）",
+  "quest_clusters_editor.line_presets.gif.none": "资源包里没有 .gif"
 }

@@ -60,8 +60,10 @@ public final class DecorativeLinesWidget extends Widget {
     }
     private final QuestPanel questPanel;
     private final Map<String, Widget> nodes = new HashMap<>();
-    /** For the dev self-test: segments drawn in the last frame. */
+    /** For the dev self-test: segments drawn in the last frame, and the texture / frame / flow of the last one. */
     public static int lastDrawn;
+    public static ResourceLocation lastTexture;
+    public static float lastV0, lastFlow;
 
     public DecorativeLinesWidget(QuestPanel panel) {
         super(panel);
@@ -190,20 +192,41 @@ public final class DecorativeLinesWidget extends Widget {
         ResourceLocation presetTex = preset == null ? null : com.questclusters.client.Textures.file(preset.texture());
         ResourceLocation tex = presetTex != null ? presetTex : texture();
         int start = presetTex != null ? 0xFFFFFFFF : START, end = presetTex != null ? 0xFFFFFFFF : END;
-        int[] size = com.questclusters.client.Textures.size(tex);
-        // an animated strip (with .mcmeta) shows its first frame; U repeats along the line like Quest Enhance's
-        float v1 = size == null ? 1F : (float) size[2] / size[1];
-        float u1 = (float) (len / half / 2D);
+        long now = System.currentTimeMillis();
+        float v0 = 0F, v1 = 1F;
+        if (tex.getPath().endsWith(".gif")) {
+            // GIF: its current frame is uploaded into one texture
+            tex = com.questclusters.editor.client.GifTextures.currentFrame(tex);
+            if (tex == null) return;
+        } else {
+            int[] size = com.questclusters.client.Textures.size(tex);
+            var anim = com.questclusters.client.Textures.animation(tex);
+            if (size != null && anim != null && anim.columns() == 1) {
+                // .mcmeta frame strip: show the frame due now (frames stacked vertically)
+                int f = anim.frameAt(now);
+                v0 = (float) f * anim.frameHeight() / size[1];
+                v1 = (float) (f + 1) * anim.frameHeight() / size[1];
+            } else if (size != null) {
+                v1 = (float) size[2] / size[1]; // other animated layouts: first frame
+            }
+        }
+        // U repeats along the line like Quest Enhance's; a preset may make it flow (repeats per second)
+        float flow = preset == null || preset.scroll() == 0F ? 0F
+                : (float) (((now % 1_000_000L) / 1000D * preset.scroll()) % 1D);
+        float u0 = -flow, u1 = u0 + (float) (len / half / 2D);
+        lastTexture = tex;
+        lastV0 = v0;
+        lastFlow = flow;
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         RenderSystem.setShaderTexture(0, tex);
         Matrix4f m = g.pose().last().pose();
         var buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buf.addVertex(m, (float) x1 + nx, (float) y1 + ny, 0).setUv(0, 0).setColor(start);
-        buf.addVertex(m, (float) x2 + nx, (float) y2 + ny, 0).setUv(u1, 0).setColor(end);
+        buf.addVertex(m, (float) x1 + nx, (float) y1 + ny, 0).setUv(u0, v0).setColor(start);
+        buf.addVertex(m, (float) x2 + nx, (float) y2 + ny, 0).setUv(u1, v0).setColor(end);
         buf.addVertex(m, (float) x2 - nx, (float) y2 - ny, 0).setUv(u1, v1).setColor(end);
-        buf.addVertex(m, (float) x1 - nx, (float) y1 - ny, 0).setUv(0, v1).setColor(start);
+        buf.addVertex(m, (float) x1 - nx, (float) y1 - ny, 0).setUv(u0, v1).setColor(start);
         BufferUploader.drawWithShader(buf.buildOrThrow());
     }
 }
