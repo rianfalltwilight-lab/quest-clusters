@@ -40,8 +40,17 @@ public abstract class QuestPanelEditorMixin {
      */
     @WrapOperation(method = "drawOffsetBackground", at = @At(value = "INVOKE",
             target = "Ldev/ftb/mods/ftbquests/client/gui/quests/QuestPanel;renderConnection(Ldev/ftb/mods/ftbquests/client/gui/quests/QuestButton;Ldev/ftb/mods/ftbquests/client/gui/quests/QuestButton;Lcom/mojang/blaze3d/vertex/PoseStack;FIIIIIFLcom/mojang/blaze3d/vertex/Tesselator;)V"))
+    //? if neoforge {
     private void quest_clusters_editor$hiddenLines(QuestPanel panel, QuestButton from, QuestButton to, PoseStack ps, float s,
                                                    int r, int g, int b, int a, int a1, float mu, Tesselator t, Operation<Void> op) {
+    //?} else {
+    /*private void quest_clusters_editor$hiddenLines(QuestPanel panel, dev.ftb.mods.ftblibrary.ui.Widget fromW, QuestButton to, PoseStack ps,
+            com.mojang.blaze3d.vertex.BufferBuilder buf, float s, int r, int g, int b, int a, int a1, float mu, Tesselator t, Operation<Void> op) {
+        if (!(fromW instanceof QuestButton from)) {
+            op.call(panel, fromW, to, ps, buf, s, r, g, b, a, a1, mu, t);
+            return;
+        }
+    *///?}
         QuestScreen qs = (QuestScreen) panel.getGui();
         if (qs.isViewingQuest()) {
             return;

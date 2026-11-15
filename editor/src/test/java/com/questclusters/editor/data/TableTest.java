@@ -42,9 +42,9 @@ class TableTest {
         DescriptionTable t = sample();
         t.merge(0, 1, 1, 2); // rows 0-1, columns 1-2
         t.insertRow(1);
-        assertEquals(new DescriptionTable.Merge(0, 1, 3, 2), t.merges.getFirst());
+        assertEquals(new DescriptionTable.Merge(0, 1, 3, 2), t.merges.get(0));
         t.removeColumn(1);
-        assertEquals(new DescriptionTable.Merge(0, 1, 3, 1), t.merges.getFirst());
+        assertEquals(new DescriptionTable.Merge(0, 1, 3, 1), t.merges.get(0));
         t.removeRow(0);
         t.removeRow(0);
         assertTrue(t.merges.isEmpty()); // shrank to a single cell

@@ -38,10 +38,22 @@ public abstract class QuestButtonMixin {
     protected QuestScreen questScreen;
 
     /** Context menu with several objects selected. */
+    //? if neoforge {
     @Inject(method = "addMultiSelectionContextMenuItems", at = @At("TAIL"))
     private void quest_clusters$addSelectionItems(Collection<Quest> selected, List<ContextMenuItem> menu, CallbackInfo ci) {
         QuestScreenAccessor acc = (QuestScreenAccessor) questScreen;
         ClusterEditor.addSelectionMenuItems(menu, questScreen, List.copyOf(acc.quest_clusters$getSelectedObjects()),
                 acc.quest_clusters$getSelectedChapter());
     }
+    //?} else {
+    /*@com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation(method = "onClicked", at = @At(value = "INVOKE",
+            target = "Ldev/ftb/mods/ftblibrary/ui/BaseScreen;openContextMenu(Ljava/util/List;)Ldev/ftb/mods/ftblibrary/ui/ContextMenu;"))
+    private dev.ftb.mods.ftblibrary.ui.ContextMenu quest_clusters$addSelectionItems(dev.ftb.mods.ftblibrary.ui.BaseScreen screen,
+            List<ContextMenuItem> menu, com.llamalad7.mixinextras.injector.wrapoperation.Operation<dev.ftb.mods.ftblibrary.ui.ContextMenu> op) {
+        QuestScreenAccessor acc = (QuestScreenAccessor) questScreen;
+        ClusterEditor.addSelectionMenuItems(menu, questScreen, List.copyOf(acc.quest_clusters$getSelectedObjects()),
+                acc.quest_clusters$getSelectedChapter());
+        return op.call(screen, menu);
+    }
+    *///?}
 }

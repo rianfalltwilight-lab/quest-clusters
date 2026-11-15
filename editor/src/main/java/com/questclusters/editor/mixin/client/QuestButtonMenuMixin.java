@@ -22,8 +22,18 @@ public abstract class QuestButtonMenuMixin {
     @Final
     protected QuestScreen questScreen;
 
+    //? if neoforge {
     @Inject(method = "addMultiSelectionContextMenuItems", at = @At("TAIL"))
     private void quest_clusters_editor$selectionItems(Collection<Quest> selected, List<ContextMenuItem> menu, CallbackInfo ci) {
         EditorMenus.selectionItems(menu, questScreen);
     }
+    //?} else {
+    /*@com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation(method = "onClicked", at = @At(value = "INVOKE",
+            target = "Ldev/ftb/mods/ftblibrary/ui/BaseScreen;openContextMenu(Ljava/util/List;)Ldev/ftb/mods/ftblibrary/ui/ContextMenu;"))
+    private dev.ftb.mods.ftblibrary.ui.ContextMenu quest_clusters_editor$selectionItems(dev.ftb.mods.ftblibrary.ui.BaseScreen screen,
+            List<ContextMenuItem> menu, com.llamalad7.mixinextras.injector.wrapoperation.Operation<dev.ftb.mods.ftblibrary.ui.ContextMenu> op) {
+        EditorMenus.selectionItems(menu, questScreen);
+        return op.call(screen, menu);
+    }
+    *///?}
 }

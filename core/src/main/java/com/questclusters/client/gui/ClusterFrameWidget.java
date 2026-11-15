@@ -38,7 +38,7 @@ public final class ClusterFrameWidget extends ClusterWidgetBase {
         ClientQuestFile file = ClientQuestFile.INSTANCE;
         boolean edit = ClusterWidgets.canEdit();
         for (long id : cluster.members()) {
-            if (file != null && file.getBase(id) instanceof Movable m) {
+            if (file != null && com.questclusters.platform.Ftbq.lookup(file, id) instanceof Movable m) {
                 if (edit || ClusterWidgets.isVisibleToPlayer(m)) {
                     shown.add(m);
                 }

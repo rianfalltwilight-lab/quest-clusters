@@ -36,9 +36,15 @@ public abstract class QuestScreenMixin {
     }
 
     /** Context menu of a single object: used by quests, quest links and chapter images alike. */
+    //? if neoforge {
     @Inject(method = "addObjectMenuItems", at = @At("TAIL"))
     private void quest_clusters$addClusterItems(List<ContextMenuItem> menu, Button button, Runnable gui,
                                                 QuestObjectBase object, Movable deletionFocus, CallbackInfo ci) {
+    //?} else {
+    /*@Inject(method = "addObjectMenuItems", at = @At("TAIL"))
+    private void quest_clusters$addClusterItems(List<ContextMenuItem> menu, Runnable gui,
+                                                QuestObjectBase object, Movable deletionFocus, CallbackInfo ci) {
+    *///?}
         if (deletionFocus != null) {
             ClusterEditor.addObjectMenuItems(menu, (QuestScreen) (Object) this, deletionFocus);
         }

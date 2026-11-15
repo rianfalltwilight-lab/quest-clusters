@@ -31,9 +31,15 @@ import java.util.List;
  */
 @Mixin(value = QuestScreen.class, remap = false)
 public abstract class QuestScreenMenuMixin {
+    //? if neoforge {
     @Inject(method = "addObjectMenuItems", at = @At("TAIL"))
     private void quest_clusters_editor$objectItems(List<ContextMenuItem> menu, Button button, Runnable gui, QuestObjectBase object,
                                                    Movable deletionFocus, CallbackInfo ci) {
+    //?} else {
+    /*@Inject(method = "addObjectMenuItems", at = @At("TAIL"))
+    private void quest_clusters_editor$objectItems(List<ContextMenuItem> menu, Runnable gui, QuestObjectBase object,
+                                                   Movable deletionFocus, CallbackInfo ci) {
+    *///?}
         EditorMenus.objectItems(menu, (QuestScreen) (Object) this, object);
     }
 

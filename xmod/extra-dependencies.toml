@@ -10,13 +10,13 @@ side = "BOTH"
 [[dependencies.${module_id}]]
 modId = "ftbxmodcompat"
 type = "optional"
-versionRange = "[21.1.14,21.2)"
+versionRange = "${ftb_xmod_compat_version_range}"
 ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies.${module_id}]]
 modId = "ftbfiltersystem"
 type = "optional"
-versionRange = "[21.1.4,21.2)"
+versionRange = "${ftb_filter_system_version_range}"
 ordering = "NONE"
 side = "BOTH"

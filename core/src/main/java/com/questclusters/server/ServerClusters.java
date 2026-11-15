@@ -181,7 +181,7 @@ public final class ServerClusters {
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
         boolean any = false;
         for (long id : c.members()) {
-            if (file.getBase(id) instanceof Movable m) {
+            if (com.questclusters.platform.Ftbq.lookup(file, id) instanceof Movable m) {
                 any = true;
                 minX = Math.min(minX, m.getX() - m.getWidth() / 2D);
                 maxX = Math.max(maxX, m.getX() + m.getWidth() / 2D);
@@ -256,14 +256,14 @@ public final class ServerClusters {
             }
             List<com.questclusters.platform.History.Change> events = new ArrayList<>();
             for (long id : c.members()) {
-                if (file.getBase(id) instanceof Movable m && !com.questclusters.platform.History.locked(m)) {
+                if (com.questclusters.platform.Ftbq.lookup(file, id) instanceof Movable m && !com.questclusters.platform.History.locked(m)) {
                     com.questclusters.platform.History
                             .move(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
                 }
             }
             // Quest Enhance anchor points that only serve lines inside the cluster move with it
             for (long imageId : com.questclusters.compat.QuestEnhanceCompat.anchorsInside(chapter, c.members())) {
-                if (!c.members().contains(imageId) && file.getBase(imageId) instanceof Movable m && !com.questclusters.platform.History.locked(m)) {
+                if (!c.members().contains(imageId) && com.questclusters.platform.Ftbq.lookup(file, imageId) instanceof Movable m && !com.questclusters.platform.History.locked(m)) {
                     com.questclusters.platform.History
                             .move(m, chapter, m.getX() + dx, m.getY() + dy).ifPresent(events::add);
                 }
@@ -404,7 +404,7 @@ public final class ServerClusters {
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
         List<Long> movables = new ArrayList<>();
         for (long id : c.members()) {
-            if (file.getBase(id) instanceof Movable m) {
+            if (com.questclusters.platform.Ftbq.lookup(file, id) instanceof Movable m) {
                 movables.add(id);
                 minX = Math.min(minX, m.getX() - m.getWidth() / 2D);
                 maxX = Math.max(maxX, m.getX() + m.getWidth() / 2D);

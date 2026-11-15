@@ -290,7 +290,7 @@ public final class ClusterEditor {
         ClientQuestFile file = ClientQuestFile.INSTANCE;
         List<Movable> selected = ((QuestScreenAccessor) screen).quest_clusters$getSelectedObjects();
         for (long id : c.members()) {
-            if (file.getBase(id) instanceof Movable m && !selected.contains(m)) {
+            if (com.questclusters.platform.Ftbq.lookup(file, id) instanceof Movable m && !selected.contains(m)) {
                 screen.toggleSelected(m);
             }
         }
@@ -379,7 +379,7 @@ public final class ClusterEditor {
         ClientQuestFile file = ClientQuestFile.INSTANCE;
         double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
         for (long id : c.members()) {
-            if (file.getBase(id) instanceof Movable m) {
+            if (com.questclusters.platform.Ftbq.lookup(file, id) instanceof Movable m) {
                 minX = Math.min(minX, m.getX() - m.getWidth() / 2);
                 maxX = Math.max(maxX, m.getX() + m.getWidth() / 2);
                 minY = Math.min(minY, m.getY() - m.getHeight() / 2);

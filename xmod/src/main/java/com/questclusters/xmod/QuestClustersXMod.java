@@ -17,7 +17,18 @@ public final class QuestClustersXMod {
     public static final String MOD_ID = "quest_clusters_xmod";
     public static final Logger LOGGER = LoggerFactory.getLogger("Quest Clusters XMod");
 
+    //? if neoforge {
     public QuestClustersXMod(IEventBus modBus) {
+        this(new com.questclusters.platform.ModContext(modBus, null));
+    }
+    //?} else {
+    /*public QuestClustersXMod() {
+        this(com.questclusters.platform.ModContext.current());
+    }
+    *///?}
+
+    private QuestClustersXMod(com.questclusters.platform.ModContext ctx) {
+        IEventBus modBus = ctx.modBus();
         modBus.addListener((FMLCommonSetupEvent e) -> e.enqueueWork(QuestClustersXMod::setup));
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             modBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent e) ->

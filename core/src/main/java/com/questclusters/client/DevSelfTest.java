@@ -353,7 +353,7 @@ public final class DevSelfTest {
             }
             var acc = (com.questclusters.mixin.client.QuestScreenAccessor) screen;
             acc.quest_clusters$getSelectedObjects().clear();
-            for (long m : cluster().members()) acc.quest_clusters$getSelectedObjects().add((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(m));
+            for (long m : cluster().members()) acc.quest_clusters$getSelectedObjects().add(com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, m));
             acc.quest_clusters$invokeCopy();
             return 5;
         });
@@ -544,20 +544,20 @@ public final class DevSelfTest {
             var ch = ClientQuestFile.INSTANCE.getChapter(chapterId());
             var inside = com.questclusters.compat.QuestEnhanceCompat.anchorsInside(ch, cluster().members());
             check(inside.contains(0xA1L), "anchor serving only cluster lines is detected: " + inside);
-            before = new double[]{((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(0xA1L)).getX()};
+            before = new double[]{(com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, 0xA1L)).getX()};
             Net.sendToServer(new ClusterPayloads.Move(CLUSTER, 1, 0));
             return 25;
         });
         STEPS.add(() -> {
             if (!net.neoforged.fml.ModList.get().isLoaded("quest_enhance")) return 0;
-            double ax = ((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(0xA1L)).getX();
+            double ax = (com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, 0xA1L)).getX();
             check(Math.abs(ax - (before[0] + 1)) < 1e-6, "anchor moves with the cluster: " + before[0] + " -> " + ax);
             undo();
             return 25;
         });
         STEPS.add(() -> {
             if (!net.neoforged.fml.ModList.get().isLoaded("quest_enhance")) return 0;
-            double ax = ((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(0xA1L)).getX();
+            double ax = (com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, 0xA1L)).getX();
             check(Math.abs(ax - before[0]) < 1e-6, "one undo puts the anchor back too");
             ClusterViewState.setExpanded(cluster(), false);
             com.questclusters.client.gui.DecorativeLineWindow.swaps = 0;
@@ -621,7 +621,7 @@ public final class DevSelfTest {
         STEPS.add(() -> {
             var selected = ((com.questclusters.mixin.client.QuestScreenAccessor) screen).quest_clusters$getSelectedObjects();
             new ArrayList<>(selected).forEach(screen::toggleSelected);
-            var image = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(IMAGE_A3);
+            var image = com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, IMAGE_A3);
             check(image != null && !cluster().members().contains(IMAGE_A3), "image not a member yet");
             screen.toggleSelected(image);
             var item = ClusterEditor.clusterMenu(screen, cluster()).stream()
@@ -635,8 +635,8 @@ public final class DevSelfTest {
         });
         STEPS.add(() -> {
             check(cluster().members().contains(IMAGE_A3), "selected image joined the cluster");
-            screen.toggleSelected((dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(IMAGE_A3));
-            var img = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(IMAGE_A3);
+            screen.toggleSelected(com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, IMAGE_A3));
+            var img = com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, IMAGE_A3);
             screen.questPanel.scrollTo(img.getX(), img.getY());
             return 15;
         });
@@ -658,7 +658,7 @@ public final class DevSelfTest {
             check(titles.contains(want), "image menu offers \"" + want + "\": " + titles);
             screen.closeContextMenu();
             List<ContextMenuItem> items = new ArrayList<>();
-            ClusterEditor.addObjectMenuItems(items, screen, (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(IMAGE_A3));
+            ClusterEditor.addObjectMenuItems(items, screen, com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, IMAGE_A3));
             items.stream().filter(i -> i.getTitle().getString().equals(want)).findFirst()
                     .ifPresent(i -> i.onClicked(null, screen.questPanel, dev.ftb.mods.ftblibrary.ui.input.MouseButton.LEFT));
             return 20;
@@ -841,7 +841,7 @@ public final class DevSelfTest {
             ClusterViewState.setExpanded(cluster(), true);
             double cx = 0, cy = 0;
             for (long m : cluster().members()) {
-                var mv = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(m);
+                var mv = com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, m);
                 cx += mv.getX() / cluster().members().size();
                 cy += mv.getY() / cluster().members().size();
             }
@@ -1018,16 +1018,18 @@ public final class DevSelfTest {
                 wait = w;
             }
         } catch (Throwable t) {
+            // a throwing step is a failed check; the run goes on, so one run shows every problem
             QuestClusters.LOGGER.error("[devtest] crashed at step {}", step, t);
-            step = Integer.MAX_VALUE;
-            mc.stop();
+            check(false, "step " + step + " threw " + t);
+            step = Math.max(step, 0) + 1;
+            wait = 5;
         }
     }
 
     // ---------------------------------------------------------------- helpers
 
     private static double memberX(long id) {
-        return ClientQuestFile.INSTANCE.getBase(id) instanceof dev.ftb.mods.ftbquests.quest.Movable m ? m.getX() : Double.NaN;
+        return com.questclusters.platform.Ftbq.lookup(ClientQuestFile.INSTANCE, id) instanceof dev.ftb.mods.ftbquests.quest.Movable m ? m.getX() : Double.NaN;
     }
 
     private static boolean ready() {

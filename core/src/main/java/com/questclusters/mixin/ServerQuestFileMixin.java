@@ -14,8 +14,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(value = ServerQuestFile.class, remap = false)
 public abstract class ServerQuestFileMixin {
+    //? if neoforge {
     @Inject(method = "load(ZZ)V", at = @At("TAIL"))
     private void quest_clusters$afterLoad(boolean quests, boolean progression, CallbackInfo ci) {
+    //?} else {
+    /*@Inject(method = "load", at = @At("TAIL"))
+    private void quest_clusters$afterLoad(CallbackInfo ci) {
+        boolean quests = true;
+    *///?}
         if (quests) {
             ServerClusters.onQuestsLoaded((ServerQuestFile) (Object) this);
         }

@@ -58,6 +58,11 @@ public final class ChapterSearchWidgets {
         return true;
     }
 
+    /** The search box in this chapter panel, if one was added. */
+    public static Widget searchBox(ChapterPanel panel) {
+        return BOXES.get(panel);
+    }
+
     public static boolean isSearchFocused(ChapterPanel panel) {
         SearchBox box = BOXES.get(panel);
         return box != null && box.isFocused();

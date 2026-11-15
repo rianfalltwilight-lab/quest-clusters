@@ -36,7 +36,11 @@ public abstract class ViewQuestPanelEditorMixin {
     @Inject(method = "mouseScrolled", cancellable = true, at = @At(value = "FIELD", ordinal = 0,
             opcode = org.objectweb.asm.Opcodes.GETFIELD,
             target = "Ldev/ftb/mods/ftbquests/client/gui/quests/ViewQuestPanel;lastScrollTime:J"))
+    //? if neoforge {
     private void quest_clusters_editor$noPaging(double mx, double my, double dx, double dy, CallbackInfoReturnable<Boolean> cir) {
+    //?} else {
+    /*private void quest_clusters_editor$noPaging(double scroll, CallbackInfoReturnable<Boolean> cir) {
+    *///?}
         if (quest != null && ClientEditor.book().quest(quest.id).disableScrollPaging()) {
             cir.setReturnValue(true);
         }

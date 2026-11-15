@@ -79,7 +79,7 @@ public final class ClusterClipboard {
         for (QuestCluster c : copied.clusters()) {
             List<ClusterTemplate.MemberSpec> specs = new ArrayList<>();
             for (long id : c.members()) {
-                if (file.getBase(id) instanceof Movable m) {
+                if (com.questclusters.platform.Ftbq.lookup(file, id) instanceof Movable m) {
                     specs.add(new ClusterTemplate.MemberSpec(id, tx + (m.getX() - copied.anchorX()), ty + (m.getY() - copied.anchorY())));
                 }
             }

@@ -144,4 +144,10 @@ public final class Ftbq {
     public static void copyImage(long imageId, dev.ftb.mods.ftbquests.quest.Chapter target, double x, double y) {
         NetworkManager.sendToServer(new dev.ftb.mods.ftbquests.net.CopyChapterImageMessage(imageId, target.id, x, y));
     }
+
+    /** The quest object or chapter image with this id, or null (chapter images are not quest objects on 1.20.1). */
+    public static Object lookup(BaseQuestFile file, long id) {
+        Object o = file.getBase(id);
+        return o != null ? o : image(file, id);
+    }
 }

@@ -18,8 +18,17 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class QuestPanelCullMixin {
     @WrapOperation(method = "drawOffsetBackground", at = @At(value = "INVOKE",
             target = "Ldev/ftb/mods/ftbquests/client/gui/quests/QuestPanel;renderConnection(Ldev/ftb/mods/ftbquests/client/gui/quests/QuestButton;Ldev/ftb/mods/ftbquests/client/gui/quests/QuestButton;Lcom/mojang/blaze3d/vertex/PoseStack;FIIIIIFLcom/mojang/blaze3d/vertex/Tesselator;)V"))
+    //? if neoforge {
     private void quest_clusters_editor$cull(QuestPanel panel, QuestButton from, QuestButton to, PoseStack ps, float s,
                                            int r, int g, int b, int a, int a1, float mu, Tesselator t, Operation<Void> op) {
+    //?} else {
+    /*private void quest_clusters_editor$cull(QuestPanel panel, dev.ftb.mods.ftblibrary.ui.Widget fromW, QuestButton to, PoseStack ps,
+            com.mojang.blaze3d.vertex.BufferBuilder buf, float s, int r, int g, int b, int a, int a1, float mu, Tesselator t, Operation<Void> op) {
+        if (!(fromW instanceof QuestButton from)) {
+            op.call(panel, fromW, to, ps, buf, s, r, g, b, a, a1, mu, t);
+            return;
+        }
+    *///?}
         if (EditorConfig.CULL_LINES.get()) {
             double sx = from.getX() + from.width / 2D, sy = from.getY() + from.height / 2D;
             double ex = to.getX() + to.width / 2D, ey = to.getY() + to.height / 2D;

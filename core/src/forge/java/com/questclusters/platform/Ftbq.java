@@ -153,4 +153,10 @@ public final class Ftbq {
         ChapterImage img = image(target.file, imageId);
         if (img != null) new dev.ftb.mods.ftbquests.net.CopyChapterImageMessage(img, target, x, y).sendToServer();
     }
+
+    /** The quest object or chapter image with this id, or null (chapter images are not quest objects on 1.20.1). */
+    public static Object lookup(BaseQuestFile file, long id) {
+        Object o = file.getBase(id);
+        return o != null ? o : image(file, id);
+    }
 }

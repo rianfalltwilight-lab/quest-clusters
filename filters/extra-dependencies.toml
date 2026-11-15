@@ -10,7 +10,7 @@ side = "BOTH"
 [[dependencies.${module_id}]]
 modId = "ftbfiltersystem"
 type = "optional"
-versionRange = "[21.1.4,21.2)"
+versionRange = "${ftb_filter_system_version_range}"
 ordering = "AFTER"
 side = "BOTH"
 

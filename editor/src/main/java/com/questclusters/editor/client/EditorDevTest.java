@@ -568,7 +568,7 @@ final class EditorDevTest {
                         wasExpanded[0] = com.questclusters.client.ClusterViewState.isExpanded(c);
                         com.questclusters.client.ClusterViewState.setExpanded(c, true);
                     }
-                    var img = (dev.ftb.mods.ftbquests.quest.Movable) ClientQuestFile.INSTANCE.getBase(anchor);
+                    var img = com.questclusters.platform.Ftbq.movable(ClientQuestFile.INSTANCE, anchor);
                     qs.questPanel.scrollTo(img.getX(), img.getY());
                     return 30;
                 },

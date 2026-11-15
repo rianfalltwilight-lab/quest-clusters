@@ -15,6 +15,10 @@ stonecutter {
             replace('dev.latvian.mods.kubejs.event.KubeEvent', 'dev.latvian.mods.kubejs.event.EventJS')
             replace('implements KubeEvent', 'extends EventJS')
             replace('ImageComponent.ImageAlign.byName(', 'ImageComponent.ImageAlign.fromString(')
+            // FTB Quests 2001 draws dependency lines from any widget, with a shared BufferBuilder
+            replace('renderConnection(Ldev/ftb/mods/ftbquests/client/gui/quests/QuestButton;Ldev/ftb/mods/ftbquests/client/gui/quests/QuestButton;Lcom/mojang/blaze3d/vertex/PoseStack;F',
+                    'renderConnection(Ldev/ftb/mods/ftblibrary/ui/Widget;Ldev/ftb/mods/ftbquests/client/gui/quests/QuestButton;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/BufferBuilder;F')
+            replace('op.call(panel, from, to, ps, s,', 'op.call(panel, fromW, to, ps, buf, s,')
         }
     }
 }

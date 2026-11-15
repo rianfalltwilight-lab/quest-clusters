@@ -146,9 +146,12 @@ dependencies {
     if (legacy) {
         annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
         compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:${project.mixinextras_version}"))
-        implementation("io.github.llamalad7:mixinextras-forge:${project.mixinextras_version}")
-        jarJar("io.github.llamalad7:mixinextras-forge") {
-            version { strictly "[${project.mixinextras_version},)"; prefer project.mixinextras_version }
+        // core nests MixinExtras for every module (they all require core)
+        if (project.module_id == 'quest_clusters') {
+            implementation("io.github.llamalad7:mixinextras-forge:${project.mixinextras_version}")
+            jarJar("io.github.llamalad7:mixinextras-forge") {
+                version { strictly "[${project.mixinextras_version},)"; prefer project.mixinextras_version }
+            }
         }
     }
 }
@@ -157,14 +160,36 @@ def mixinConfig = "${project.module_id}.mixins.json"
 def hasMixins = new File(moduleDir, "src/main/resources/$mixinConfig").exists()
 // 1.20.1-only mixins (backports such as chapter image ids) have their own config in src/forge/resources
 def forgeMixinConfig = "${project.module_id}.forge.mixins.json"
-def mixinConfigs = [mixinConfig, forgeMixinConfig].findAll { new File(moduleDir, legacy && it == forgeMixinConfig ? "src/forge/resources/$it" : "src/main/resources/$it").exists() }
+// only configs that list mixins (the bundle's is empty: no refmap would be written for it)
+def listsMixins = { File f ->
+    if (!f.exists()) return false
+    def json = new groovy.json.JsonSlurper().parse(f)
+    return ['mixins', 'client', 'server'].any { json[it] instanceof List && !json[it].isEmpty() }
+}
+def mixinConfigs = [mixinConfig, forgeMixinConfig].findAll { listsMixins(new File(moduleDir, it == forgeMixinConfig ? "src/forge/resources/$it" : "src/main/resources/$it")) }
 if (legacy && !mixinConfigs.isEmpty()) {
+    // Forge 47 reads mixin configs from the mod's manifest. Dev runs load mods from their output folders (not on
+    // the launch classpath, so --mixin.config cannot find them): those get a manifest file in the resources too.
     mixin {
         add sourceSets.main, "${project.module_id}.refmap.json"
-        mixinConfigs.each { config it }
     }
     tasks.named('jar') {
         manifest.attributes(['MixinConfigs': mixinConfigs.join(',')])
+        exclude 'META-INF/MANIFEST.MF'
+    }
+    // a dev mod is its classes and resources folders together; write the manifest into both
+    def writeManifest = { File dir ->
+        def mf = new File(dir, 'META-INF/MANIFEST.MF')
+        mf.parentFile.mkdirs()
+        mf.text = "Manifest-Version: 1.0\nMixinConfigs: ${mixinConfigs.join(',')}\n"
+    }
+    tasks.named('processResources', ProcessResources) {
+        inputs.property('mixinConfigs', mixinConfigs.join(','))
+        doLast { writeManifest(destinationDir) }
+    }
+    tasks.named('compileJava', JavaCompile) {
+        inputs.property('mixinConfigs', mixinConfigs.join(','))
+        doLast { writeManifest(destinationDirectory.get().asFile) }
     }
 }
 
@@ -180,7 +205,9 @@ def forgeDeps = { String text ->
 }
 def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     def extra = depsFile.exists() ? depsFile.getText('UTF-8')
-            .replace('${module_id}', project.module_id).replace('${mod_version}', rootProject.mod_version) : ''
+            .replace('${module_id}', project.module_id).replace('${mod_version}', rootProject.mod_version)
+            .replace('${ftb_filter_system_version_range}', project.ftb_filter_system_version_range)
+            .replace('${ftb_xmod_compat_version_range}', project.ftb_xmod_compat_version_range) : ''
     def props = [
             minecraft_version_range : project.minecraft_version_range,
             loader_range            : legacy ? project.forge_version_range : project.neo_version_range,

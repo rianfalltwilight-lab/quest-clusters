@@ -189,7 +189,7 @@ public final class ClusterLinesWidget extends Widget {
         }
         int hidden = 0, reveal = 0;
         for (ClusterEdges.Pair p : pairs) {
-            if (file.getBase(p.dependentMovable()) instanceof Movable a && file.getBase(p.dependencyMovable()) instanceof Movable b) {
+            if (com.questclusters.platform.Ftbq.lookup(file, p.dependentMovable()) instanceof Movable a && com.questclusters.platform.Ftbq.lookup(file, p.dependencyMovable()) instanceof Movable b) {
                 var setting = QuestEnhanceCompat.hiddenLine(chapter, a, b);
                 if (setting.isPresent()) {
                     hidden++;

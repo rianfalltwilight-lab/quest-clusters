@@ -16,7 +16,7 @@ public record FtbqMemberLookup(BaseQuestFile file) implements MemberLookup {
 
     @Override
     public OptionalLong chapterOfMovable(long objectId) {
-        if (file.getBase(objectId) instanceof Movable movable) {
+        if (com.questclusters.platform.Ftbq.lookup(file, objectId) instanceof Movable movable) {
             Chapter chapter = movable.getChapter();
             if (chapter != null) {
                 return OptionalLong.of(chapter.id);
