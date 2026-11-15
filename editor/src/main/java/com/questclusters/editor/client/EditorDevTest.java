@@ -256,7 +256,7 @@ final class EditorDevTest {
                     DevSelfTest.moduleCheck(b.chapter(C3).prerequisites.equals(List.of(D6, D5)), "editor: prerequisite added");
                     DevSelfTest.moduleCheck(b.excludedImages.contains(A7), "editor: box-select exclusion set");
                     var imgs = ClientQuestFile.INSTANCE.getChapter(C2).getImages();
-                    DevSelfTest.moduleCheck(count(imgs, CanvasElement.Anchor.class) == 2, "editor: guide point created");
+                    DevSelfTest.moduleCheck(count(imgs, CanvasElement.Anchor.class) == 2, "editor: guide point created (" + count(imgs, CanvasElement.Anchor.class) + " guide points)");
                     DevSelfTest.moduleCheck(count(imgs, CanvasElement.Gif.class) == 1, "editor: GIF element created");
                     DevSelfTest.moduleCheck(imgs.stream().anyMatch(i -> CanvasElement.parse(com.questclusters.platform.Ftbq.clickData(i)) instanceof CanvasElement.Text t
                             && t.text().equals("Devtest text") && t.scale() == 1.5), "editor: canvas text created");
@@ -287,7 +287,7 @@ final class EditorDevTest {
                             keys.add(a.uuid());
                         }
                     }
-                    DevSelfTest.moduleCheck(anchors == 3 && keys.size() == 3, "editor: copied guide point gets a new id");
+                    DevSelfTest.moduleCheck(anchors == 3 && keys.size() == 3, "editor: copied guide point gets a new id (" + anchors + " guide points, " + keys.size() + " ids)");
                     var qs = DevSelfTest.questScreen();
                     DevSelfTest.moduleCheck(CanvasEdit.copy(qs) && CanvasEdit.hasMultiClipboard(), "editor: two quests copied");
                     CanvasEdit.paste(file.getChapter(C2), 0, 6, true);

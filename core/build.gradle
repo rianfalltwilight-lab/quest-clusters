@@ -129,6 +129,11 @@ def inlineLangFile(File quests) {
     def names = [title: 'title', quest_subtitle: 'subtitle', quest_desc: 'description']
     new File(quests, 'chapters').eachFileMatch(~/.*\.snbt/) { File f ->
         def text = f.getText('UTF-8')
+        // other field forms of FTB Quests 2001
+        text = text.replace('disable_recipe_mod:', 'disable_jei:')
+        text = text.replace('click_action: "none:', 'click: "')
+        text = text.replaceAll(/fluid: \{ id: "([^"]+)", amount: (\d+L) \}/, 'fluid: "$1", amount: $2')
+        text = text.replaceAll(/\{ id: "([^"]+)", count: (\d+), components: \{ "minecraft:custom_data": (\{[^{}]*\}) \} \}/, '{ id: "$1", Count: $2b, tag: $3 }')
         byId.each { id, fields ->
             def extra = fields.collect { k, v -> "${names[k] ?: k}: $v" }.join(', ')
             text = text.replace("id: \"$id\"", "id: \"$id\", $extra")

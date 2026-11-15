@@ -35,7 +35,8 @@ final class RecipeDevTest {
             RecipeIndex.INSTANCE.invalidateAll();
             List<QuestRecipe> quests = RecipeIndex.INSTANCE.quests();
             check(has(quests, RECIPE), "quest with item rewards is a recipe");
-            check(!has(quests, HIDDEN), "\"disable in recipe viewers\" is respected");
+            // FTB Quests for 1.20.1 does not save "disable in recipe viewers", so the test book cannot set it there
+            if (!com.questclusters.client.DevSelfTest.LEGACY) check(!has(quests, HIDDEN), "\"disable in recipe viewers\" is respected");
             check(!has(quests, LOCKED), "quests the team cannot start yet are not shown");
             QuestRecipe r = quests.stream().filter(q -> q.quest().id == RECIPE).findFirst().orElse(null);
             if (r != null) {
@@ -47,7 +48,9 @@ final class RecipeDevTest {
             check(has(RecipeIndex.INSTANCE.questsUsing(new ItemStack(Items.IRON_INGOT)), RECIPE), "uses of iron ingot");
             check(has(RecipeIndex.INSTANCE.questsUsing(Fluids.WATER), RECIPE), "uses of water");
             check(has(RecipeIndex.INSTANCE.questsGiving(new ItemStack(Items.DIAMOND)), RECIPE), "recipes for diamond");
-            check(RecipeIndex.INSTANCE.questsGiving(new ItemStack(Items.EMERALD)).isEmpty(), "hidden quest's reward has no recipe");
+            if (!com.questclusters.client.DevSelfTest.LEGACY) {
+                check(RecipeIndex.INSTANCE.questsGiving(new ItemStack(Items.EMERALD)).isEmpty(), "hidden quest's reward has no recipe");
+            }
             List<CrateRecipe> crates = RecipeIndex.INSTANCE.crates();
             check(crates.size() == 1 && crates.get(0).drops().size() == 2, "one loot crate with two drops: " + crates.size());
             if (!crates.isEmpty()) {

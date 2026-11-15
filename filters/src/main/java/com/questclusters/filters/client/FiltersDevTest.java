@@ -87,6 +87,9 @@ final class FiltersDevTest {
         FTBFilterSystemClient.INSTANCE.openFilterConfigScreen(child, parent, false);
     }
 
+    /** Common tags: c: on NeoForge 1.21.1, forge: on Forge 1.20.1. */
+    private static final String TAGS = DevSelfTest.LEGACY ? "forge" : "c";
+
     //? if neoforge {
     private static final String HEALING_DATA = "[minecraft:potion_contents={potion:\"minecraft:healing\"}]";
 
@@ -132,15 +135,16 @@ final class FiltersDevTest {
                             && !matches(healing, swiftness()), "variant entry matches that potion only");
                     var missing = parse("smart_filter_extras:items(nomod:thing,minecraft:stone)");
                     check(missing.test(new ItemStack(Items.STONE)) && FfsCompat.asString(missing, reg).contains("nomod:thing"), "missing ids kept, rest still works");
-                    String tags = "smart_filter_extras:item_tag(#c:ingots,c:gems)";
+                    String tags = "smart_filter_extras:item_tag(#" + TAGS + ":ingots," + TAGS + ":gems)";
                     check(matches(tags, new ItemStack(Items.IRON_INGOT)) && matches(tags, new ItemStack(Items.DIAMOND))
                             && !matches(tags, new ItemStack(Items.STONE)), "several item tags");
-                    check(FfsCompat.asString(parse(tags), reg).equals("smart_filter_extras:item_tag(c:ingots,c:gems)"), "tags saved without #: " + FfsCompat.asString(parse(tags), reg));
+                    check(FfsCompat.asString(parse(tags), reg).equals("smart_filter_extras:item_tag(" + TAGS + ":ingots," + TAGS + ":gems)"), "tags saved without #: " + FfsCompat.asString(parse(tags), reg));
                     String blocks = "smart_filter_extras:block_tag(minecraft:logs,minecraft:crops)";
                     check(matches(blocks, new ItemStack(Items.OAK_LOG)) && matches(blocks, new ItemStack(Items.WHEAT_SEEDS))
                             && !matches(blocks, new ItemStack(Items.STICK)), "block tags (seeds place crops)");
                     check(matches("smart_filter_extras:fuel(>=1600)", new ItemStack(Items.COAL)) && !matches("smart_filter_extras:fuel(>=1600)", new ItemStack(Items.STICK))
-                            && matches("smart_filter_extras:fuel(=0)", new ItemStack(Items.STONE)), "fuel value");
+                            && matches("smart_filter_extras:fuel(=0)", new ItemStack(Items.STONE)), "fuel value (coal "
+                            + com.questclusters.filters.filter.FuelFilter.burnTime(new ItemStack(Items.COAL)) + ", " + FfsCompat.asString(parse("smart_filter_extras:fuel(>=1600)"), reg) + ")");
                     var alias = parse("smartfilterextras:items(minecraft:stone)");
                     check(((SmartFilter.Compound) alias).getChildren().get(0) instanceof ItemListFilter
                             && FfsCompat.asString(alias, reg).startsWith("smart_filter_extras:items"), "2.x ids read and rewritten");

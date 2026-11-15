@@ -1058,7 +1058,9 @@ public final class DevSelfTest {
     }
 
     private static <T> T find(Class<T> type) {
-        for (Widget w : screen.questPanel.getWidgets()) {
+        // the quest screen on display (reopening the book can make a new one)
+        QuestScreen shown = dev.ftb.mods.ftblibrary.util.client.ClientUtils.getCurrentGuiAs(QuestScreen.class);
+        for (Widget w : (shown != null ? shown : screen).questPanel.getWidgets()) {
             if (type.isInstance(w)) {
                 return type.cast(w);
             }

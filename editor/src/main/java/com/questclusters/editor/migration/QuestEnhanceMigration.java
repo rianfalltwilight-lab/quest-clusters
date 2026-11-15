@@ -41,7 +41,10 @@ public final class QuestEnhanceMigration implements Migration {
 
         // on disk first: the book may be reloaded from disk before FTB Quests saves the objects fixed below
         java.util.Set<String> files = new java.util.HashSet<>();
+        //? if neoforge {
         r.legacyClicks().forEach(c -> files.add(c.chapterFile()));
+        //?}
+        // (FTB Quests for 1.20.1 still reads 'click' itself: nothing to move there)
         for (String name : files) {
             java.nio.file.Path path = ctx.questsFolder().resolve("chapters").resolve(name + ".snbt");
             dev.ftb.mods.ftblibrary.snbt.SNBTCompoundTag raw = dev.ftb.mods.ftblibrary.snbt.SNBT.read(path);

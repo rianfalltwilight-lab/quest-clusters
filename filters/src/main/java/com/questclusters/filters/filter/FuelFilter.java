@@ -27,7 +27,11 @@ public class FuelFilter extends AbstractSmartFilter {
     }
 
     public static int burnTime(ItemStack stack) {
+        //? if neoforge {
         return stack.isEmpty() ? 0 : stack.getBurnTime(RecipeType.SMELTING);
+        //?} else {
+        /*return stack.isEmpty() ? 0 : net.minecraftforge.common.ForgeHooks.getBurnTime(stack, RecipeType.SMELTING);
+        *///?}
     }
 
     @Override
