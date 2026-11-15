@@ -199,18 +199,20 @@ public final class LinePresetsScreen extends AbstractButtonListScreen {
             getGui().openContextMenu(List.of(
                     new ContextMenuItem(Component.translatable("quest_clusters_editor.line_presets.rename"), Icons.SETTINGS,
                             b -> askName(p.name(), name -> {
-                                presets.set(index, new LinePreset(p.id(), name, p.texture(), p.scroll()));
+                                presets.set(index, p.withName(name));
                                 changed = true;
                                 refreshWidgets();
                             })),
                     new ContextMenuItem(Component.translatable("quest_clusters_editor.line_presets.image"), Icons.ART,
                             b -> pickImage(p.texture(), texture -> {
-                                presets.set(index, new LinePreset(p.id(), p.name(), texture, p.scroll()));
+                                presets.set(index, p.withTexture(texture));
                                 changed = true;
                             })),
                     ContextMenuItem.subMenu(Component.translatable("quest_clusters_editor.line_presets.gif"), Icons.ART, gifItems(p)),
                     new ContextMenuItem(Component.translatable("quest_clusters_editor.line_presets.scroll", speed(p.scroll())), Icons.SETTINGS,
                             b -> askScroll(p)),
+                    new ContextMenuItem(Component.translatable("quest_clusters_editor.line_presets.look"), Icons.COLOR_RGB,
+                            b -> editLook(p)),
                     new ContextMenuItem(Component.translatable("gui.remove").withStyle(ChatFormatting.RED), Icons.BIN, b -> {
                         presets.remove(index);
                         changed = true;
@@ -227,12 +229,31 @@ public final class LinePresetsScreen extends AbstractButtonListScreen {
             }
             for (var gif : gifs) {
                 out.add(new ContextMenuItem(Component.literal(gif.toString()), Icons.ART, b -> {
-                    presets.set(index, new LinePreset(p.id(), p.name(), gif.toString(), p.scroll()));
+                    presets.set(index, p.withTexture(gif.toString()));
                     changed = true;
                     refreshWidgets();
                 }));
             }
             return out;
+        }
+
+        /** Tint and thickness, on FTB Library's settings screen; back to the preset list either way. */
+        private void editLook(LinePreset p) {
+            int[] color = {p.color()};
+            double[] width = {p.width()};
+            var group = new dev.ftb.mods.ftblibrary.config.ConfigGroup("quest_clusters_editor", accepted -> {
+                if (accepted) {
+                    float w = (float) Math.max(LinePreset.MIN_WIDTH, Math.min(LinePreset.MAX_WIDTH, width[0]));
+                    presets.set(index, presets.get(index).withLook(color[0], w));
+                    changed = true;
+                }
+                LinePresetsScreen.this.openGui();
+                LinePresetsScreen.this.refreshWidgets();
+            });
+            group.addColor("line_color", dev.ftb.mods.ftblibrary.icon.Color4I.rgba(color[0]), v -> color[0] = v.rgba() | 0xFF000000,
+                    dev.ftb.mods.ftblibrary.icon.Color4I.WHITE);
+            group.addDouble("line_width", width[0], v -> width[0] = v, 1D, LinePreset.MIN_WIDTH, LinePreset.MAX_WIDTH);
+            new dev.ftb.mods.ftblibrary.config.ui.EditConfigScreen(group).openGui();
         }
 
         /** Repeats per second along the line, -20..20 (negative flows towards the line's start); 0 = still. */

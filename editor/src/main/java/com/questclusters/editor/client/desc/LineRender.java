@@ -94,9 +94,16 @@ public final class LineRender {
     public static boolean before(TextField field, GuiGraphics g, Theme theme, int x, int y, int w, int h) {
         Info info = LINES.get(field);
         if (info == null || info.markup.isPlain()) return false;
-        LineMarkup.Line m = info.markup;
         Widget parent = field.getParent();
         int px = parent == null ? x : x - field.getPosX(), pw = parent == null ? w : parent.width;
+        return decorate(info.markup, g, theme, px, pw, x, y, w, h);
+    }
+
+    /**
+     * Draws a line's decorations: {@code px}/{@code pw} span the whole panel, {@code x}/{@code w} the text. Returns
+     * true if the pose was pushed (the caller pops it after drawing the text).
+     */
+    public static boolean decorate(LineMarkup.Line m, GuiGraphics g, Theme theme, int px, int pw, int x, int y, int w, int h) {
         RenderSystem.enableBlend();
         switch (m.kind()) {
             case DIVIDER -> {
@@ -146,14 +153,68 @@ public final class LineRender {
         if (pushed) g.pose().popPose();
         Info info = LINES.get(field);
         if (info == null || !info.markup.spoiler() || revealed(info)) return;
+        cover(g, theme, x, y, w, h, 0xFF);
+    }
+
+    private static void cover(GuiGraphics g, Theme theme, int x, int y, int w, int h, int alpha) {
         g.pose().pushPose();
         g.pose().translate(0, 0, 10);
-        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, SPOILER);
+        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, (SPOILER & 0xFFFFFF) | alpha << 24);
         Component hint = Component.translatable("quest_clusters_editor.spoiler");
         int hw = theme.getStringWidth(hint);
         if (hw < w) {
             theme.drawString(g, hint, x + (w - hw) / 2, y + (h - theme.getFontHeight()) / 2 + 1, dev.ftb.mods.ftblibrary.icon.Color4I.rgb(0x9A9A9A), 0);
         }
         g.pose().popPose();
+    }
+
+    /** Height {@link #preview} needs for a line drawn {@code w} pixels wide. */
+    public static int previewHeight(LineMarkup.Line m, Theme theme, int w) {
+        return switch (m.kind()) {
+            case DIVIDER, DOUBLE_DIVIDER -> 9;
+            case GAP -> Math.max(1, m.gap());
+            default -> {
+                int inner = Math.max(10, (int) ((w - indentLeft(m, theme) - indentRight(m)) / m.scale()));
+                int lines = Math.max(1, theme.getFont().split(m.text(), inner).size());
+                yield (int) Math.ceil(lines * (theme.getFontHeight() + 1) * m.scale()) + 2 * padding(m);
+            }
+        };
+    }
+
+    /**
+     * Draws one marked-up line the way the quest view does, for the description editor's preview: decorations, the
+     * (scaled, maybe centred, wrapped) text, and a see-through spoiler cover.
+     */
+    public static void preview(LineMarkup.Line m, GuiGraphics g, Theme theme, int px, int y, int pw) {
+        int h = previewHeight(m, theme, pw);
+        if (m.kind() == LineMarkup.Kind.GAP) {
+            g.fill(px, y, px + pw, y + h, 0x204A90E2);
+            return;
+        }
+        int x = px + indentLeft(m, theme), w = pw - indentLeft(m, theme) - indentRight(m);
+        float scale = m.scale();
+        var lines = m.kind() == LineMarkup.Kind.TEXT
+                ? theme.getFont().split(m.text(), Math.max(10, (int) (w / scale))) : java.util.List.<net.minecraft.util.FormattedCharSequence>of();
+        int textW = 0;
+        for (var l : lines) textW = Math.max(textW, (int) (theme.getFont().width(l) * scale));
+        int tx = m.center() ? x + (w - textW) / 2 : x;
+        int boxX = m.code() ? tx : x, boxW = m.code() ? textW : w;
+        boolean pushed = decorate(m, g, theme, px, pw, boxX, y, boxW, h - 2 * padding(m));
+        if (m.kind() == LineMarkup.Kind.TEXT) {
+            g.pose().pushPose();
+            g.pose().translate(tx, y, 0);
+            g.pose().scale(scale, scale, 1F);
+            int ly = 0;
+            for (var l : lines) {
+                int lx = m.center() ? (int) ((textW - theme.getFont().width(l) * scale) / 2 / scale) : 0;
+                g.drawString(theme.getFont(), l, lx, ly, 0xFFFFFFFF, true);
+                ly += theme.getFontHeight() + 1;
+            }
+            g.pose().popPose();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+        }
+        if (pushed) g.pose().popPose();
+        if (m.spoiler()) cover(g, theme, tx, y, Math.max(textW, 20), h, 0x90);
     }
 }

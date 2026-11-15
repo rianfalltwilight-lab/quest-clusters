@@ -75,4 +75,24 @@ class LinePresetTest {
         assertFalse(new LinePreset("f3", "NaN", "a:x.png", Float.NaN).isValid());
         assertTrue(new LinePreset("f4", "Gif", "a:textures/gui/fire.gif", 1F).isValid());
     }
+
+    @Test
+    void colourAndWidthStoredAndBounded() {
+        BookExtras b = new BookExtras();
+        b.linePresets.add(new LinePreset("c1", "Red thick", "a:x.png", 0F, 0xFFFF0000, 2.5F));
+        b.linePresets.add(new LinePreset("c2", "Default", "a:x.png"));
+        CompoundTag t = ExtrasNbt.writeBook(b, CompoundTag::new);
+        assertFalse(t.getList("line_presets", 10).getCompound(1).contains("color"), "defaults are not written");
+        BookExtras back = new BookExtras();
+        ExtrasNbt.readBook(t, back);
+        assertEquals(0xFFFF0000, back.linePresets.get(0).color());
+        assertEquals(2.5F, back.linePresets.get(0).width());
+        assertEquals(LinePreset.WHITE, back.linePresets.get(1).color());
+        assertEquals(1F, back.linePresets.get(1).width());
+        assertFalse(new LinePreset("w1", "Too thin", "a:x.png", 0F, LinePreset.WHITE, 0.1F).isValid());
+        assertFalse(new LinePreset("w2", "Too thick", "a:x.png", 0F, LinePreset.WHITE, 5F).isValid());
+        var renamed = back.linePresets.get(0).withName("Renamed").withTexture("a:y.png");
+        assertEquals(0xFFFF0000, renamed.color(), "edits keep the look");
+        assertEquals(2.5F, renamed.width());
+    }
 }

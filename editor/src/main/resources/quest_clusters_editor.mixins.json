@@ -48,7 +48,8 @@
     "client.TreeViewButtonMixin",
     "client.ViewQuestPanelDescMixin",
     "client.ViewQuestPanelEditLineMixin",
-    "client.ViewQuestPanelEditorMixin"
+    "client.ViewQuestPanelEditorMixin",
+    "client.DescriptionPreviewMixin"
   ],
   "injectors": {
     "defaultRequire": 1

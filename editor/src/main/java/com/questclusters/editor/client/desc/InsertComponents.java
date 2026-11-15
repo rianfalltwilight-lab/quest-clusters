@@ -77,7 +77,26 @@ public final class InsertComponents {
         text.add(item("obfuscated", back, init, out));
         return List.of(ContextMenuItem.subMenu(tr("group.nav"), Icons.COMPASS, nav),
                 ContextMenuItem.subMenu(tr("group.media"), Icons.ART, media),
-                ContextMenuItem.subMenu(tr("group.text"), Icons.NOTES, text));
+                ContextMenuItem.subMenu(tr("group.text"), Icons.NOTES, text),
+                ContextMenuItem.subMenu(tr("group.markup"), Icons.INFO, markupItems(selected, out)));
+    }
+
+    /** Line markup (see LineMarkup): inserts a new line with the marker; the selection, if any, becomes its text. */
+    public static List<ContextMenuItem> markupItems(String selected, Consumer<String> out) {
+        String text = selected != null && !selected.isBlank() && !selected.contains("\n") ? selected : tr("markup.sample").getString();
+        String[][] entries = {
+                {"h1", "# " + text}, {"h2", "## " + text}, {"h3", "### " + text},
+                {"divider", "---"}, {"double", "==="}, {"bar", "> " + text},
+                {"info", "[!info] " + text}, {"tip", "[!tip] " + text}, {"warn", "[!warn] " + text}, {"danger", "[!danger] " + text},
+                {"spoiler", "[spoiler]" + text}, {"code", "`" + text + "`"}, {"gap", "[gap=8]"},
+                {"bullet", "- " + text}, {"numbered", "1. " + text}, {"center", "[center]" + text}};
+        List<ContextMenuItem> out2 = new ArrayList<>();
+        for (String[] e : entries) {
+            String line = e[1];
+            out2.add(new ContextMenuItem(tr("markup." + e[0]).copy().append(Component.literal("  " + line.replace(text, "…"))
+                    .withStyle(net.minecraft.ChatFormatting.DARK_GRAY)), Icons.ADD, b -> out.accept(line)));
+        }
+        return out2;
     }
 
     static DescriptionTable defaultTable() {

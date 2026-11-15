@@ -187,11 +187,12 @@ public final class DecorativeLinesWidget extends Widget {
     private static void quad(GuiGraphics g, double x1, double y1, double x2, double y2, float half,
                              com.questclusters.editor.data.LinePreset preset) {
         double len = Math.hypot(x2 - x1, y2 - y1);
+        if (preset != null) half *= preset.width();
         if (len < 0.5 || half <= 0) return;
         float nx = (float) (-(y2 - y1) / len * half), ny = (float) ((x2 - x1) / len * half);
         ResourceLocation presetTex = preset == null ? null : com.questclusters.client.Textures.file(preset.texture());
         ResourceLocation tex = presetTex != null ? presetTex : texture();
-        int start = presetTex != null ? 0xFFFFFFFF : START, end = presetTex != null ? 0xFFFFFFFF : END;
+        int start = presetTex != null ? preset.color() : START, end = presetTex != null ? preset.color() : END;
         long now = System.currentTimeMillis();
         float v0 = 0F, v1 = 1F;
         if (tex.getPath().endsWith(".gif")) {

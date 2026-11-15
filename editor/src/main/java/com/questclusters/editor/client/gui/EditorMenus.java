@@ -294,6 +294,7 @@ public final class EditorMenus {
         add.add(item("canvas_text.add", Icons.NOTES, () -> CanvasEdit.addText(screen, ch, qx, qy)));
         add.add(item("guide_point.add", Icons.ADD, () -> CanvasEdit.addGuidePoint(ch, qx, qy)));
         add.add(item("line_presets", Icons.ART, () -> new LinePresetsScreen(screen).openGui()));
+        add.add(item("book_check", Icons.BUG, () -> new BookCheckScreen(screen).openGui()));
         List<ContextMenuItem> gifs = gifItems(rl -> CanvasEdit.addGif(ch, qx, qy, rl));
         add.add(gifs.isEmpty() ? new ContextMenuItem(tr("gif.none"), Icons.ART, b -> {
         }).setEnabled(false) : ContextMenuItem.subMenu(tr("gif.add"), Icons.ART, gifs));

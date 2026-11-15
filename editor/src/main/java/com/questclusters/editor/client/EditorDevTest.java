@@ -100,6 +100,8 @@ final class EditorDevTest {
         DevSelfTest.addModuleSteps(anchorInClusterSteps());
         DevSelfTest.addModuleSteps(animatedLineSteps());
         DevSelfTest.addModuleSteps(markupSteps());
+        DevSelfTest.addModuleSteps(descEditorSteps());
+        DevSelfTest.addModuleSteps(bookCheckSteps());
         DevSelfTest.addModuleSteps(treeSteps());
         DevSelfTest.addModuleSteps(perfSteps());
         DevSelfTest.addModuleSteps(DevSelfTest.configScreenSteps("quest_clusters_editor", "qc_37_editor_settings", () -> List.of(
@@ -727,6 +729,120 @@ final class EditorDevTest {
     }
 
     /** Quest tree view: dependency nesting, reading order, chapter headings in the all-chapters view. */
+    /** Book check: planted problems are found, the screen lists and jumps, the server command agrees with the server's data. */
+    static List<java.util.function.IntSupplier> bookCheckSteps() {
+        int[] commandResult = {-1}, serverCount = {-2};
+        com.questclusters.editor.client.gui.BookCheckScreen[] screen = new com.questclusters.editor.client.gui.BookCheckScreen[1];
+        return List.of(
+                () -> {
+                    var file = ClientQuestFile.INSTANCE;
+                    var a = file.getQuest(0xA20L);
+                    var b = file.getQuest(0xA21L);
+                    DevSelfTest.moduleCheck(a != null && b != null, "book check: loop test quests exist");
+                    if (a == null || b == null) return 1;
+                    boolean ab = a.hasDependency(b), ba = b.hasDependency(a);
+                    // a loop, on the client copy only, undone right away
+                    if (!ab) a.addDependency(b);
+                    if (!ba) b.addDependency(a);
+                    var planted = com.questclusters.editor.data.BookCheck.run(file, ClientEditor.book(), tex -> false);
+                    if (!ab) a.removeDependency(b);
+                    if (!ba) b.removeDependency(a);
+                    DevSelfTest.moduleCheck(planted.stream().anyMatch(i -> i.kind().equals("loop")), "book check: dependency loop found");
+                    DevSelfTest.moduleCheck(planted.stream().anyMatch(i -> i.kind().equals("missing_chapter_background")),
+                            "book check: missing chapter background found");
+                    var real = com.questclusters.editor.client.gui.BookCheckScreen.runClient();
+                    DevSelfTest.moduleCheck(real.stream().noneMatch(i -> i.kind().equals("loop") || i.kind().startsWith("missing_image")
+                            || i.kind().endsWith("background")), "book check: the test book itself has no loops or missing textures "
+                            + real.stream().map(i -> i.kind() + "=" + i.text().getString()).toList());
+                    screen[0] = new com.questclusters.editor.client.gui.BookCheckScreen(DevSelfTest.questScreen());
+                    screen[0].openGui();
+                    return 10;
+                },
+                DevSelfTest.waitFrames(3),
+                () -> {
+                    DevSelfTest.moduleShot("qc_45_book_check");
+                    var target = screen[0].issues().stream().filter(i -> ClientQuestFile.INSTANCE.getBase(i.object())
+                            instanceof dev.ftb.mods.ftbquests.quest.Quest).findFirst().orElse(null);
+                    if (target != null) {
+                        com.questclusters.editor.client.gui.BookCheckScreen.jump(DevSelfTest.questScreen(), target);
+                        DevSelfTest.moduleCheck(DevSelfTest.questScreen().getViewedQuest() != null
+                                && DevSelfTest.questScreen().getViewedQuest().id == target.object(), "book check: clicking an issue opens its quest");
+                    } else {
+                        DevSelfTest.questScreen().openGui();
+                    }
+                    var server = Minecraft.getInstance().getSingleplayerServer();
+                    server.execute(() -> {
+                        serverCount[0] = com.questclusters.editor.data.BookCheck.run(ServerQuestFile.INSTANCE,
+                                com.questclusters.editor.server.ServerEditor.book(), null).size();
+                        try {
+                            commandResult[0] = server.getCommands().getDispatcher().execute("questclusters check",
+                                    server.createCommandSourceStack().withSuppressedOutput());
+                        } catch (Exception e) {
+                            commandResult[0] = -3;
+                        }
+                    });
+                    return 10;
+                },
+                () -> {
+                    DevSelfTest.moduleCheck(commandResult[0] == serverCount[0], "book check: /questclusters check reports "
+                            + commandResult[0] + " issues (server data: " + serverCount[0] + ")");
+                    if (DevSelfTest.questScreen().getViewedQuest() != null) DevSelfTest.questScreen().closeQuest();
+                    return 5;
+                });
+    }
+
+    /** Description editor: the markup entries of the Insert menu, and the preview of the cursor line. */
+    static List<java.util.function.IntSupplier> descEditorSteps() {
+        dev.ftb.mods.ftbquests.client.gui.MultilineTextEditorScreen[] screen = new dev.ftb.mods.ftbquests.client.gui.MultilineTextEditorScreen[1];
+        int[] danger = new int[1];
+        java.util.function.Predicate<int[]> red = p -> p[0] > p[1] + 25 && p[0] > p[2] + 25;
+        return List.of(
+                () -> {
+                    var cfg = new dev.ftb.mods.ftblibrary.config.ListConfig<String, dev.ftb.mods.ftblibrary.config.StringConfig>(
+                            new dev.ftb.mods.ftblibrary.config.StringConfig());
+                    cfg.setValue(new java.util.ArrayList<>(List.of("Plain line", "[!danger] Danger box")));
+                    screen[0] = new dev.ftb.mods.ftbquests.client.gui.MultilineTextEditorScreen(net.minecraft.network.chat.Component.literal("Desc test"), cfg, accepted -> {
+                    });
+                    screen[0].openGui();
+                    return 10;
+                },
+                () -> {
+                    var box = ((com.questclusters.editor.mixin.client.MultilineEditorAccessor) screen[0]).quest_clusters_editor$textBox();
+                    box.seekCursor(net.minecraft.client.gui.components.Whence.END, 0);
+                    return 2;
+                },
+                DevSelfTest.waitFrames(3),
+                () -> {
+                    danger[0] = count(red);
+                    DevSelfTest.moduleShot("qc_44_desc_preview");
+                    var box = ((com.questclusters.editor.mixin.client.MultilineEditorAccessor) screen[0]).quest_clusters_editor$textBox();
+                    box.seekCursor(net.minecraft.client.gui.components.Whence.ABSOLUTE, 0);
+                    return 2;
+                },
+                DevSelfTest.waitFrames(3),
+                () -> {
+                    int plain = count(red);
+                    DevSelfTest.moduleCheck(danger[0] > plain + 40, "desc editor: preview draws the [!danger] box of the cursor line (" + danger[0] + " vs " + plain + ")");
+                    var acc = (com.questclusters.editor.mixin.client.MultilineEditorAccessor) screen[0];
+                    var items = com.questclusters.editor.client.desc.InsertComponents.markupItems(null, line -> acc.quest_clusters_editor$insertAtEndOfLine("\n" + line));
+                    DevSelfTest.moduleCheck(items.size() == 16, "desc editor: 16 markup entries in Insert (" + items.size() + ")");
+                    try {
+                        var f = dev.ftb.mods.ftblibrary.ui.ContextMenuItem.class.getDeclaredField("callback");
+                        f.setAccessible(true);
+                        @SuppressWarnings("unchecked")
+                        var cb = (java.util.function.Consumer<dev.ftb.mods.ftblibrary.ui.Button>) f.get(items.get(1));
+                        cb.accept(null);
+                    } catch (ReflectiveOperationException e) {
+                        DevSelfTest.moduleCheck(false, "desc editor: menu callback (" + e + ")");
+                    }
+                    String text = acc.quest_clusters_editor$textBox().getText();
+                    DevSelfTest.moduleCheck(text.startsWith("Plain line\n## ") && text.endsWith("[!danger] Danger box"),
+                            "desc editor: Insert > Subheading adds a '## ' line after the cursor line");
+                    DevSelfTest.questScreen().openGui();
+                    return 10;
+                });
+    }
+
     static List<java.util.function.IntSupplier> treeSteps() {
         boolean[] wasEditing = new boolean[1];
         return List.of(

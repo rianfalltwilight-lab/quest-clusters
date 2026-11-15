@@ -46,9 +46,22 @@ public final class ExtrasNbt {
             pt.putString("name", p.name());
             pt.putString("texture", p.texture());
             if (p.scroll() != 0F) pt.putFloat("scroll", p.scroll());
+            if (p.color() != LinePreset.WHITE) pt.putString("color", String.format("#%08X", p.color()));
+            if (p.width() != 1F) pt.putFloat("width", p.width());
             l.add(pt);
         }
         return l;
+    }
+
+    /** "#AARRGGBB" or "#RRGGBB" (opaque); white if missing or malformed. */
+    static int parseColor(String s) {
+        if (s == null || !s.startsWith("#") || (s.length() != 7 && s.length() != 9)) return LinePreset.WHITE;
+        try {
+            long v = Long.parseLong(s.substring(1), 16);
+            return s.length() == 7 ? (int) (0xFF000000L | v) : (int) v;
+        } catch (NumberFormatException e) {
+            return LinePreset.WHITE;
+        }
     }
 
     /** Valid presets only, ids unique, at most {@link LinePreset#MAX}. */
@@ -56,7 +69,8 @@ public final class ExtrasNbt {
         List<LinePreset> out = new ArrayList<>();
         for (int i = 0; i < l.size() && out.size() < LinePreset.MAX; i++) {
             CompoundTag pt = l.getCompound(i);
-            LinePreset p = new LinePreset(pt.getString("id"), pt.getString("name"), pt.getString("texture"), pt.getFloat("scroll"));
+            LinePreset p = new LinePreset(pt.getString("id"), pt.getString("name"), pt.getString("texture"), pt.getFloat("scroll"),
+                    parseColor(pt.getString("color")), pt.contains("width") ? pt.getFloat("width") : 1F);
             if (p.isValid() && out.stream().noneMatch(o -> o.id().equals(p.id()))) out.add(p);
         }
         return out;
