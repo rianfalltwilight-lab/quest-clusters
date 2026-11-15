@@ -4,7 +4,6 @@ import com.questclusters.platform.Rl;
 import com.questclusters.xmod.recipe.CrateRecipe;
 import com.questclusters.xmod.recipe.RecipeIndex;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
-import dev.ftb.mods.ftbquests.registry.ModItems;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.gui.Renderer;
@@ -31,7 +30,7 @@ final class ReiCategories {
     }
 
     static final class Quest implements DisplayCategory<ReiDisplays.QuestDisplay> {
-        private final Renderer icon = EntryStacks.of(ModItems.BOOK.get());
+        private final Renderer icon = EntryStacks.of(com.questclusters.xmod.recipe.FtbqItems.book());
 
         @Override
         public CategoryIdentifier<? extends ReiDisplays.QuestDisplay> getCategoryIdentifier() {
@@ -91,7 +90,7 @@ final class ReiCategories {
             @Override
             public void render(GuiGraphics graphics, Rectangle bounds, int mouseX, int mouseY, float delta) {
                 List<ItemStack> crates = RecipeIndex.INSTANCE.crateStacks();
-                ItemStack stack = crates.isEmpty() ? new ItemStack(ModItems.LOOTCRATE.get())
+                ItemStack stack = crates.isEmpty() ? new ItemStack(com.questclusters.xmod.recipe.FtbqItems.lootCrate())
                         : crates.get((int) (System.currentTimeMillis() / 1000L % crates.size()));
                 graphics.renderItem(stack, bounds.getCenterX() - 8, bounds.getCenterY() - 8);
             }
@@ -136,7 +135,7 @@ final class ReiCategories {
             widgets.add(Widgets.createRecipeBase(bounds));
             widgets.add(Widgets.createLabel(new Point(x + 1, y), display.recipe().title().copy().withStyle(ChatFormatting.UNDERLINE))
                     .leftAligned().color(0xFFFFFF00));
-            widgets.add(Widgets.createSlot(new Point(x + 1, y + 9)).entries(display.getInputEntries().getFirst()).markInput());
+            widgets.add(Widgets.createSlot(new Point(x + 1, y + 9)).entries(display.getInputEntries().get(0)).markInput());
             int line = 0;
             for (Component chance : display.recipe().dropChances()) {
                 widgets.add(Widgets.createLabel(new Point(x + width - 1, y + 9 + line++ * 9), chance).rightAligned().noShadow().color(0xFF404040, 0xFFBBBBBB));

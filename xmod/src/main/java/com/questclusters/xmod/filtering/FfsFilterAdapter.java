@@ -34,16 +34,29 @@ public final class FfsFilterAdapter implements ItemFilterAdapter {
         return FTBFilterSystemAPI.api().isFilterItem(stack);
     }
 
+    //? if neoforge {
     @Override
     public boolean doesItemMatch(ItemStack filterStack, ItemStack toCheck, HolderLookup.Provider registryAccess) {
         return FTBFilterSystemAPI.api().doesFilterMatch(filterStack, toCheck, registryAccess);
     }
+    //?} else {
+    /*@Override
+    public boolean doesItemMatch(ItemStack filterStack, ItemStack toCheck) {
+        return FTBFilterSystemAPI.api().doesFilterMatch(filterStack, toCheck);
+    }
+    *///?}
 
     /** Parses the filter once for repeated checks (inventory scans); an unreadable filter matches nothing. */
     @Override
+    //? if neoforge {
     public Matcher getMatcher(ItemStack filterStack, HolderLookup.Provider registryAccess) {
         try {
             SmartFilter filter = FTBFilterSystemAPI.api().parseFilter(filterStack, registryAccess);
+    //?} else {
+    /*public Matcher getMatcher(ItemStack filterStack) {
+        try {
+            SmartFilter filter = FTBFilterSystemAPI.api().parseFilter(filterStack);
+    *///?}
             return filter::test;
         } catch (FilterException e) {
             return NO_MATCH;

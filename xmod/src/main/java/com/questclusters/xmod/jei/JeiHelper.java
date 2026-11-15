@@ -9,7 +9,9 @@ import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.RecipeIngredientRole;
+//? if neoforge {
 import mezz.jei.api.runtime.IBookmarkManager;
+//?}
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.world.item.ItemStack;
 
@@ -30,26 +32,36 @@ public final class JeiHelper extends ViewerHelper {
         show(VanillaTypes.ITEM_STACK, stack);
     }
 
-    @Override
+    // FTB Quests 1.21.1 only (no @Override: 1.20.1 has no such hook)
     public void showRecipes(FluidStack fluid) {
+        //? if neoforge {
         show(NeoForgeTypes.FLUID_STACK, new net.neoforged.neoforge.fluids.FluidStack(
                 fluid.getFluid().builtInRegistryHolder(), (int) Math.min(Integer.MAX_VALUE, Math.max(1, fluid.getAmount())), fluid.getPatch()));
+        //?} else {
+        /*show(ForgeTypes.FLUID_STACK, new net.minecraftforge.fluids.FluidStack(
+                fluid.getFluid(), (int) Math.min(Integer.MAX_VALUE, Math.max(1, fluid.getAmount())), fluid.getTag()));
+        *///?}
     }
 
     private static <T> void show(IIngredientType<T> type, T ingredient) {
         IJeiRuntime r = QuestsJeiPlugin.runtime;
         if (r != null) {
+            //? if neoforge {
             r.getIngredientManager().createTypedIngredient(type, ingredient, false).ifPresent(typed -> r.getRecipesGui()
+            //?} else {
+            /*r.getIngredientManager().createTypedIngredient(type, ingredient).ifPresent(typed -> r.getRecipesGui()
+            *///?}
                     .show(r.getJeiHelpers().getFocusFactory().createFocus(RecipeIngredientRole.OUTPUT, typed)));
         }
     }
 
-    @Override
+    // FTB Quests 1.21.1 only (no @Override: 1.20.1 has no such hook)
     public Tristate toggleBookmark(ItemStack stack) {
         IJeiRuntime r = QuestsJeiPlugin.runtime;
         if (r == null || !bookmarks) {
             return Tristate.DEFAULT;
         }
+        //? if neoforge {
         return r.getIngredientManager().createTypedIngredient(VanillaTypes.ITEM_STACK, stack, true).map(typed -> {
             IBookmarkManager manager = r.getBookmarkManager();
             if (manager.contains(typed)) {
@@ -57,12 +69,19 @@ public final class JeiHelper extends ViewerHelper {
             }
             return manager.add(typed) ? Tristate.TRUE : Tristate.DEFAULT;
         }).orElse(Tristate.DEFAULT);
+        //?} else {
+        /*return Tristate.DEFAULT; // JEI 15 (1.20.1) has no bookmark API: FTB Quests' own handling stays
+        *///?}
     }
 
-    @Override
+    // FTB Quests 1.21.1 only (no @Override: 1.20.1 has no such hook)
     public boolean isBookmarkKey(Key key) {
         IJeiRuntime r = QuestsJeiPlugin.runtime;
+        //? if neoforge {
         return r != null && bookmarks && r.getKeyMappings().getBookmark().isActiveAndMatches(key.getInputMapping());
+        //?} else {
+        /*return false;
+        *///?}
     }
 
     @Override

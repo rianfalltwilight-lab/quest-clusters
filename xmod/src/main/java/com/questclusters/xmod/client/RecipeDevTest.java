@@ -41,7 +41,7 @@ final class RecipeDevTest {
             if (r != null) {
                 check(r.inputs().size() == 2 && r.inputs().get(1).isFluid() && r.inputs().get(1).fluidAmount() == 1000,
                         "inputs: item task + fluid task (1000 mB)");
-                check(r.inputs().getFirst().items().getFirst().getCount() == 3, "item task count shown");
+                check(r.inputs().get(0).items().get(0).getCount() == 3, "item task count shown");
                 check(r.outputs().size() == 2 && r.outputs().get(1).items().size() == 2, "outputs: item reward + reward table contents");
             }
             check(has(RecipeIndex.INSTANCE.questsUsing(new ItemStack(Items.IRON_INGOT)), RECIPE), "uses of iron ingot");
@@ -49,11 +49,11 @@ final class RecipeDevTest {
             check(has(RecipeIndex.INSTANCE.questsGiving(new ItemStack(Items.DIAMOND)), RECIPE), "recipes for diamond");
             check(RecipeIndex.INSTANCE.questsGiving(new ItemStack(Items.EMERALD)).isEmpty(), "hidden quest's reward has no recipe");
             List<CrateRecipe> crates = RecipeIndex.INSTANCE.crates();
-            check(crates.size() == 1 && crates.getFirst().drops().size() == 2, "one loot crate with two drops: " + crates.size());
+            check(crates.size() == 1 && crates.get(0).drops().size() == 2, "one loot crate with two drops: " + crates.size());
             if (!crates.isEmpty()) {
-                CrateRecipe c = crates.getFirst();
-                check(c.drops().getFirst().stack().is(Items.GOLDEN_APPLE) && c.chance(c.drops().getFirst()).equals("25%"),
-                        "drops sorted rarest first with chance: " + c.chance(c.drops().getFirst()));
+                CrateRecipe c = crates.get(0);
+                check(c.drops().get(0).stack().is(Items.GOLDEN_APPLE) && c.chance(c.drops().get(0)).equals("25%"),
+                        "drops sorted rarest first with chance: " + c.chance(c.drops().get(0)));
                 check(c.dropChances().size() == 2, "mob drop lines for passive and monster only: " + c.dropChances().size());
                 check(!RecipeIndex.INSTANCE.cratesGiving(new ItemStack(Items.APPLE)).isEmpty()
                         && RecipeIndex.INSTANCE.cratesOf(c.crateStack()).size() == 1, "crate lookups");

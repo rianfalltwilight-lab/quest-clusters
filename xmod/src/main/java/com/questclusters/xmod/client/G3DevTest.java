@@ -1,11 +1,21 @@
 package com.questclusters.xmod.client;
 
 import com.questclusters.client.DevSelfTest;
+//? if neoforge {
 import dev.ftb.mods.ftblibrary.integration.docsmod.DocsModRegistry;
+//?}
 import dev.ftb.mods.ftblibrary.integration.stages.StageHelper;
+//? if neoforge {
 import dev.ftb.mods.ftbquests.block.entity.BaseBarrierBlockEntity;
+//?} else {
+/*import dev.ftb.mods.ftbquests.block.entity.QuestBarrierBlockEntity;
+*///?}
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
+//? if neoforge {
 import dev.ftb.mods.ftbquests.registry.ModBlocks;
+//?} else {
+/*import dev.ftb.mods.ftbquests.block.FTBQuestsBlocks;
+*///?}
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
@@ -73,9 +83,14 @@ final class G3DevTest {
                 StageHelper.INSTANCE.getProvider().add(p, "qc_stage");
                 // queued right behind the refresh that add() schedules: if that refresh exists, the quest is done
                 // here, independent of FTB Quests' once-a-second stage check and of how fast this client runs
+                //? if neoforge {
                 server.execute(() -> completedFast = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE.getTeamData(p)
                         .map(d -> d.isCompleted(dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE.getQuest(STAGE_QUEST)))
                         .orElse(false));
+                //?} else {
+                /*server.execute(() -> completedFast = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE.getOrCreateTeamData(p)
+                        .isCompleted(dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE.getQuest(STAGE_QUEST)));
+                *///?}
             });
             return 30;
         });
@@ -89,6 +104,8 @@ final class G3DevTest {
             server.execute(() -> StageHelper.INSTANCE.getProvider().remove(server.getPlayerList().getPlayer(uuid), "qc_stage"));
             return 1;
         });
+        // "show docs" targets exist on 1.21.1 only (FTB Library's docs registry)
+        //? if neoforge {
         steps.add(() -> {
             for (String mod : new String[]{"guideme", "patchouli"}) {
                 if (ModList.get().isLoaded(mod)) {
@@ -99,6 +116,7 @@ final class G3DevTest {
             }
             return 1;
         });
+        //?}
         if (ModList.get().isLoaded("jade")) {
             steps.add(() -> {
                 // a stone-skinned quest barrier right in front of the player (edit mode is off in the devtest)
@@ -111,16 +129,25 @@ final class G3DevTest {
                 BlockPos pos = barrierPos;
                 server.execute(() -> {
                     var level = server.overworld();
+                    //? if neoforge {
                     level.setBlockAndUpdate(pos, ModBlocks.BARRIER.get().defaultBlockState());
                     if (level.getBlockEntity(pos) instanceof BaseBarrierBlockEntity b) {
                         b.setSkin(new ItemStack(Items.MOSSY_COBBLESTONE));
                     }
+                    //?} else {
+                    /*level.setBlockAndUpdate(pos, FTBQuestsBlocks.BARRIER.get().defaultBlockState());
+                    *///?}
                 });
                 return 40;
             });
             steps.add(() -> {
+                //? if neoforge {
                 check(Minecraft.getInstance().level.getBlockEntity(barrierPos) instanceof BaseBarrierBlockEntity b
                         && !b.getSkin().isEmpty(), "skinned barrier placed for the Jade check");
+                //?} else {
+                /*check(Minecraft.getInstance().level.getBlockEntity(barrierPos) instanceof QuestBarrierBlockEntity,
+                        "barrier placed for the Jade check");
+                *///?}
                 wasEditing = ClientQuestFile.canClientPlayerEdit();
                 editingMode(true);
                 return 30;

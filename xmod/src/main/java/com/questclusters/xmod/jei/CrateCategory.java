@@ -2,7 +2,6 @@ package com.questclusters.xmod.jei;
 
 import com.questclusters.xmod.recipe.CrateRecipe;
 import com.questclusters.xmod.recipe.RecipeIndex;
-import dev.ftb.mods.ftbquests.registry.ModItems;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -40,7 +39,7 @@ final class CrateCategory implements IRecipeCategory<CrateRecipe> {
         @Override
         public void draw(GuiGraphics graphics, int x, int y) {
             List<ItemStack> crates = RecipeIndex.INSTANCE.crateStacks();
-            ItemStack stack = crates.isEmpty() ? new ItemStack(ModItems.LOOTCRATE.get())
+            ItemStack stack = crates.isEmpty() ? new ItemStack(com.questclusters.xmod.recipe.FtbqItems.lootCrate())
                     : crates.get((int) (System.currentTimeMillis() / 1000L % crates.size()));
             graphics.renderItem(stack, x, y);
         }

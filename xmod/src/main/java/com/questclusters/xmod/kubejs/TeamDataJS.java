@@ -40,7 +40,11 @@ public abstract class TeamDataJS {
     public void changeProgress(Object id, Consumer<ProgressChange> consumer) {
         QuestObjectBase o = object(id);
         if (o == null) return;
+        //? if neoforge {
         ProgressChange change = new ProgressChange(o, new UUID(0L, 0L));
+        //?} else {
+        /*ProgressChange change = new ProgressChange(o.getQuestFile(), o, new UUID(0L, 0L));
+        *///?}
         consumer.accept(change);
         o.forceProgress(getData(), change);
     }
@@ -82,7 +86,12 @@ public abstract class TeamDataJS {
     }
 
     public EntityArrayList getOnlineMembers() {
+        //? if neoforge {
         return new EntityArrayList(getData().getOnlineMembers());
+        //?} else {
+        /*var players = getData().getOnlineMembers();
+        return new EntityArrayList(players.isEmpty() ? null : players.iterator().next().level(), players);
+        *///?}
     }
 
     /** Wraps a team's data directly. */

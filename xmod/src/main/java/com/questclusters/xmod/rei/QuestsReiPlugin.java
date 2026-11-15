@@ -3,8 +3,6 @@ package com.questclusters.xmod.rei;
 import com.questclusters.xmod.recipe.QuestRecipe;
 import com.questclusters.xmod.recipe.RecipeIndex;
 import dev.architectury.fluid.FluidStack;
-import dev.ftb.mods.ftbquests.registry.ModDataComponents;
-import dev.ftb.mods.ftbquests.registry.ModItems;
 import me.shedaniel.rei.api.client.entry.filtering.base.BasicFilteringRule;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
@@ -34,8 +32,8 @@ public final class QuestsReiPlugin implements REIClientPlugin {
     @Override
     public void registerCategories(CategoryRegistry registry) {
         registry.add(new ReiCategories.Quest(), new ReiCategories.Crate());
-        registry.addWorkstations(ReiDisplays.QUEST, EntryStacks.of(ModItems.BOOK.get()));
-        registry.addWorkstations(ReiDisplays.LOOT_CRATE, EntryStacks.of(ModItems.LOOTCRATE.get()));
+        registry.addWorkstations(ReiDisplays.QUEST, EntryStacks.of(com.questclusters.xmod.recipe.FtbqItems.book()));
+        registry.addWorkstations(ReiDisplays.LOOT_CRATE, EntryStacks.of(com.questclusters.xmod.recipe.FtbqItems.lootCrate()));
     }
 
     @Override
@@ -65,7 +63,7 @@ public final class QuestsReiPlugin implements REIClientPlugin {
     /** Swaps the crate entries in REI's list for {@code wanted} (FTB Quests calls this when the book's crates change). */
     static void syncCrates(Collection<ItemStack> wanted) {
         EntryRegistry entries = EntryRegistry.getInstance();
-        entries.removeEntryIf(e -> e.getType() == VanillaEntryTypes.ITEM && ((ItemStack) e.castValue()).has(ModDataComponents.LOOT_CRATE.get()));
+        entries.removeEntryIf(e -> e.getType() == VanillaEntryTypes.ITEM && com.questclusters.xmod.recipe.FtbqItems.crateId(((ItemStack) e.castValue())) != null);
         entries.addEntries(wanted.stream().<EntryStack<?>>map(EntryStacks::of).toList());
         if (cratesShown != null) {
             cratesShown.markDirty();

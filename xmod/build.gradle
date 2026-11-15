@@ -15,3 +15,23 @@ dependencies {
     modCompileOnly("vazkii.patchouli:Patchouli:${project.patchouli_version}:api")
     modCompileOnly("dev.latvian.mods:${project.rhino_artifact}:${project.rhino_version}")
 }
+
+// 1.20.1: KubeJS 6 (script events are EventJS subclasses), JEI 15, fluid data as NBT
+stonecutter {
+    if (legacy) {
+        replacements.string(true) {
+            replace('dev.latvian.mods.kubejs.event.KubeEvent', 'dev.latvian.mods.kubejs.event.EventJS')
+            replace('implements KubeEvent', 'extends EventJS')
+            replace('dev.latvian.mods.kubejs.stages.StageEvents', 'dev.latvian.mods.kubejs.stages.Stages')
+            replace('StageEvents.get(', 'Stages.get(')
+            // fluid data: 1.21 data components, 1.20.1 NBT
+            replace('net.minecraft.core.component.DataComponentPatch', 'net.minecraft.nbt.CompoundTag')
+            replace('DataComponentPatch fluidComponents', 'CompoundTag fluidComponents')
+            replace('DataComponentPatch.EMPTY', '(CompoundTag) null')
+            replace('getFluidDataComponentPatch()', 'getFluidNBT()')
+            // JEI 15
+            replace('mezz.jei.api.neoforge.NeoForgeTypes', 'mezz.jei.api.forge.ForgeTypes')
+            replace('NeoForgeTypes.FLUID_STACK', 'ForgeTypes.FLUID_STACK')
+        }
+    }
+}

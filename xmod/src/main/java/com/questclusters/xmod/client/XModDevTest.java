@@ -43,12 +43,20 @@ final class XModDevTest {
                         long ffs = ItemMatchingSystem.INSTANCE.adapters().stream().filter(a -> a.getName().equals("FTB Filter System")).count();
                         check(ffs == 1, "one FTB Filter System adapter for item tasks" + (xmod ? " (XMod's is switched off)" : "") + ": " + ffs);
                         var reg = Minecraft.getInstance().level.registryAccess();
+                        //? if neoforge {
                         ItemStack filter = new ItemStack(dev.ftb.mods.ftbfiltersystem.api.FTBFilterSystemAPI.api().filterItem());
                         dev.ftb.mods.ftbfiltersystem.registry.item.SmartFilterItem.setFilter(filter, "smart_filter_extras:items(minecraft:stone,minecraft:dirt)");
                         var none = ItemMatchingSystem.ComponentMatchType.NONE;
                         check(ItemMatchingSystem.INSTANCE.doesItemMatch(filter, new ItemStack(Items.DIRT), none, reg)
                                 && !ItemMatchingSystem.INSTANCE.doesItemMatch(filter, new ItemStack(Items.COBBLESTONE), none, reg),
                                 "item tasks match through a smart filter");
+                        //?} else {
+                        /*ItemStack filter = new ItemStack(dev.ftb.mods.ftbfiltersystem.registry.ModItems.SMART_FILTER.get());
+                        dev.ftb.mods.ftbfiltersystem.registry.item.SmartFilterItem.setFilter(filter, "smart_filter_extras:items(minecraft:stone,minecraft:dirt)");
+                        check(ItemMatchingSystem.INSTANCE.doesItemMatch(filter, new ItemStack(Items.DIRT), false, false)
+                                && !ItemMatchingSystem.INSTANCE.doesItemMatch(filter, new ItemStack(Items.COBBLESTONE), false, false),
+                                "item tasks match through a smart filter");
+                        *///?}
                     }
                     if (ModList.get().isLoaded("kubejs")) {
                         var server = Minecraft.getInstance().getSingleplayerServer();

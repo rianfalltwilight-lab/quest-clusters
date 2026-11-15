@@ -3,7 +3,6 @@ package com.questclusters.xmod.jei;
 import com.questclusters.client.DevSelfTest;
 import com.questclusters.xmod.recipe.RecipeIndex;
 import dev.ftb.mods.ftbquests.FTBQuests;
-import dev.ftb.mods.ftbquests.registry.ModDataComponents;
 import mezz.jei.api.constants.VanillaTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
@@ -37,7 +36,7 @@ public final class JeiDevTest {
                             .get().count();
                     check(forDiamond == 1, "recipe lookup for diamond: " + forDiamond);
                     long crates = r.getIngredientManager().getAllIngredients(VanillaTypes.ITEM_STACK).stream()
-                            .filter(s -> "qc_test_crate".equals(s.get(ModDataComponents.LOOT_CRATE.get()))).count();
+                            .filter(s -> "qc_test_crate".equals(com.questclusters.xmod.recipe.FtbqItems.crateId(s))).count();
                     check(crates == 1, "the book's crate is one JEI entry: " + crates);
                     long categories = r.getRecipeManager().createRecipeCategoryLookup().includeHidden().get()
                             .filter(c -> c.getRecipeType().getUid().getNamespace().equals("ftbquests")).count();

@@ -4,7 +4,6 @@ import com.questclusters.platform.Rl;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.questclusters.xmod.recipe.QuestRecipe;
 import dev.ftb.mods.ftbquests.client.ClientQuestFile;
-import dev.ftb.mods.ftbquests.registry.ModItems;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
@@ -43,7 +42,7 @@ final class QuestCategory implements IRecipeCategory<QuestRecipe> {
 
     QuestCategory(IGuiHelper gui) {
         background = gui.createDrawable(BACKGROUND, 0, 0, WIDTH, HEIGHT);
-        icon = gui.createDrawableItemStack(new ItemStack(ModItems.BOOK.get()));
+        icon = gui.createDrawableItemStack(new ItemStack(com.questclusters.xmod.recipe.FtbqItems.book()));
     }
 
     @Override

@@ -16,7 +16,7 @@ import dev.ftb.mods.ftbquests.quest.reward.RewardAutoClaim;
 import dev.ftb.mods.ftbquests.quest.task.FluidTask;
 import dev.ftb.mods.ftbquests.quest.task.ItemTask;
 import dev.ftb.mods.ftbquests.quest.task.Task;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -161,7 +161,11 @@ public final class RecipeIndex {
         }
         // any other task: its icon, expanded through FTB Quests' item filters when the icon is a filter item
         if (task.getIcon().getIngredient() instanceof ItemStack stack && !stack.isEmpty()) {
+            //? if neoforge {
             List<ItemStack> all = ItemMatchingSystem.INSTANCE.getAllMatchingStacks(stack, file.holderLookup());
+            //?} else {
+            /*List<ItemStack> all = ItemMatchingSystem.INSTANCE.getAllMatchingStacks(stack);
+            *///?}
             List<ItemStack> shown = all.isEmpty() ? List.of(stack.copy()) : all;
             return QuestRecipe.Slot.ofItems(shown, s -> containsSame(shown, s));
         }
@@ -195,7 +199,7 @@ public final class RecipeIndex {
         Object ingredient = reward.getIcon().getIngredient();
         if (ingredient instanceof ItemStack s && !s.isEmpty()) {
             ItemStack shown = s.copy();
-            shown.set(DataComponents.CUSTOM_NAME, reward.getTitle());
+            com.questclusters.xmod.recipe.FtbqItems.named(shown, reward.getTitle());
             return QuestRecipe.Slot.ofItems(List.of(shown), x -> false);
         }
         if (reward.getIcon() instanceof ItemIcon) {
@@ -221,7 +225,7 @@ public final class RecipeIndex {
                 tests.add(slot.accepts());
             }
         }
-        out.add(new QuestRecipe.Slot(List.copyOf(items), null, 0, net.minecraft.core.component.DataComponentPatch.EMPTY, s -> tests.stream().anyMatch(t -> t.test(s)), rest.size() - 1));
+        out.add(new QuestRecipe.Slot(List.copyOf(items), null, 0, DataComponentPatch.EMPTY, s -> tests.stream().anyMatch(t -> t.test(s)), rest.size() - 1));
         return out;
     }
 
@@ -236,7 +240,7 @@ public final class RecipeIndex {
 
     private static ItemStack named(Icon icon, Component title) {
         ItemStack stack = icon instanceof ItemIcon itemIcon ? itemIcon.getStack().copyWithCount(1) : new ItemStack(Items.PAINTING);
-        stack.set(DataComponents.CUSTOM_NAME, title);
+        com.questclusters.xmod.recipe.FtbqItems.named(stack, title);
         return stack;
     }
 

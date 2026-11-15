@@ -27,7 +27,7 @@ public final class ReiHelper extends ViewerHelper {
         show(EntryStacks.of(stack));
     }
 
-    @Override
+    // FTB Quests 1.21.1 only (no @Override: 1.20.1 has no such hook)
     public void showRecipes(FluidStack fluid) {
         show(EntryStacks.of(fluid));
     }
@@ -36,7 +36,7 @@ public final class ReiHelper extends ViewerHelper {
         ViewSearchBuilder.builder().addRecipesFor(entry).open();
     }
 
-    @Override
+    // FTB Quests 1.21.1 only (no @Override: 1.20.1 has no such hook)
     public Tristate toggleBookmark(ItemStack stack) {
         ConfigObject config = ConfigObject.getInstance();
         if (!config.isFavoritesEnabled()) {
@@ -52,7 +52,7 @@ public final class ReiHelper extends ViewerHelper {
         return removed ? Tristate.FALSE : Tristate.TRUE;
     }
 
-    @Override
+    // FTB Quests 1.21.1 only (no @Override: 1.20.1 has no such hook)
     public boolean isBookmarkKey(Key key) {
         ConfigObject config = ConfigObject.getInstance();
         return config.isFavoritesEnabled() && config.getFavoriteKeyCode().matchesKey(key.keyCode, key.scanCode);

@@ -6,13 +6,13 @@ import com.questclusters.xmod.recipe.CrateRecipe;
 import com.questclusters.xmod.recipe.QuestRecipe;
 import com.questclusters.xmod.recipe.RecipeIndex;
 import dev.ftb.mods.ftbquests.quest.loot.LootCrate;
-import dev.ftb.mods.ftbquests.registry.ModDataComponents;
-import dev.ftb.mods.ftbquests.registry.ModItems;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.ITypedIngredient;
+//? if neoforge {
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
+//?}
 import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.advanced.ISimpleRecipeManagerPlugin;
@@ -48,19 +48,26 @@ public final class QuestsJeiPlugin implements IModPlugin {
     @Override
     public void registerItemSubtypes(ISubtypeRegistration registration) {
         // every crate is its own JEI entry, told apart by its crate id
-        registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, ModItems.LOOTCRATE.get(), new ISubtypeInterpreter<>() {
+        //? if neoforge {
+        registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, com.questclusters.xmod.recipe.FtbqItems.lootCrate(), new ISubtypeInterpreter<>() {
             @Override
             public @Nullable Object getSubtypeData(ItemStack stack, UidContext context) {
-                return stack.get(ModDataComponents.LOOT_CRATE.get());
+                return com.questclusters.xmod.recipe.FtbqItems.crateId(stack);
             }
 
             @Override
             @SuppressWarnings("deprecation")
             public String getLegacyStringSubtypeInfo(ItemStack stack, UidContext context) {
-                String id = stack.get(ModDataComponents.LOOT_CRATE.get());
+                String id = com.questclusters.xmod.recipe.FtbqItems.crateId(stack);
                 return id == null ? "" : id;
             }
         });
+        //?} else {
+        /*registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, com.questclusters.xmod.recipe.FtbqItems.lootCrate(), (stack, context) -> {
+            String id = com.questclusters.xmod.recipe.FtbqItems.crateId(stack);
+            return id == null ? "" : id;
+        });
+        *///?}
     }
 
     @Override
@@ -70,8 +77,8 @@ public final class QuestsJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        registration.addRecipeCatalysts(JeiTypes.QUEST, ModItems.BOOK.get());
-        registration.addRecipeCatalysts(JeiTypes.LOOT_CRATE, ModItems.LOOTCRATE.get());
+        registration.addRecipeCatalysts(JeiTypes.QUEST, com.questclusters.xmod.recipe.FtbqItems.book());
+        registration.addRecipeCatalysts(JeiTypes.LOOT_CRATE, com.questclusters.xmod.recipe.FtbqItems.lootCrate());
     }
 
     @Override
@@ -84,7 +91,11 @@ public final class QuestsJeiPlugin implements IModPlugin {
     public void onRuntimeAvailable(IJeiRuntime r) {
         runtime = r;
         // JEI may (re)start after the book arrived: make sure the book's crates are listed
+        //? if neoforge {
         Minecraft.getInstance().execute(() -> syncCrates(LootCrate.allCrateStacks(true)));
+        //?} else {
+        /*Minecraft.getInstance().execute(() -> syncCrates(LootCrate.allCrateStacks()));
+        *///?}
     }
 
     @Override
@@ -100,7 +111,7 @@ public final class QuestsJeiPlugin implements IModPlugin {
         }
         IIngredientManager manager = r.getIngredientManager();
         List<ItemStack> present = manager.getAllIngredients(VanillaTypes.ITEM_STACK).stream()
-                .filter(s -> s.has(ModDataComponents.LOOT_CRATE.get())).toList();
+                .filter(s -> com.questclusters.xmod.recipe.FtbqItems.crateId(s) != null).toList();
         List<ItemStack> remove = new ArrayList<>();
         for (ItemStack s : present) {
             if (wanted.stream().noneMatch(w -> ItemStack.isSameItemSameComponents(w, s))) {
