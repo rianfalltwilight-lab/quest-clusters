@@ -1,0 +1,36 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/rianfalltwilight-lab/quest-clusters/issues"
+
+[[mods]]
+modId = "${module_id}"
+version = "${mod_version}"
+displayName = "${module_name}"
+displayTest = "${display_test}"
+authors = "${mod_authors}"
+description = '''
+${module_description}
+'''
+
+[[dependencies.${module_id}]]
+modId = "forge"
+mandatory = true
+versionRange = "${loader_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${module_id}]]
+modId = "minecraft"
+mandatory = true
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${module_id}]]
+modId = "ftbquests"
+mandatory = true
+versionRange = "${ftb_quests_version_range}"
+ordering = "AFTER"
+side = "BOTH"
+${extra_dependencies}

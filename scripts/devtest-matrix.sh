@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Runs the in-game self-test (:core:runClientDevtest) once per mod combination and prints a summary.
+# Runs the in-game self-test (:core:<mc>:runClientDevtest) once per mod combination and prints a summary.
+# MC=1.20.1 tests the Forge 1.20.1 build (default: 1.21.1, NeoForge).
 #
 #   scripts/devtest-matrix.sh              all profiles
 #   scripts/devtest-matrix.sh default rei  only these
 #   scripts/devtest-matrix.sh --list       show the profiles
 #
-# Logs:    build/devtest-matrix/<profile>.log
-# Summary: build/devtest-matrix/summary.md (also printed)
+# Logs:    build/devtest-matrix/<mc>/<profile>.log
+# Summary: build/devtest-matrix/<mc>/summary.md (also printed)
 # Exit:    0 only if every profile reached "ALL CHECKS PASSED". Gradle itself exits 0 even when checks fail,
 #          so the result is read from the log; a run without the final line (crash, timeout) counts as failed.
 #
@@ -52,7 +53,8 @@ for p in "${selected[@]}"; do
   flags "$p" > /dev/null || { echo "unknown profile: $p (see --list)" >&2; exit 2; }
 done
 
-out=build/devtest-matrix
+mc="${MC:-1.21.1}"
+out=build/devtest-matrix/$mc
 mkdir -p "$out"
 limit="${DEVTEST_TIMEOUT:-900}"
 timeout_cmd=""
@@ -60,18 +62,18 @@ if command -v timeout > /dev/null; then timeout_cmd="timeout $limit"; elif comma
 
 summary="$out/summary.md"
 {
-  echo "| Profile | Result | Passed | Failed | Time | Flags |"
-  echo "|---|---|---|---|---|---|"
+  echo "| Minecraft | Profile | Result | Passed | Failed | Time | Flags |"
+  echo "|---|---|---|---|---|---|---|"
 } > "$summary"
 failed_any=0
 
 for p in "${selected[@]}"; do
   f="$(flags "$p")"
   log="$out/$p.log"
-  echo "==> $p ${f:-(no flags)}"
+  echo "==> $mc $p ${f:-(no flags)}"
   start=$(date +%s)
   # shellcheck disable=SC2086
-  $timeout_cmd ./gradlew :core:runClientDevtest --console=plain $f ${GRADLE_ARGS:-} > "$log" 2>&1
+  $timeout_cmd ./gradlew ":core:$mc:runClientDevtest" --console=plain $f ${GRADLE_ARGS:-} > "$log" 2>&1
   code=$?
   secs=$(( $(date +%s) - start ))
   passed=$(grep -c '\[devtest\] PASS ' "$log")
@@ -86,7 +88,7 @@ for p in "${selected[@]}"; do
     result="ERROR (exit $code, no final line)"
   fi
   [ "$result" = "ok" ] || failed_any=1
-  echo "| $p | $result | $passed | $failed | $((secs / 60))m$((secs % 60))s | \`${f:-}\` |" >> "$summary"
+  echo "| $mc | $p | $result | $passed | $failed | $((secs / 60))m$((secs % 60))s | \`${f:-}\` |" >> "$summary"
   echo "    $result: $passed passed, $failed failed (${secs}s), log: $log"
   grep '\[devtest\] FAIL \|\[devtest\] crashed' "$log" | sed 's/^.*\[devtest\] /    /' | head -20
 done

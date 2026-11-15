@@ -3,13 +3,13 @@ apply from: rootProject.file('gradle/module.gradle')
 // Dev runs load core plus every module marked publish=true. Add others with -PdevModules=filters,xmod
 // (e.g. to see their incompatibility rules refuse to start next to Certain Questing Additions / Quest Enhance).
 def extraModules = ['visuals', 'editor', 'filters', 'xmod']
-extraModules.each { evaluationDependsOn(":$it") }
+extraModules.each { evaluationDependsOn(":$it:$mc") }
 def requested = (findProperty('devModules') ?: '').toString().split(',').collect { it.trim() }.findAll { it }
 // -PskipModules=editor leaves a published module out (e.g. to test next to Quest Enhance, which it replaces)
 def skipped = (findProperty('skipModules') ?: '').toString().split(',').collect { it.trim() }.findAll { it }
 def devModules = extraModules.findAll { (project(":$it").findProperty('publish') == 'true' || requested.contains(it)) && !skipped.contains(it) }
 
-neoForge {
+configure(mdg) {
     runs {
         client {
             client()
@@ -32,6 +32,8 @@ neoForge {
         }
         configureEach {
             logLevel = org.slf4j.event.Level.INFO
+            // one game folder per Minecraft version: core/run (1.21.1), core/run-1.20.1
+            gameDirectory = new File(moduleDir, legacy ? "run-$mc" : 'run')
         }
     }
 
@@ -40,7 +42,7 @@ neoForge {
             sourceSet sourceSets.main
         }
         devModules.each { m ->
-            def p = project(":$m")
+            def p = sibling(m)
             "${p.module_id}" {
                 sourceSet p.sourceSets.main
             }
@@ -49,43 +51,45 @@ neoForge {
 }
 
 dependencies {
-    compileOnly("dev.latvian.mods:kubejs-neoforge:${rootProject.kubejs_version}") { transitive = false }
-    compileOnly("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
+    modCompileOnly("dev.latvian.mods:${ld('kubejs')}:${project.kubejs_version}")
+    modCompileOnly("dev.latvian.mods:${project.rhino_artifact}:${project.rhino_version}")
 
-    localRuntime("dev.architectury:architectury-neoforge:${rootProject.architectury_version}") { transitive = false }
-    localRuntime("dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}") { transitive = false }
-    localRuntime("dev.ftb.mods:ftb-teams-neoforge:${rootProject.ftb_teams_version}") { transitive = false }
-    localRuntime("dev.ftb.mods:ftb-quests-neoforge:${rootProject.ftb_quests_version}") { transitive = false }
+    modRuntime("dev.architectury:${ld('architectury')}:${project.architectury_version}")
+    modRuntime("dev.ftb.mods:${ld('ftb-library')}:${project.ftb_library_version}")
+    modRuntime("dev.ftb.mods:${ld('ftb-teams')}:${project.ftb_teams_version}")
+    modRuntime("dev.ftb.mods:${ld('ftb-quests')}:${project.ftb_quests_version}")
     if (devModules.contains('filters') && !project.hasProperty('noFfs')) {
-        localRuntime("dev.ftb.mods:ftb-filter-system-neoforge:${rootProject.ftb_filter_system_version}") { transitive = false }
+        modRuntime("dev.ftb.mods:${ld('ftb-filter-system')}:${project.ftb_filter_system_version}")
     }
     if (project.hasProperty('withXmod')) { // FTB XMod Compat, to test the take-over of its FTB Quests part
-        localRuntime("dev.ftb.mods:ftb-xmod-compat-neoforge:${rootProject.ftb_xmod_compat_version}") { transitive = false }
+        modRuntime("dev.ftb.mods:${ld('ftb-xmod-compat')}:${project.ftb_xmod_compat_version}")
     }
     if (project.hasProperty('withKubejs')) {
-        localRuntime("dev.latvian.mods:kubejs-neoforge:${rootProject.kubejs_version}") { transitive = false }
-        localRuntime("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
+        modRuntime("dev.latvian.mods:${ld('kubejs')}:${project.kubejs_version}")
+        modRuntime("dev.latvian.mods:${project.rhino_artifact}:${project.rhino_version}")
     }
     if (project.hasProperty('withJade')) {
-        localRuntime("maven.modrinth:jade:${rootProject.jade_version}") { transitive = false }
+        modRuntime("maven.modrinth:jade:${project.jade_version}")
     }
-    if (project.hasProperty('withDocs')) { // GuideME and Patchouli, for the "show docs" targets
-        localRuntime("maven.modrinth:guideme:${rootProject.guideme_version}") { transitive = false }
-        localRuntime("maven.modrinth:patchouli:1.21.1-93-neoforge") { transitive = false }
+    if (project.hasProperty('withDocs')) { // GuideME (1.21.1 only) and Patchouli, for the "show docs" targets
+        if (project.guideme_version) modRuntime("maven.modrinth:guideme:${project.guideme_version}")
+        modRuntime(project.patchouli_runtime)
     }
     if (project.hasProperty('withRei')) { // REI instead of JEI (xmod's REI plugin)
-        localRuntime("me.shedaniel:RoughlyEnoughItems-neoforge:${rootProject.rei_version}") { transitive = false }
-        localRuntime("me.shedaniel.cloth:cloth-config-neoforge:15.0.140") { transitive = false }
+        modRuntime("me.shedaniel:${ld('RoughlyEnoughItems')}:${project.rei_version}")
+        modRuntime("me.shedaniel.cloth:${ld('cloth-config')}:${project.cloth_config_version}")
     }
     if (project.hasProperty('withJei')) {
-        localRuntime("mezz.jei:jei-1.21.1-neoforge:${rootProject.jei_version}") { transitive = false }
+        modRuntime("mezz.jei:jei-${mc}-${project.loader}:${project.jei_version}")
     }
 }
 
+def runDir = { String path -> new File(moduleDir, (legacy ? "run-$mc/" : 'run/') + path) }
+
 // resets the devtest quest book (and migration state) before every scripted UI run, so results are repeatable
 def prepareDevtest = tasks.register('prepareDevtest', Sync) {
-    from 'devtest/quests'
-    into 'run/config/ftbquests/quests'
+    from new File(moduleDir, 'devtest/quests')
+    into runDir('config/ftbquests/quests')
     // the game writes into this folder during the run; Gradle would otherwise think it is still up to date
     outputs.upToDateWhen { false }
 }
@@ -94,31 +98,31 @@ def prepareVisualsDevtest = tasks.register('prepareVisualsDevtest') {
     doLast {
         // fresh run folder (new checkout, CI): without options.txt Minecraft first shows its accessibility
         // onboarding screen and only then runs quick play, which a headless run never gets past
-        def options = file('run/options.txt')
+        def options = runDir('options.txt')
         if (!options.exists()) {
             options.parentFile.mkdirs()
             // ...and no movement tutorial toast over the screenshots
             options.text = 'onboardAccessibility:false\ntutorialStep:none\n'
         }
-        delete 'run/local/quest_clusters_visuals'
-        file('run/local/certain_questing_additions').mkdirs()
-        file('run/local/certain_questing_additions/client-config.snbt').text = '{\n\tanimations: { quest_hover: true }\n\tappearance: { quest_hover_glow_alpha: 77 }\n}\n'
+        delete runDir('local/quest_clusters_visuals')
+        runDir('local/certain_questing_additions').mkdirs()
+        runDir('local/certain_questing_additions/client-config.snbt').text = '{\n\tanimations: { quest_hover: true }\n\tappearance: { quest_hover_glow_alpha: 77 }\n}\n'
     }
 }
 // -PtourBook=/path/to/config/ftbquests/quests: load that quest book for runClientTour (a local copy; the next
 // runClientDevtest restores the fixture)
 def prepareTour = tasks.register('prepareTour', Sync) {
     onlyIf { project.hasProperty('tourBook') }
-    from { project.findProperty('tourBook') ?: 'devtest/quests' }
-    into 'run/config/ftbquests/quests'
+    from { project.findProperty('tourBook') ?: new File(moduleDir, 'devtest/quests') }
+    into runDir('config/ftbquests/quests')
     outputs.upToDateWhen { false }
 }
 tasks.matching { it.name == 'runClientTour' }.configureEach { dependsOn prepareTour }
 // -PwithKubejs: the dev self-test's KubeJS script
 def prepareKubejsDevtest = tasks.register('prepareKubejsDevtest', Sync) {
     onlyIf { project.hasProperty('withKubejs') }
-    from 'devtest/kubejs/server_scripts'
-    into 'run/kubejs/server_scripts'
+    from new File(moduleDir, 'devtest/kubejs/server_scripts')
+    into runDir('kubejs/server_scripts')
     outputs.upToDateWhen { false }
 }
 tasks.matching { it.name == 'runClientDevtest' }.configureEach { dependsOn prepareKubejsDevtest }

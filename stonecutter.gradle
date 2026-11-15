@@ -1,0 +1,9 @@
+plugins {
+    id 'dev.kikugie.stonecutter'
+    // 1.21.1: NeoForge; 1.20.1: MinecraftForge (the legacy plugin of the same release)
+    id 'net.neoforged.moddev' version '2.0.148' apply false
+    id 'net.neoforged.moddev.legacyforge' version '2.0.148' apply false
+}
+
+// the version the sources in src/ are written for (and the one the IDE sees)
+stonecutter.active '1.21.1'

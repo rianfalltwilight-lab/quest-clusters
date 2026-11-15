@@ -2,12 +2,30 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         maven { url = 'https://maven.neoforged.net/releases' }
+        maven { url = 'https://maven.kikugie.dev/releases' }
     }
+}
+
+plugins {
+    // one source tree for every Minecraft version: //? if >=1.21 { ... } comments pick the code per version
+    id 'dev.kikugie.stonecutter' version '0.9.8'
+    // 1.20.1 compiles and runs with Java 17: download it when it is not installed
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
 rootProject.name = 'quest-clusters'
 
 // core: the quest_clusters mod (clusters, scoring, search, migration framework)
-// visuals / editor / filters / xmod: modules for phases D-G, published once they are implemented
+// visuals / editor / filters / xmod: optional modules
 // bundle: one jar that nests every published module (jar-in-jar)
-include 'core', 'visuals', 'editor', 'filters', 'xmod', 'bundle'
+// Each module is built once per Minecraft version, as :<module>:<version> (e.g. :core:1.20.1), from <module>/src.
+stonecutter {
+    kotlinController = false
+    centralScript = 'build.gradle'
+    create(rootProject) {
+        versions('1.21.1', '1.20.1')
+        // sources in git are always in the 1.21.1 state; switch with ./gradlew "Set active project to 1.20.1"
+        vcsVersion = '1.21.1'
+        ['core', 'visuals', 'editor', 'filters', 'xmod', 'bundle'].each { branch(it) }
+    }
+}

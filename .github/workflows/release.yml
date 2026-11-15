@@ -17,7 +17,9 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: |
+            17
+            21
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -28,11 +30,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # each released module on its own, plus the bundle (every released module in one jar)
+          # each released module on its own, plus the bundle (every released module in one jar), for every
+          # Minecraft version (versions/<mc>/build/libs holds the jar to ship; 1.20.1's is the reobfuscated one)
           files=""
           for m in */gradle.properties; do
             d=$(dirname "$m")
-            if grep -q '^publish=true' "$m"; then files="$files $(ls $d/build/libs/*.jar)"; fi
+            if grep -q '^publish=true' "$m"; then files="$files $(ls $d/versions/*/build/libs/*.jar)"; fi
           done
           gh release create "$GITHUB_REF_NAME" $files \
             --title "Quest Clusters $GITHUB_REF_NAME" \

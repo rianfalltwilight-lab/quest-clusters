@@ -1,11 +1,11 @@
 apply from: rootProject.file('gradle/module.gradle')
 
-// nest every module that is marked publish=true (except this one)
-def nested = rootProject.subprojects.findAll { it != project && it.findProperty('publish') == 'true' }
-nested.each { evaluationDependsOn(it.path) }
+// nest every module that is marked publish=true (except this one), built for the same Minecraft version
+def nested = ['core', 'visuals', 'editor', 'filters', 'xmod'].findAll { project(":$it").findProperty('publish') == 'true' }
+nested.each { evaluationDependsOn(":$it:$mc") }
 
 dependencies {
-    nested.each { jarJar(project(it.path)) }
+    nested.each { jarJar(sibling(it)) }
 }
 
 tasks.named('jar') {

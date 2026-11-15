@@ -1,9 +1,2 @@
-plugins {
-    id 'net.neoforged.moddev' version '2.0.148' apply false
-}
-
-// Shared settings for every module; module-specific values live in <module>/gradle.properties.
-subprojects {
-    group = rootProject.mod_group_id
-    version = "${rootProject.minecraft_version}-${rootProject.mod_version}"
-}
+// Central script of the root's per-version nodes (:1.21.1, :1.20.1). They hold no code; the modules use
+// gradle/module.gradle. Version-specific settings are in versions/<minecraft version>/gradle.properties.

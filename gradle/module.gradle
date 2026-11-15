@@ -1,13 +1,41 @@
-// Applied by every mod module: NeoForge setup, FTB dependencies, metadata generation.
+// Applied by every mod module, once per Minecraft version (project :<module>:<version>, folder
+// <module>/versions/<version>; sources are shared in <module>/src). 1.21.1 builds with NeoForge, 1.20.1 with
+// MinecraftForge (ModDevGradle's legacy plugin: SRG reobfuscation, Mixin refmaps, MixinExtras nested).
 apply plugin: 'java-library'
 apply plugin: 'idea'
-apply plugin: 'net.neoforged.moddev'
+
+def mc = stonecutter.current.version
+def legacy = mc == '1.20.1'
+
+// versions/<mc>/gradle.properties: loader, Minecraft and dependency versions (-P on the command line still wins)
+def versionProps = new Properties()
+rootProject.file("versions/$mc/gradle.properties").withInputStream { versionProps.load(it) }
+versionProps.each { k, v -> if (!project.hasProperty(k)) project.ext.set(k, v) }
+
+ext.mc = mc
+ext.legacy = legacy
+/** The module's folder (the shared one, not versions/<mc>). */
+ext.moduleDir = project.parent.projectDir
+/** Same module, other module or the bundle, for this Minecraft version. */
+ext.sibling = { String name -> project(":$name:$mc") }
+
+// every versioned project is named after its version ("1.21.1"): a per-module group keeps their coordinates apart
+group = "${rootProject.mod_group_id}.${project.parent.name}"
+version = "${mc}-${rootProject.mod_version}"
+
+apply plugin: legacy ? 'net.neoforged.moddev.legacyforge' : 'net.neoforged.moddev'
+/** neoForge { } or legacyForge { } */
+ext.mdg = extensions.getByName(legacy ? 'legacyForge' : 'neoForge')
+
+stonecutter {
+    constants.match(legacy ? 'forge' : 'neoforge', 'forge', 'neoforge')
+}
 
 base {
     archivesName = project.module_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(legacy ? 17 : 21)
 
 repositories {
     maven { url = 'https://maven.ftb.dev/releases' }
@@ -21,14 +49,18 @@ repositories {
         url = 'https://maven.shedaniel.me'
         content { includeGroup 'me.shedaniel'; includeGroup 'me.shedaniel.cloth' }
     }
-    maven { // WATERMeDIA, EMI (optional, compile only)
+    maven { // WATERMeDIA, EMI, Jade (optional, compile only)
         url = 'https://api.modrinth.com/maven'
         content { includeGroup 'maven.modrinth' }
     }
 }
 
-neoForge {
-    version = rootProject.neo_version
+configure(mdg) {
+    if (legacy) {
+        version = project.forge_version
+    } else {
+        version = project.neo_version
+    }
     // lets plain JUnit tests use Minecraft classes such as CompoundTag
     addModdingDependenciesTo(sourceSets.test)
 }
@@ -37,50 +69,112 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+/**
+ * Mod dependencies. On 1.20.1 mods are published with SRG names and go through the remapping configurations
+ * (modCompileOnly etc.); on 1.21.1 they are used as they are.
+ */
+ext.modCompileOnly = { String notation -> dependencies.add(legacy ? 'modCompileOnly' : 'compileOnly', notation) { transitive = false } }
+ext.modRuntime = { String notation -> dependencies.add(legacy ? 'modRuntimeOnly' : 'localRuntime', notation) { transitive = false } }
+ext.modTest = { String notation -> dependencies.add(legacy ? 'modTestImplementation' : 'testImplementation', notation) { transitive = false } }
+/** Artifact name with the loader suffix: ftb-quests-neoforge / ftb-quests-forge */
+ext.ld = { String artifact -> "$artifact-${project.loader}" }
+
+if (legacy) {
+    obfuscation {
+        createRemappingConfiguration(configurations.testImplementation)
+    }
+}
+
 dependencies {
-    compileOnly("dev.architectury:architectury-neoforge:${rootProject.architectury_version}") { transitive = false }
-    compileOnly("dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}") { transitive = false }
-    compileOnly("dev.ftb.mods:ftb-teams-neoforge:${rootProject.ftb_teams_version}") { transitive = false }
-    compileOnly("dev.ftb.mods:ftb-quests-neoforge:${rootProject.ftb_quests_version}") { transitive = false }
+    modCompileOnly("dev.architectury:${ld('architectury')}:${project.architectury_version}")
+    modCompileOnly("dev.ftb.mods:${ld('ftb-library')}:${project.ftb_library_version}")
+    modCompileOnly("dev.ftb.mods:${ld('ftb-teams')}:${project.ftb_teams_version}")
+    modCompileOnly("dev.ftb.mods:${ld('ftb-quests')}:${project.ftb_quests_version}")
 
     // FTB Library's SNBT reader/writer is used by code under test
-    testImplementation("dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_library_version}") { transitive = false }
+    modTest("dev.ftb.mods:${ld('ftb-library')}:${project.ftb_library_version}")
     testImplementation(platform('org.junit:junit-bom:5.11.3'))
     testImplementation('org.junit.jupiter:junit-jupiter')
     testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+
+    if (legacy) {
+        annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+        compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:${project.mixinextras_version}"))
+        implementation("io.github.llamalad7:mixinextras-forge:${project.mixinextras_version}")
+        jarJar("io.github.llamalad7:mixinextras-forge") {
+            version { strictly "[${project.mixinextras_version},)"; prefer project.mixinextras_version }
+        }
+    }
 }
 
-def depsFile = file('extra-dependencies.toml')
+def mixinConfig = "${project.module_id}.mixins.json"
+def hasMixins = new File(moduleDir, "src/main/resources/$mixinConfig").exists()
+if (legacy && hasMixins) {
+    mixin {
+        add sourceSets.main, "${project.module_id}.refmap.json"
+        config mixinConfig
+    }
+    tasks.named('jar') {
+        manifest.attributes(['MixinConfigs': mixinConfig])
+    }
+}
+
+// mod metadata: META-INF/neoforge.mods.toml (1.21.1) or META-INF/mods.toml (1.20.1), from gradle/templates
+def depsFile = new File(moduleDir, 'extra-dependencies.toml')
+/** NeoForge's dependency 'type' to Forge 47's 'mandatory'; incompatible/discouraged are checked in code there. */
+def forgeDeps = { String text ->
+    text.split(/(?=\[\[dependencies)/).collect { block ->
+        if (block =~ /type\s*=\s*"(incompatible|discouraged)"/) return block.startsWith('[[') ? '' : block
+        block.replaceAll(/type\s*=\s*"required"/, 'mandatory = true').replaceAll(/type\s*=\s*"optional"/, 'mandatory = false')
+                .replaceAll(/(?m)^reason\s*=.*\n/, '')
+    }.join('')
+}
 def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    def extra = depsFile.exists() ? depsFile.getText('UTF-8')
+            .replace('${module_id}', project.module_id).replace('${mod_version}', rootProject.mod_version) : ''
     def props = [
-            minecraft_version_range : rootProject.minecraft_version_range,
-            neo_version_range       : rootProject.neo_version_range,
-            loader_version_range    : rootProject.loader_version_range,
+            minecraft_version_range : project.minecraft_version_range,
+            loader_range            : legacy ? project.forge_version_range : project.neo_version_range,
+            loader_version_range    : project.loader_version_range,
             mod_license             : rootProject.mod_license,
             mod_version             : rootProject.mod_version,
             mod_authors             : rootProject.mod_authors,
-            ftb_quests_version_range: rootProject.ftb_quests_version_range,
+            ftb_quests_version_range: project.ftb_quests_version_range,
             module_id               : project.module_id,
             module_name             : project.module_name,
             module_description      : project.module_description,
             // client-only modules use IGNORE_ALL_VERSION so servers don't need them
             display_test            : project.findProperty('display_test') ?: 'MATCH_VERSION',
             // placeholders inside the inserted text are not expanded by the template engine: resolve them here
-            extra_dependencies      : depsFile.exists() ? depsFile.getText('UTF-8')
-                    .replace('${module_id}', project.module_id).replace('${mod_version}', rootProject.mod_version) : ''
+            extra_dependencies      : legacy ? forgeDeps(extra) : extra,
+            has_mixins              : hasMixins
     ]
     inputs.properties props
     filteringCharset = 'UTF-8'
     expand props
-    from rootProject.file('gradle/templates')
+    from rootProject.file(legacy ? 'gradle/templates-forge' : 'gradle/templates')
     into layout.buildDirectory.dir('generated/sources/modMetadata')
 }
 
 sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
+mdg.ideSyncTask generateModMetadata
+
+// 1.20.1 runs Mixin with Java 17 and needs the refmap named in the config
+if (legacy) {
+    tasks.named('processResources', ProcessResources) {
+        def refmap = "${project.module_id}.refmap.json"
+        filesMatching('*.mixins.json') {
+            filter { String line ->
+                line.replace('"JAVA_21"', '"JAVA_17"')
+                        .replaceFirst(/^(\s*)"package"/, "\$1\"refmap\": \"$refmap\",\n\$1\"package\"")
+            }
+        }
+    }
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xmaxerrs', '5000']
 }
 
 tasks.named('test') {

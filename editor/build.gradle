@@ -1,9 +1,9 @@
 apply from: rootProject.file('gradle/module.gradle')
 
 dependencies {
-    compileOnly project(':core')
-    compileOnly("maven.modrinth:watermedia:${rootProject.watermedia_version}") { transitive = false }
-    compileOnly("dev.latvian.mods:kubejs-neoforge:${rootProject.kubejs_version}") { transitive = false }
-    compileOnly("dev.latvian.mods:rhino:${rootProject.rhino_version}") { transitive = false }
-    testImplementation project(':core')
+    compileOnly sibling('core')
+    testImplementation sibling('core')
+    modCompileOnly("maven.modrinth:watermedia:${project.watermedia_version}")
+    modCompileOnly("dev.latvian.mods:${ld('kubejs')}:${project.kubejs_version}")
+    modCompileOnly("dev.latvian.mods:${project.rhino_artifact}:${project.rhino_version}")
 }
