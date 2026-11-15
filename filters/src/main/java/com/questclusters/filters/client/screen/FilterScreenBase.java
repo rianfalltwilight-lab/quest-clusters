@@ -75,25 +75,14 @@ abstract class FilterScreenBase<T extends SmartFilter> extends AbstractFilterCon
     @Override
     public void onClose() {
         if (!saving && !confirmed && changed()) {
-            // the callback as a local: some Java 17 compilers reject a lambda given to an anonymous class's constructor
-            it.unimi.dsi.fastutil.booleans.BooleanConsumer answer = discard -> {
+            minecraft.setScreen(new UnsavedChanges(discard -> {
                 if (discard) {
                     confirmed = true;
                     onClose();
                 } else {
                     minecraft.setScreen(this);
                 }
-            };
-            minecraft.setScreen(new ConfirmScreen(answer, tr("unsaved.title"), tr("unsaved.message"), tr("unsaved.discard"), tr("unsaved.keep")) {
-                @Override
-                public boolean keyPressed(int key, int scan, int mods) {
-                    if (key == GLFW.GLFW_KEY_ESCAPE) {
-                        minecraft.setScreen(FilterScreenBase.this);
-                        return true;
-                    }
-                    return super.keyPressed(key, scan, mods);
-                }
-            });
+            }, this));
             return;
         }
         super.onClose();
@@ -239,6 +228,29 @@ abstract class FilterScreenBase<T extends SmartFilter> extends AbstractFilterCon
         @Override
         protected void updateWidgetNarration(NarrationElementOutput out) {
             defaultButtonNarrationText(out);
+        }
+    }
+
+    /**
+     * "Discard changes?" where Escape goes back to the filter screen. A named class with its own constructor: an
+     * anonymous subclass copies the parameter names of ConfirmScreen's constructor, which some Minecraft builds
+     * (without recompiled sources) give as duplicates.
+     */
+    private static final class UnsavedChanges extends ConfirmScreen {
+        private final net.minecraft.client.gui.screens.Screen back;
+
+        UnsavedChanges(it.unimi.dsi.fastutil.booleans.BooleanConsumer answer, net.minecraft.client.gui.screens.Screen back) {
+            super(answer, tr("unsaved.title"), tr("unsaved.message"), tr("unsaved.discard"), tr("unsaved.keep"));
+            this.back = back;
+        }
+
+        @Override
+        public boolean keyPressed(int key, int scan, int mods) {
+            if (key == GLFW.GLFW_KEY_ESCAPE) {
+                minecraft.setScreen(back);
+                return true;
+            }
+            return super.keyPressed(key, scan, mods);
         }
     }
 }
