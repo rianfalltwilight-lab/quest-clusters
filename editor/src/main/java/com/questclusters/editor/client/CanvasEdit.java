@@ -102,7 +102,7 @@ public final class CanvasEdit {
         group.addString("text", text[0], v -> text[0] = v, "");
         List<String> fonts = fonts();
         if (!fonts.contains(font[0])) fonts.add(font[0]);
-        group.addEnum("font", font[0], v -> font[0] = v, NameMap.of(CanvasElement.DEFAULT_FONT, fonts).create());
+        group.addEnum("font", font[0], v -> font[0] = v, NameMap.of(CanvasElement.DEFAULT_FONT, fonts).create(), CanvasElement.DEFAULT_FONT);
         group.addDouble("scale", scale[0], v -> scale[0] = v, 1.0, 0.05, 10.0);
         new EditConfigScreen(group).openGui();
     }

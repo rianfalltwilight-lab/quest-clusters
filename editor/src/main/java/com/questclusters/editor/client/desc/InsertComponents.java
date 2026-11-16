@@ -142,7 +142,7 @@ public final class InsertComponents {
                 List<String> items = Ponder.items().stream().map(ResourceLocation::toString).toList();
                 if (items.isEmpty()) items = List.of("minecraft:air");
                 v.putIfAbsent("item", items.get(0));
-                g.addEnum("item", (String) v.get("item"), x -> v.put("item", x), NameMap.of(items.get(0), items).create());
+                g.addEnum("item", (String) v.get("item"), x -> v.put("item", x), NameMap.of(items.get(0), items).create(), items.get(0));
             }
             case "copy" -> {
                 str(g, v, "text", text.isEmpty() ? "Copy" : text);
@@ -160,7 +160,7 @@ public final class InsertComponents {
                 str(g, v, "text", text);
                 List<String> fonts = com.questclusters.editor.client.CanvasEditFonts.fonts();
                 v.putIfAbsent("font", fonts.get(0));
-                g.addEnum("font", (String) v.get("font"), x -> v.put("font", x), NameMap.of(fonts.get(0), fonts).create());
+                g.addEnum("font", (String) v.get("font"), x -> v.put("font", x), NameMap.of(fonts.get(0), fonts).create(), fonts.get(0));
             }
             case "translate" -> {
                 str(g, v, "key", "");
@@ -172,7 +172,7 @@ public final class InsertComponents {
                 keys.sort(String::compareTo);
                 v.putIfAbsent("key", keys.contains("key.inventory") ? "key.inventory" : keys.get(0));
                 g.addEnum("key", (String) v.get("key"), x -> v.put("key", x),
-                        NameMap.of(keys.get(0), keys).name(k -> Component.translatable(k)).create());
+                        NameMap.of(keys.get(0), keys).name(k -> Component.translatable(k == null ? keys.get(0) : k)).create(), keys.get(0));
             }
             case "obfuscated" -> str(g, v, "text", text);
             case "item_tooltip" -> {
@@ -199,13 +199,13 @@ public final class InsertComponents {
                     videos = new ArrayList<>(videos);
                     videos.add((String) v.get("video"));
                 }
-                g.addEnum("video", (String) v.get("video"), x -> v.put("video", x), NameMap.of(videos.get(0), videos).create());
+                g.addEnum("video", (String) v.get("video"), x -> v.put("video", x), NameMap.of(videos.get(0), videos).create(), videos.get(0));
                 str(g, v, "text", text);
             }
             case "gif" -> {
                 List<String> gifs = GifTextures.list().stream().map(ResourceLocation::toString).toList();
                 v.putIfAbsent("gif", gifs.get(0));
-                g.addEnum("gif", (String) v.get("gif"), x -> v.put("gif", x), NameMap.of(gifs.get(0), gifs).create());
+                g.addEnum("gif", (String) v.get("gif"), x -> v.put("gif", x), NameMap.of(gifs.get(0), gifs).create(), gifs.get(0));
                 imageFields(g, v, 200, 0, false);
             }
             default -> {
@@ -233,7 +233,7 @@ public final class InsertComponents {
     private static void imageFields(ConfigGroup g, Map<String, Object> v, int w, int h, boolean fit) {
         g.addInt("width", (Integer) v.getOrDefault("width", w), x -> v.put("width", x), w, 0, 1000);
         g.addInt("height", (Integer) v.getOrDefault("height", h), x -> v.put("height", x), h, 0, 1000);
-        g.addEnum("align", (Align) v.getOrDefault("align", Align.CENTER), x -> v.put("align", x), Align.NAMES);
+        g.addEnum("align", (Align) v.getOrDefault("align", Align.CENTER), x -> v.put("align", x), Align.NAMES, Align.CENTER);
         g.addBool("fit", (Boolean) v.getOrDefault("fit", fit), x -> v.put("fit", x), fit);
         str(g, v, "hover", "");
     }

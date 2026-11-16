@@ -319,7 +319,7 @@ public final class TableEditorScreen extends BaseScreen {
             });
         });
         g.addBool("header", (Boolean) v[0], x -> v[0] = x, false);
-        g.addEnum("alignment", (Align) v[1], x -> v[1] = x, Align.NAMES);
+        g.addEnum("alignment", (Align) v[1], x -> v[1] = x, Align.NAMES, Align.CENTER);
         g.addInt("cell_width", (Integer) v[2], x -> v[2] = x, 0, 0, 1000);
         g.addInt("row_height", (Integer) v[3], x -> v[3] = x, 18, 12, 30);
         g.addInt("line_width", (Integer) v[4], x -> v[4] = x, 1, 1, 4);
@@ -352,7 +352,7 @@ public final class TableEditorScreen extends BaseScreen {
         });
         g.addInt("table_width", (Integer) v[0], x -> v[0] = x, 0, 0, 1000);
         g.addBool("header_row", (Boolean) v[1], x -> v[1] = x, true);
-        g.addEnum("alignment", (Align) v[2], x -> v[2] = x, Align.NAMES);
+        g.addEnum("alignment", (Align) v[2], x -> v[2] = x, Align.NAMES, Align.CENTER);
         g.addInt("row_height", (Integer) v[3], x -> v[3] = x, 18, 12, 30);
         g.addInt("line_width", (Integer) v[4], x -> v[4] = x, 1, 1, 4);
         g.addColor("border_color", (Color4I) v[5], x -> v[5] = x, Color4I.rgba(0xFF999999));

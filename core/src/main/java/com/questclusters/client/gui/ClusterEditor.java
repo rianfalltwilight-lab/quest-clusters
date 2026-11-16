@@ -215,7 +215,7 @@ public final class ClusterEditor {
         group.addEnum("background_mode", BackgroundMode.values()[st.backgroundMode()],
                 v -> e[0] = e[0].withStyle(e[0].style().withBackground(e[0].style().background(), v.ordinal(),
                         e[0].style().sliceBorder(), e[0].style().backgroundOnFrame())),
-                BackgroundMode.NAME_MAP).setOrder(o++);
+                BackgroundMode.NAME_MAP, BackgroundMode.STRETCH).setOrder(o++);
         group.addInt("slice_border", st.sliceBorder(),
                 v -> e[0] = e[0].withStyle(e[0].style().withBackground(e[0].style().background(), e[0].style().backgroundMode(),
                         v, e[0].style().backgroundOnFrame())), 4, 0, 64).setOrder(o++);

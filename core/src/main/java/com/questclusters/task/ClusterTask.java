@@ -185,11 +185,11 @@ public class ClusterTask extends Task {
         }
         NameMap<Long> names = NameMap.of(0L, ids)
                 .id(QuestCluster::idToString)
-                .name(id -> id == 0L ? Component.translatable("quest_clusters.task.no_cluster")
+                .name(id -> id == null || id == 0L ? Component.translatable("quest_clusters.task.no_cluster")
                         : store().get(id).map(c -> com.questclusters.client.gui.ClusterText.text(c.title()))
                         .orElse(Component.literal(QuestCluster.idToString(id))))
                 .create();
-        config.addEnum("cluster", clusterId, v -> clusterId = v, names).setNameKey("quest_clusters.task.cluster");
+        config.addEnum("cluster", clusterId, v -> clusterId = v, names, 0L).setNameKey("quest_clusters.task.cluster");
         config.addInt("required", required, v -> required = v, 0, 0, QuestCluster.MAX_MEMBERS)
                 .setNameKey("quest_clusters.task.required");
     }

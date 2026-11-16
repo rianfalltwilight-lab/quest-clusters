@@ -100,6 +100,28 @@ final class EditorDevTest {
         EditorDebug.hiddenPurple = EditorDebug.hiddenSkipped = EditorDebug.hiddenRevealed = 0;
     }
 
+    /** Fills an object's edit screen and builds every row's tooltip; returns the first that fails, or null. */
+    private static String tooltipProblem(dev.ftb.mods.ftbquests.quest.QuestObjectBase o) {
+        var g = new dev.ftb.mods.ftblibrary.config.ConfigGroup("ftbquests", accepted -> {});
+        o.fillConfigGroup(o.createSubGroup(g));
+        return tooltipProblem(g);
+    }
+
+    private static String tooltipProblem(dev.ftb.mods.ftblibrary.config.ConfigGroup g) {
+        for (var v : g.getValues()) {
+            try {
+                v.addInfo(new dev.ftb.mods.ftblibrary.util.TooltipList());
+            } catch (RuntimeException e) {
+                return v.id + ": " + e;
+            }
+        }
+        for (var sub : g.getSubgroups()) {
+            String bad = tooltipProblem(sub);
+            if (bad != null) return bad;
+        }
+        return null;
+    }
+
     static void register() {
         DevSelfTest.addModuleSteps(presetSteps());
         DevSelfTest.addModuleSteps(anchorInClusterSteps());
@@ -145,6 +167,11 @@ final class EditorDevTest {
                     DevSelfTest.moduleCheck(icon instanceof dev.ftb.mods.ftblibrary.icon.AtlasSpriteIcon
                             && !sprite.contents().name().equals(net.minecraft.client.renderer.texture.MissingTextureAtlasSprite.getLocation()),
                             "editor: sprite-id backgrounds resolve to the atlas sprite (" + icon.getClass().getSimpleName() + ")");
+                    // every row of the edit screens must be able to show its tooltip (1.20.1 crashed on a null default)
+                    for (long id : new long[]{D5, C2}) {
+                        String bad = tooltipProblem(ClientQuestFile.INSTANCE.getBase(id));
+                        DevSelfTest.moduleCheck(bad == null, "editor: config tooltips render for " + Long.toHexString(id) + (bad == null ? "" : " (" + bad + ")"));
+                    }
                     command("ftbquests change_progress @me reset 00000000000000D6"); // earlier runs completed it
                     editMode(false);
                     return 40;

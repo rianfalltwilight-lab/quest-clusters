@@ -28,7 +28,7 @@ public abstract class QuestModelConfigMixin {
         List<String> ids = new ArrayList<>();
         ids.add("");
         BuiltInRegistries.ENTITY_TYPE.keySet().stream().map(ResourceLocation::toString).sorted().forEach(ids::add);
-        NameMap<String> names = NameMap.of("", ids).name(s -> s.isEmpty()
+        NameMap<String> names = NameMap.of("", ids).name(s -> s == null || s.isEmpty()
                 ? Component.translatable("quest_clusters_editor.model.none")
                 : Component.translatable("entity." + s.replace(':', '.'))).create();
         config.addEnum("entity_model", current == null ? "" : current.toString(), v -> {
@@ -38,7 +38,7 @@ public abstract class QuestModelConfigMixin {
             } else if (now == null || !now.toString().equals(v)) {
                 self.setRawIcon(EntityModels.iconFor(Rl.parse(v)));
             }
-        }, names).setOrder(-125);
+        }, names, "").setOrder(-125);
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient() && net.neoforged.fml.ModList.get().isLoaded("watermedia")) {
             List<String> videos = new ArrayList<>();
             videos.add("");
@@ -47,7 +47,7 @@ public abstract class QuestModelConfigMixin {
             if (cur != null && !videos.contains(cur)) videos.add(cur);
             config.addEnum("node_video", cur == null ? "" : cur, v -> self.setRawIcon(EntityModels.withVideo(
                     ((QuestObjectIconAccessor) (Object) self).quest_clusters_editor$rawIcon(), v)),
-                    NameMap.of("", videos).name(x -> x.isEmpty() ? Component.translatable("quest_clusters_editor.model.none") : Component.literal(x)).create())
+                    NameMap.of("", videos).name(x -> x == null || x.isEmpty() ? Component.translatable("quest_clusters_editor.model.none") : Component.literal(x)).create(), "")
                     .setOrder(-124);
         }
     }

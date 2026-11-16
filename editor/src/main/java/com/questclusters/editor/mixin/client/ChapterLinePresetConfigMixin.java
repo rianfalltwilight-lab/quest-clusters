@@ -30,13 +30,13 @@ public abstract class ChapterLinePresetConfigMixin {
         ids.add("");
         book.linePresets.stream().map(LinePreset::id).forEach(ids::add);
         NameMap<String> names = NameMap.of("", ids).name(id -> {
-            LinePreset p = book.preset(id);
+            LinePreset p = id == null ? null : book.preset(id);
             return p == null ? Component.translatable("quest_clusters_editor.menu.line_presets.builtin") : Component.literal(p.name());
         }).create();
         config.getOrCreateSubgroup("appearance").addEnum("decorative_line_preset", current, v -> {
             if (!v.equals(ClientEditor.book().chapter(chapterId).linePreset)) {
                 EditorActions.editChapter("line_preset", chapterId, c -> c.linePreset = v);
             }
-        }, names).setNameKey("quest_clusters_editor.chapter.decorative_line_preset");
+        }, names, "").setNameKey("quest_clusters_editor.chapter.decorative_line_preset");
     }
 }
