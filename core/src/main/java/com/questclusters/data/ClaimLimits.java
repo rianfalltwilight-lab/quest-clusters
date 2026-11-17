@@ -14,6 +14,8 @@ import java.util.function.Supplier;
  * <ul>
  *   <li>Rules (part of the quest book): a quest's maximum number of completions per team; a reward's maximum number
  *       of claims per team (all members together) and per player. 0 = no limit.</li>
+ *   <li>Batch submit (part of the quest book): a repeatable quest whose tasks all take items may be submitted and
+ *       finished for up to this many rounds in one go (shift-click). 0 = off.</li>
  *   <li>Counts (part of the world): claims per team and per player, kept across repeats (FTB Quests forgets its own
  *       claim records every time a quest repeats).</li>
  * </ul>
@@ -21,6 +23,8 @@ import java.util.function.Supplier;
  */
 public final class ClaimLimits {
     public static final int MAX = 100_000;
+    /** Most rounds one batch submit may run. */
+    public static final int MAX_BATCH = 256;
 
     /** @param team claims for the whole team, {@code player} claims per player (0 = unlimited) */
     public record RewardLimit(int team, int player) {
@@ -40,6 +44,7 @@ public final class ClaimLimits {
     private final Map<Long, Integer> questMax = new LinkedHashMap<>();
     private final java.util.Set<Long> personal = new java.util.LinkedHashSet<>();
     private final Map<Long, RewardLimit> rewards = new LinkedHashMap<>();
+    private final Map<Long, Integer> batch = new LinkedHashMap<>();
     // counts
     private final Map<UUID, Map<Long, Integer>> teamClaims = new HashMap<>();
     private final Map<UUID, Map<Long, Integer>> playerClaims = new HashMap<>();
@@ -54,6 +59,21 @@ public final class ClaimLimits {
         max = Math.max(0, Math.min(MAX, max));
         if (max == 0) questMax.remove(quest);
         else questMax.put(quest, max);
+    }
+
+    /** Rounds one batch submit of this quest may run (0 = batch submit is off). */
+    public int batchMax(long quest) {
+        return batch.getOrDefault(quest, 0);
+    }
+
+    public void setBatch(long quest, int rounds) {
+        rounds = Math.max(0, Math.min(MAX_BATCH, rounds));
+        if (rounds == 0) batch.remove(quest);
+        else batch.put(quest, rounds);
+    }
+
+    public Map<Long, Integer> batchRules() {
+        return batch;
     }
 
     public RewardLimit reward(long reward) {
@@ -74,7 +94,7 @@ public final class ClaimLimits {
     }
 
     public boolean hasRules() {
-        return !questMax.isEmpty() || !rewards.isEmpty() || !personal.isEmpty();
+        return !questMax.isEmpty() || !rewards.isEmpty() || !personal.isEmpty() || !batch.isEmpty();
     }
 
     /** Personal quest: in a team, every member has their own progress, completion and rewards for it. */
@@ -166,6 +186,7 @@ public final class ClaimLimits {
         questMax.clear();
         rewards.clear();
         personal.clear();
+        batch.clear();
     }
 
     public void clearCounts() {
@@ -191,6 +212,9 @@ public final class ClaimLimits {
         net.minecraft.nbt.ListTag p = new net.minecraft.nbt.ListTag();
         personal.forEach(id -> p.add(net.minecraft.nbt.StringTag.valueOf(QuestCluster.idToString(id))));
         root.put("personal", p);
+        CompoundTag b = factory.get();
+        batch.forEach((id, n) -> b.putInt(QuestCluster.idToString(id), n));
+        root.put("batch", b);
         return root;
     }
 
@@ -208,6 +232,8 @@ public final class ClaimLimits {
             long id = QuestCluster.idFromString(p.getString(i));
             if (id != 0L) personal.add(id);
         }
+        CompoundTag b = root.getCompound("batch");
+        for (String k : b.getAllKeys()) setBatch(QuestCluster.idFromString(k), b.getInt(k));
     }
 
     public CompoundTag writeCounts(Supplier<CompoundTag> factory) {

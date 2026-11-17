@@ -61,4 +61,23 @@ class ClaimLimitsTest {
         assertEquals(2, copy.resetCounts(TEAM, null, 0L), "all rewards of the team");
         assertFalse(copy.exhausted(10L, TEAM, A));
     }
+
+    @Test
+    void batchRule() {
+        ClaimLimits l = new ClaimLimits();
+        assertEquals(0, l.batchMax(5L), "off by default");
+        l.setBatch(5L, 10);
+        l.setBatch(6L, 99_999);
+        l.setBatch(7L, -3);
+        assertEquals(ClaimLimits.MAX_BATCH, l.batchMax(6L), "capped");
+        assertEquals(0, l.batchMax(7L));
+        ClaimLimits copy = new ClaimLimits();
+        copy.readRules(l.writeRules(CompoundTag::new));
+        assertEquals(10, copy.batchMax(5L));
+        assertEquals(ClaimLimits.MAX_BATCH, copy.batchMax(6L));
+        assertTrue(copy.hasRules());
+        copy.setBatch(5L, 0);
+        copy.setBatch(6L, 0);
+        assertFalse(copy.hasRules(), "0 removes the rule");
+    }
 }

@@ -88,6 +88,8 @@ public final class DevSelfTest {
     private static boolean[] personalResult = new boolean[0];
     private static boolean personalSaved;
     private static int[] limitResult = new int[0];
+    private static int batchBase, batchXp;
+    private static int[] batchResult = new int[0];
 
     private DevSelfTest() {
     }
@@ -479,7 +481,7 @@ public final class DevSelfTest {
             return 5;
         });
         STEPS.add(() -> {
-            Net.sendToServer(new ClusterPayloads.SetQuestLimit(0xDAL, limitBase + 3));
+            Net.sendToServer(new ClusterPayloads.SetQuestLimit(0xDAL, limitBase + 3, 0));
             return 10;
         });
         for (int round = 1; round <= 4; round++) {
@@ -526,8 +528,92 @@ public final class DevSelfTest {
             // leave the book as it was
             Net.sendToServer(new ClusterPayloads.SetRewardLimit(0xBAL, com.questclusters.data.ClaimLimits.RewardLimit.NONE));
             Net.sendToServer(new ClusterPayloads.SetRewardLimit(0xBBL, com.questclusters.data.ClaimLimits.RewardLimit.NONE));
-            Net.sendToServer(new ClusterPayloads.SetQuestLimit(0xDAL, 0));
+            Net.sendToServer(new ClusterPayloads.SetQuestLimit(0xDAL, 0, 0));
             return 5;
+        });
+        // ---------------------------------------------------------------- batch submit
+        // quest DC repeats, takes 3 dirt and gives 2 xp; batch submit allows 5 rounds per click, the quest 4 rounds in all
+        STEPS.add(() -> {
+            var server = Minecraft.getInstance().getSingleplayerServer();
+            String name = Minecraft.getInstance().player.getGameProfile().getName();
+            server.execute(() -> {
+                var src = server.createCommandSourceStack().withSuppressedOutput();
+                server.getCommands().performPrefixedCommand(src, "ftbquests change_progress " + name + " reset 00000000000000DC");
+                server.getCommands().performPrefixedCommand(src, "clear " + name + " minecraft:dirt");
+                var sp = server.getPlayerList().getPlayers().get(0);
+                var file = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE;
+                batchBase = file.getOrCreateTeamData(sp).getCompletionCount(file.getQuest(0xDCL));
+                batchXp = sp.totalExperience;
+            });
+            return 10;
+        });
+        STEPS.add(() -> {
+            Net.sendToServer(new ClusterPayloads.SetQuestLimit(0xDCL, batchBase + 4, 5));
+            var server = Minecraft.getInstance().getSingleplayerServer();
+            String name = Minecraft.getInstance().player.getGameProfile().getName();
+            server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(),
+                    "give " + name + " minecraft:dirt 7"));
+            return 20;
+        });
+        STEPS.add(() -> {
+            var file = ClientQuestFile.INSTANCE;
+            check(com.questclusters.server.ServerBatch.eligible(file.getQuest(0xDCL)) && !com.questclusters.server.ServerBatch.eligible(file.getQuest(0xDAL)),
+                    "batch submit only for repeatable quests whose tasks all take items");
+            int rounds = com.questclusters.client.ClientLimits.batchRounds(file.getQuest(0xDCL));
+            check(rounds == 2, "client: 7 dirt are enough for 2 rounds (" + rounds + ")");
+            List<net.minecraft.network.chat.Component> tips = new ArrayList<>();
+            com.questclusters.client.ClientLimits.batchTooltip(file.getQuest(0xDCL), tips);
+            check(tips.size() == 1 && tips.get(0).getString().contains("2"), "batch submit tooltip " + tips);
+            Net.sendToServer(new ClusterPayloads.BatchSubmit(0xDCL));
+            return 10;
+        });
+        for (int pass = 1; pass <= 2; pass++) {
+            int n = pass;
+            STEPS.add(() -> {
+                var server = Minecraft.getInstance().getSingleplayerServer();
+                server.execute(() -> {
+                    var sp = server.getPlayerList().getPlayers().get(0);
+                    var file = dev.ftb.mods.ftbquests.quest.ServerQuestFile.INSTANCE;
+                    var td = file.getOrCreateTeamData(sp);
+                    var quest = file.getQuest(0xDCL);
+                    batchResult = new int[]{td.getCompletionCount(quest) - batchBase, td.isCompleted(quest) ? 1 : 0,
+                            sp.getInventory().countItem(net.minecraft.world.item.Items.DIRT), sp.totalExperience - batchXp};
+                });
+                return 5;
+            });
+            STEPS.add(() -> {
+                // pass 1: two whole rounds, 1 dirt left over, nothing half-submitted
+                // pass 2 (21 dirt): round 3 starts over, round 4 is the last allowed and stays completed; 15 dirt left
+                int[][] want = {{2, 0, 1, 4}, {3, 1, 15, 8}};
+                check(java.util.Arrays.equals(batchResult, want[n - 1]), "batch submit pass " + n + ": rounds done, completed, dirt left, xp gained = "
+                        + java.util.Arrays.toString(batchResult) + " (want " + java.util.Arrays.toString(want[n - 1]) + ")");
+                if (n == 1) {
+                    var server = Minecraft.getInstance().getSingleplayerServer();
+                    String name = Minecraft.getInstance().player.getGameProfile().getName();
+                    server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(),
+                            "give " + name + " minecraft:dirt 20"));
+                    return 10;
+                }
+                return 0;
+            });
+            if (pass == 1) STEPS.add(() -> {
+                Net.sendToServer(new ClusterPayloads.BatchSubmit(0xDCL));
+                return 10;
+            });
+        }
+        STEPS.add(() -> {
+            check(com.questclusters.client.ClientLimits.batchRounds(ClientQuestFile.INSTANCE.getQuest(0xDCL)) == 0,
+                    "client: no batch rounds once the completion limit is reached");
+            // leave the book and the player as they were
+            Net.sendToServer(new ClusterPayloads.SetQuestLimit(0xDCL, 0, 0));
+            var server = Minecraft.getInstance().getSingleplayerServer();
+            String name = Minecraft.getInstance().player.getGameProfile().getName();
+            server.execute(() -> {
+                var src = server.createCommandSourceStack().withSuppressedOutput();
+                server.getCommands().performPrefixedCommand(src, "clear " + name + " minecraft:dirt");
+                server.getCommands().performPrefixedCommand(src, "ftbquests change_progress " + name + " reset 00000000000000DC");
+            });
+            return 10;
         });
         // ---------------------------------------------------------------- personal quests
         // quest DB is personal: the real player completes it; a second (made-up) member of the team has not

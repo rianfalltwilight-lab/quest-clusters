@@ -12,7 +12,8 @@
     "TeamDataAccessor",
     "TeamDataPersonalMixin",
     "QuestFileLookupMixin",
-    "InventoryDetectMixin"
+    "InventoryDetectMixin",
+    "BatchToastMixin"
   ],
   "client": [
     "client.ChapterImageMenuMixin",
@@ -31,7 +32,8 @@
     "client.ChapterPanelAccessor",
     "client.OtherButtonsPanelTopMixin",
     "client.ImageIconFramesMixin",
-    "client.LimitsTooltipMixin"
+    "client.LimitsTooltipMixin",
+    "client.TaskButtonBatchMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -34,13 +34,15 @@ public final class ClusterNetwork {
         r.toClient(ClusterPayloads.Leaderboard.TYPE, ClusterPayloads.Leaderboard.CODEC,
                 p -> com.questclusters.client.ClientScoring.showLeaderboard(p.rows()));
         r.toClient(ClusterPayloads.LimitsSync.TYPE, ClusterPayloads.LimitsSync.CODEC,
-                p -> com.questclusters.client.ClientLimits.set(p.quests(), p.rewards(), p.teamCounts(), p.playerCounts(), p.personal()));
+                p -> com.questclusters.client.ClientLimits.set(p.quests(), p.rewards(), p.teamCounts(), p.playerCounts(), p.personal(), p.batch()));
         r.toClient(ClusterPayloads.PersonalSync.TYPE, ClusterPayloads.PersonalSync.CODEC,
                 p -> com.questclusters.client.ClientPersonal.set(p.state()));
         r.toServer(ClusterPayloads.SetPersonal.TYPE, ClusterPayloads.SetPersonal.CODEC,
                 (p, player) -> com.questclusters.server.ServerLimits.handleSetPersonal(player, p.questId(), p.personal()));
         r.toServer(ClusterPayloads.SetQuestLimit.TYPE, ClusterPayloads.SetQuestLimit.CODEC,
-                (p, player) -> com.questclusters.server.ServerLimits.handleSetQuest(player, p.questId(), p.max()));
+                (p, player) -> com.questclusters.server.ServerLimits.handleSetQuest(player, p.questId(), p.max(), p.batch()));
+        r.toServer(ClusterPayloads.BatchSubmit.TYPE, ClusterPayloads.BatchSubmit.CODEC,
+                (p, player) -> com.questclusters.server.ServerBatch.handle(player, p.questId()));
         r.toServer(ClusterPayloads.SetRewardLimit.TYPE, ClusterPayloads.SetRewardLimit.CODEC,
                 (p, player) -> com.questclusters.server.ServerLimits.handleSetReward(player, p.rewardId(), p.limit()));
         r.toServer(ClusterPayloads.SetScore.TYPE, ClusterPayloads.SetScore.CODEC,

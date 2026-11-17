@@ -152,7 +152,7 @@
   "quest_clusters.settlement.background.tooltip": "画在主题自带背景之上；帧动画会播放",
   "quest_clusters.settlement.background_mode": "背景填充方式",
   "quest_clusters.limits": "次数上限",
-  "quest_clusters.limits.menu.quest": "完成次数上限…",
+  "quest_clusters.limits.menu.quest": "完成次数与连续提交…",
   "quest_clusters.limits.menu.reward": "领取次数上限…",
   "quest_clusters.limits.max_completions": "每队最多完成次数",
   "quest_clusters.limits.max_completions.tooltip": "用于可重复任务：完成这么多轮后任务保持已完成，不再重置。0 = 不限",
@@ -175,5 +175,17 @@
   "quest_clusters.personal.menu.on": "设为个人任务",
   "quest_clusters.personal.menu.off": "改回团队任务",
   "quest_clusters.personal.tooltip": "个人任务：队伍里每人各自记进度",
-  "quest_clusters.personal.reset": "已让 %s 名玩家的个人任务从头开始"
+  "quest_clusters.personal.reset": "已让 %s 名玩家的个人任务从头开始",
+  "quest_clusters.limits.batch_rounds": "连续提交：每次最多轮数",
+  "quest_clusters.limits.batch_rounds.tooltip": "用于全部任务都要上交物品的重复任务：按住 Shift 点任务，一次提交并完成最多这么多轮（以背包物品够几轮为准）。0 = 关闭",
+  "quest_clusters.batch.tooltip": "Shift+点击：一次完成 %s 轮（最多 %s 轮）",
+  "quest_clusters.batch.not_allowed": "这个任务不能连续提交",
+  "quest_clusters.batch.done": "连续提交：%2$s 完成了 %1$s 轮 —— %3$s",
+  "quest_clusters.batch.none": "连续提交：一轮也没完成 —— %s",
+  "quest_clusters.batch.stop.max": "每次最多 %s 轮",
+  "quest_clusters.batch.stop.items": "物品不够再完成一轮",
+  "quest_clusters.batch.stop.cannot_start": "任务暂时不能再开始（冷却中或前置未完成）",
+  "quest_clusters.batch.stop.completion_limit": "已达到完成次数上限",
+  "quest_clusters.batch.stop.unclaimed": "任务没有重置：请手动领取剩下的奖励",
+  "quest_clusters.batch.stop.used_up": "%s 已领完"
 }

@@ -152,7 +152,7 @@
   "quest_clusters.settlement.background.tooltip": "Drawn over the theme's own backdrop; frame animations play",
   "quest_clusters.settlement.background_mode": "Background fill",
   "quest_clusters.limits": "Limits",
-  "quest_clusters.limits.menu.quest": "Completion limit…",
+  "quest_clusters.limits.menu.quest": "Completion limit and batch submit…",
   "quest_clusters.limits.menu.reward": "Claim limit…",
   "quest_clusters.limits.max_completions": "Max completions per team",
   "quest_clusters.limits.max_completions.tooltip": "For repeatable quests: after this many rounds the quest stays completed. 0 = no limit",
@@ -175,5 +175,17 @@
   "quest_clusters.personal.menu.on": "Make personal quest",
   "quest_clusters.personal.menu.off": "Make team quest again",
   "quest_clusters.personal.tooltip": "Personal: each team member has their own progress",
-  "quest_clusters.personal.reset": "Personal quests start over for %s player(s)"
+  "quest_clusters.personal.reset": "Personal quests start over for %s player(s)",
+  "quest_clusters.limits.batch_rounds": "Batch submit: rounds per click",
+  "quest_clusters.limits.batch_rounds.tooltip": "For repeatable quests whose tasks all take items: shift-clicking a task submits and finishes up to this many rounds at once, as far as the items go. 0 = off",
+  "quest_clusters.batch.tooltip": "Shift-click: finish %s round(s) at once (up to %s)",
+  "quest_clusters.batch.not_allowed": "This quest cannot be batch submitted",
+  "quest_clusters.batch.done": "Batch submit: %s round(s) of %s finished — %s",
+  "quest_clusters.batch.none": "Batch submit: nothing done — %s",
+  "quest_clusters.batch.stop.max": "%s rounds per click",
+  "quest_clusters.batch.stop.items": "not enough items for another round",
+  "quest_clusters.batch.stop.cannot_start": "the quest cannot start again yet (cooldown or prerequisites)",
+  "quest_clusters.batch.stop.completion_limit": "completion limit reached",
+  "quest_clusters.batch.stop.unclaimed": "the quest has not started over: claim the remaining rewards by hand",
+  "quest_clusters.batch.stop.used_up": "%s is used up"
 }

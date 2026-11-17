@@ -202,7 +202,7 @@ public final class ClusterPayloads {
     /** Limit rules for everyone, plus the receiving player's own team and player claim counts. */
     public record LimitsSync(java.util.Map<Long, Integer> quests, java.util.Map<Long, com.questclusters.data.ClaimLimits.RewardLimit> rewards,
                              java.util.Map<Long, Integer> teamCounts, java.util.Map<Long, Integer> playerCounts,
-                             List<Long> personal) implements CustomPacketPayload {
+                             List<Long> personal, java.util.Map<Long, Integer> batch) implements CustomPacketPayload {
         public static final Type<LimitsSync> TYPE = newType("limits_sync");
         public static final StreamCodec<ByteBuf, LimitsSync> CODEC = StreamCodec.composite(
                 com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::quests,
@@ -210,6 +210,7 @@ public final class ClusterPayloads {
                 com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::teamCounts,
                 com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::playerCounts,
                 ByteBufCodecs.VAR_LONG.apply(ByteBufCodecs.list(100_000)), LimitsSync::personal,
+                com.questclusters.data.LimitsCodecs.COUNTS, LimitsSync::batch,
                 LimitsSync::new);
 
         @Override
@@ -218,15 +219,28 @@ public final class ClusterPayloads {
         }
     }
 
-    public record SetQuestLimit(long questId, int max) implements CustomPacketPayload {
+    /** @param max completions per team (0 = no limit), {@code batch} rounds per batch submit (0 = off) */
+    public record SetQuestLimit(long questId, int max, int batch) implements CustomPacketPayload {
         public static final Type<SetQuestLimit> TYPE = newType("set_quest_limit");
         public static final StreamCodec<ByteBuf, SetQuestLimit> CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_LONG, SetQuestLimit::questId,
                 ByteBufCodecs.VAR_INT, SetQuestLimit::max,
+                ByteBufCodecs.VAR_INT, SetQuestLimit::batch,
                 SetQuestLimit::new);
 
         @Override
         public Type<SetQuestLimit> type() {
+            return TYPE;
+        }
+    }
+
+    /** Shift-click on a task: submit and finish as many rounds of the quest as the player's items allow. */
+    public record BatchSubmit(long questId) implements CustomPacketPayload {
+        public static final Type<BatchSubmit> TYPE = newType("batch_submit");
+        public static final StreamCodec<ByteBuf, BatchSubmit> CODEC = ByteBufCodecs.VAR_LONG.map(BatchSubmit::new, BatchSubmit::questId);
+
+        @Override
+        public Type<BatchSubmit> type() {
             return TYPE;
         }
     }

@@ -54,6 +54,7 @@ public final class ServerLimits {
         rulesDirty |= LIMITS.questRules().keySet().removeIf(id -> !(file.getBase(id) instanceof Quest));
         rulesDirty |= LIMITS.rewardRules().keySet().removeIf(id -> !(file.getBase(id) instanceof Reward));
         rulesDirty |= LIMITS.personalQuests().removeIf(id -> !(file.getBase(id) instanceof Quest));
+        rulesDirty |= LIMITS.batchRules().keySet().removeIf(id -> !(file.getBase(id) instanceof Quest));
         // counts: only on the first load of this server (a /ftbquests reload must not lose unsaved counts)
         Path c = countsPath();
         if (!countsLoaded) {
@@ -143,10 +144,11 @@ public final class ServerLimits {
 
     // ---------------------------------------------------------------- editing
 
-    public static void handleSetQuest(ServerPlayer player, long questId, int max) {
+    public static void handleSetQuest(ServerPlayer player, long questId, int max, int batch) {
         edit(player, file -> {
             if (!(file.getBase(questId) instanceof Quest)) return;
             LIMITS.setQuestMax(questId, max);
+            LIMITS.setBatch(questId, batch);
         });
     }
 
@@ -198,6 +200,7 @@ public final class ServerLimits {
         Net.sendToPlayer(player, new ClusterPayloads.LimitsSync(new java.util.LinkedHashMap<>(LIMITS.questRules()),
                 new java.util.LinkedHashMap<>(LIMITS.rewardRules()),
                 team == null ? java.util.Map.of() : new java.util.HashMap<>(LIMITS.teamCounts(team)),
-                new java.util.HashMap<>(LIMITS.playerCounts(player.getUUID())), java.util.List.copyOf(LIMITS.personalQuests())));
+                new java.util.HashMap<>(LIMITS.playerCounts(player.getUUID())), java.util.List.copyOf(LIMITS.personalQuests()),
+                new java.util.LinkedHashMap<>(LIMITS.batchRules())));
     }
 }

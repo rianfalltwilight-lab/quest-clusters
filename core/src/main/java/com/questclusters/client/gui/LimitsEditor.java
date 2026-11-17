@@ -36,12 +36,13 @@ public final class LimitsEditor {
     }
 
     public static void openQuest(QuestScreen screen, Quest q) {
-        int[] max = {ClientLimits.limits().questMax(q.id)};
+        int[] max = {ClientLimits.limits().questMax(q.id), ClientLimits.limits().batchMax(q.id)};
         ConfigGroup g = new ConfigGroup("quest_clusters.limits", accepted -> {
             screen.openGui();
-            if (accepted) Net.sendToServer(new ClusterPayloads.SetQuestLimit(q.id, max[0]));
+            if (accepted) Net.sendToServer(new ClusterPayloads.SetQuestLimit(q.id, max[0], max[1]));
         });
-        g.addInt("max_completions", max[0], v -> max[0] = v, 0, 0, ClaimLimits.MAX);
+        g.addInt("max_completions", max[0], v -> max[0] = v, 0, 0, ClaimLimits.MAX).setOrder(0);
+        g.addInt("batch_rounds", max[1], v -> max[1] = v, 0, 0, ClaimLimits.MAX_BATCH).setOrder(1);
         new EditConfigScreen(g).openGui();
     }
 
